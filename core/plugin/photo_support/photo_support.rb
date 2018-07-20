@@ -9,8 +9,25 @@ module Plugin::PhotoSupport
   class << self
     extend Memoist
 
+    # 画像のダウンロード程度の大きさと可用性に適したHTTPClientを生成する
+    def photo_http_client_new
+      client = HTTPClient.new
+      # 画像の受け取りにしてはタイムアウト時間が長過ぎる
+      # スレッドが詰まってしまう
+      # これ以上かかるほどデカイ画像をダウンロードするならリジューム機能のあるものを薦めたい
+      client.connect_timeout = 5  # デフォルト60秒
+      client.send_timeout    = 10 # デフォルト120秒
+      client.receive_timeout = 30 # デフォルト60秒
+      # OpenSSLの処理を同期で実行しない
+      # HTTPClientのソースコードには2006年より古いRubyでバグるので
+      # デフォルトはtrueになっていると書いています
+      # これを書いている時点でmikutterはRuby 2.3以上を要求するので切り捨てて良い
+      client.socket_sync = false
+      return client
+    end
+
     def via_xpath(display_url, xpath)
-      connection = HTTPClient.new
+      connection = photo_http_client_new
       page = connection.get_content(display_url)
       unless page.empty?
         doc = Nokogiri::HTML(page)
@@ -46,7 +63,7 @@ end
 Plugin.create :photo_support do
   # twitpic
   defimageopener('twitpic', %r<^https?://twitpic\.com/[a-zA-Z0-9]+>) do |display_url|
-    connection = HTTPClient.new
+    connection = photo_http_client_new
     connection.transparent_gzip_decompression = true
     page = connection.get_content(display_url)
     next nil if page.empty?
@@ -59,7 +76,7 @@ Plugin.create :photo_support do
 
   # twipple photo
   defimageopener('twipple photo', %r<^http://p\.twipple\.jp/[a-zA-Z0-9]+>) do |display_url|
-    connection = HTTPClient.new
+    connection = photo_http_client_new
     page = connection.get_content(display_url)
     next nil if page.empty?
     doc = Nokogiri::HTML(page)
@@ -69,7 +86,7 @@ Plugin.create :photo_support do
 
   # moby picture
   defimageopener('moby picture', %r<^http://moby.to/[a-zA-Z0-9]+>) do |display_url|
-    connection = HTTPClient.new
+    connection = photo_http_client_new
     page = connection.get_content(display_url)
     next nil if page.empty?
     doc = Nokogiri::HTML(page)
@@ -79,7 +96,7 @@ Plugin.create :photo_support do
 
   # gyazo
   defimageopener('gyazo', %r<\Ahttps?://gyazo.com/[a-zA-Z0-9]+>) do |display_url|
-    connection = HTTPClient.new
+    connection = photo_http_client_new
     page = connection.get_content(display_url)
     next nil if page.empty?
     doc = Nokogiri::HTML(page)
@@ -89,7 +106,7 @@ Plugin.create :photo_support do
 
   # 携帯百景
   defimageopener('携帯百景', %r<^http://movapic.com/(?:[a-zA-Z0-9]+/pic/\d+|pic/[a-zA-Z0-9]+)>) do |display_url|
-    connection = HTTPClient.new
+    connection = photo_http_client_new
     page = connection.get_content(display_url)
     next nil if page.empty?
     doc = Nokogiri::HTML(page)
@@ -101,7 +118,7 @@ Plugin.create :photo_support do
 
   # piapro
   defimageopener('piapro', %r<^http://piapro.jp/t/[a-zA-Z0-9]+>) do |display_url|
-    connection = HTTPClient.new
+    connection = photo_http_client_new
     page = connection.get_content(display_url)
     next nil if page.empty?
     doc = Nokogiri::HTML(page)
@@ -113,7 +130,7 @@ Plugin.create :photo_support do
 
   # img.ly
   defimageopener('img.ly', %r<^http://img\.ly/[a-zA-Z0-9_]+>) do |display_url|
-    connection = HTTPClient.new
+    connection = photo_http_client_new
     page = connection.get_content(display_url)
     next nil if page.empty?
     doc = Nokogiri::HTML(page)
@@ -128,7 +145,7 @@ Plugin.create :photo_support do
 
   # jigokuno.com
   defimageopener('jigokuno.com', %r<^http://jigokuno\.com/\?eid=\d+>) do |display_url|
-    connection = HTTPClient.new
+    connection = photo_http_client_new
     page = connection.get_content(display_url)
     next nil if page.empty?
     doc = Nokogiri::HTML(page)
@@ -137,7 +154,7 @@ Plugin.create :photo_support do
 
   # はてなフォトライフ
   defimageopener('はてなフォトライフ', %r<^http://f\.hatena\.ne\.jp/[-\w]+/\d{9,}>) do |display_url|
-    connection = HTTPClient.new
+    connection = photo_http_client_new
     page = connection.get_content(display_url)
     next nil if page.empty?
     doc = Nokogiri::HTML(page)
@@ -147,7 +164,7 @@ Plugin.create :photo_support do
 
   # imgur
   defimageopener('imgur', %r<\Ahttps?://imgur\.com(?:/gallery)?/[a-zA-Z0-9]+>) do |display_url|
-    connection = HTTPClient.new
+    connection = photo_http_client_new
     page = connection.get_content(display_url)
     next nil if page.empty?
     doc = Nokogiri::HTML(page)
@@ -163,7 +180,7 @@ Plugin.create :photo_support do
 
   # フォト蔵
   defimageopener('フォト蔵', %r<^http://photozou\.jp/photo/show/\d+/\d+>) do |display_url|
-    connection = HTTPClient.new
+    connection = photo_http_client_new
     page = connection.get_content(display_url)
     next nil if page.empty?
     doc = Nokogiri::HTML(page)
@@ -213,7 +230,7 @@ Plugin.create :photo_support do
 
   # vine
   defimageopener('vine', %r<\Ahttps?://vine\.co/v/[a-zA-Z0-9]+>) do |display_url|
-    connection = HTTPClient.new
+    connection = photo_http_client_new
     page = connection.get_content(display_url)
     next nil if page.empty?
     doc = Nokogiri::HTML(page)
@@ -222,7 +239,7 @@ Plugin.create :photo_support do
   end
 
   defimageopener('彩の庭', %r{\Ahttp://haruicon\.com/ayanoniwa?\Z}) do |display_url|
-    connection = HTTPClient.new
+    connection = photo_http_client_new
     page = connection.get_content(display_url)
     next nil if page.empty?
     doc = Nokogiri::HTML(page)
@@ -233,7 +250,7 @@ Plugin.create :photo_support do
 
   # xkcd.com
   defimageopener('xkcd', %r<\Ahttps?://xkcd\.com/[0-9]+>) do |display_url|
-    connection = HTTPClient.new
+    connection = photo_http_client_new
     page = connection.get_content(display_url)
     next nil if page.empty?
     doc = Nokogiri::HTML(page)
