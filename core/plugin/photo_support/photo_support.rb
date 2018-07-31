@@ -19,7 +19,7 @@ module Plugin::PhotoSupport
       client.send_timeout    = 10 # デフォルト120秒
       client.receive_timeout = 30 # デフォルト60秒
       # OpenSSLの処理を同期で実行しない
-      # HTTPClientのソースコードには2006年より古いRubyでバグるので
+      # httpclientのソースコードには2006年より古いRubyでバグるので
       # デフォルトはtrueになっていると書いています
       # これを書いている時点でmikutterはRuby 2.3以上を要求するので切り捨てて良い
       client.socket_sync = false
