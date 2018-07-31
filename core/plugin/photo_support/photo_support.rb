@@ -18,6 +18,8 @@ module Plugin::PhotoSupport
       client.connect_timeout = 5  # デフォルト60秒
       client.send_timeout    = 10 # デフォルト120秒
       client.receive_timeout = 30 # デフォルト60秒
+      # cookieは使わないので保持しないようにする
+      client.cookie_manager = nil
       # OpenSSLの処理を同期で実行しない
       # httpclientのソースコードには2006年より古いRubyでバグるので
       # デフォルトはtrueになっていると書いています
