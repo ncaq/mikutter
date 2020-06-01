@@ -86,6 +86,26 @@ Plugin.create(:mastodon) do
     Delayer.new { followings_updater.call }
   end
 
+  fetch_mentions = -> do
+    activity :mastodon, _('返信を取得しています…')
+    Plugin.collect(:mastodon_worlds).deach do |world|
+      generate :mastodon_appear_toots do |stream|
+        +world.mentions
+      end
+    end.next do
+      activity :mastodon, _('返信の取得が完了しました')
+    end.trap do |err|
+      error err
+      activity :mastodon, _('返信を取得できませんでした')
+    end
+  end
+
+  # 起動時
+  Delayer.new do
+    followings_updater.call
+    fetch_mentions.call
+  end
+
   # Mastodonサーバが初期化されたら、サーバの集合に加える
   collection(:mastodon_servers) do |servers|
     on_mastodon_server_created do |server|
@@ -250,7 +270,10 @@ Plugin.create(:mastodon) do
       result = await_input
       domain = result[:domain_selection] == :other ? result[:domain] : result[:domain_selection]
 
-      instance = await Plugin::Mastodon::Instance.add_ifn(domain).trap{ nil }
+      instance = await Plugin::Mastodon::Instance.add_ifn(domain).trap{ |err|
+        error err
+        nil
+      }
       unless instance
         error_msg = _("%{domain} サーバーへの接続に失敗しました。やり直してください。") % {domain: domain}
         next

@@ -63,6 +63,15 @@ module Plugin::Mastodon
       end
     end
 
+    def mentions
+      API.call(
+        :get, domain, '/api/v1/notifications', access_token,
+        exclude_types: %w[follow follow_request favourite reblog poll]
+      ).next do |resp|
+        Status.bulk_build server, resp.value.map { |h| h[:status] }
+      end
+    end
+
     def get_lists
       Delayer::Deferred.new do
         if @@lists[uri.to_s]
