@@ -408,7 +408,7 @@ private
       description_attr_list(emoji_height: layout.pixel_size[1])
     )
     layout.wrap = Pango::WrapMode::CHAR
-    rgb = Plugin.filtering(:message_font_color, message, nil).last || BLACK
+    rgb = get_color(Plugin.filtering(:message_font_color, message, nil).last) || BLACK
     context.set_source_rgb(*rgb) if context
     layout.text = plain_description
 
@@ -433,7 +433,7 @@ private
   # ヘッダ（左）のための Pango::Layout のインスタンスを返す
   def header_left(context = nil)
     attr_list, text = header_left_markup
-    rgb = Plugin.filtering(:message_header_left_font_color, message, nil).last || BLACK
+    rgb = get_color(Plugin.filtering(:message_header_left_font_color, message, nil).last) || BLACK
     font = Plugin.filtering(:message_header_left_font, message, nil).last
     context&.set_source_rgb(*rgb)
     (context || self).create_pango_layout.tap do |layout|
@@ -494,10 +494,17 @@ private
 
   # 背景色を返す
   def get_backgroundcolor
-    color = Plugin.filtering(
+    color = get_color(Plugin.filtering(
       selected? ? :message_selected_bg_color : :message_bg_color,
       model, nil
-    ).last || WHITE
+    ).last) || WHITE
+  end
+
+  # GTK2のGtk::ColorとGTK3のGdk::RGBAを変換する
+  def get_color(color)
+    r, g, b = color
+    return [r, g, b] if r.is_a? Float
+    [r.fdiv(65536), g.fdiv(65536), b.fdiv(65536)].freeze
   end
 
   # Graphic Context にパーツを描画
@@ -567,7 +574,7 @@ private
       hl_layout = header_left(context)
       context.show_pango_layout(hl_layout)
       hr_layout = header_right(context)
-      hr_color = Plugin.filtering(:message_header_right_font_color, message, nil).last || BLACK
+      hr_color = get_color(Plugin.filtering(:message_header_right_font_color, message, nil).last) || BLACK
 
       @hl_region = Cairo::Region.new([header_text_rect.x, header_text_rect.y,
                                       hl_layout.size[0] / Pango::SCALE, hl_layout.size[1] / Pango::SCALE])
