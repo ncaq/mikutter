@@ -18,16 +18,18 @@ require 'mui/gtk_timeline_utils'
 require 'mui/gtk_userlist'
 require 'mui/gtk_webicon'
 
-require_relative 'widget/timeline'
-require_relative 'widget/miraclepainter'
 require_relative 'widget/dialog'
+require_relative 'widget/mikutterwindow'
+require_relative 'widget/miraclepainter'
 require_relative 'widget/tabcontainer'
+require_relative 'widget/tabtoolbar'
+require_relative 'widget/timeline'
+require_relative 'widget/worldshifter'
 
 require_relative 'konami_watcher'
 require_relative 'mainloop'
-require_relative 'mikutter_window'
-require_relative 'tab_toolbar'
 require_relative 'slug_dictionary'
+require_relative 'toolbar_generator'
 
 Plugin.create :gtk3 do
   pg = Plugin::Gtk3

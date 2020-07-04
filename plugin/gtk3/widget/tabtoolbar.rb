@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 
-require_relative 'toolbar_generator'
-
 module Plugin::Gtk3
   class TabToolbar < Gtk::Grid
     def initialize(imaginally)

@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 
-require_relative 'tab_toolbar'
-
 module Plugin::Gtk3
   class SlugDictionary
     class << self

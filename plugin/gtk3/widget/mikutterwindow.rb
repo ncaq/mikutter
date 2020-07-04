@@ -2,9 +2,6 @@
 
 require 'pathname'
 
-require_relative 'toolbar_generator'
-require_relative 'world_shifter'
-
 # PostBoxや複数のペインを持つWindow
 module Plugin::Gtk3
   module MikutterWindow
@@ -14,7 +11,7 @@ module Plugin::Gtk3
     module_function def open(imaginally, plugin)
       # Gtk::Builderで生成したGtk::Windowに特異メソッドを生やす
       builder = Gtk::Builder.new
-      s = (Pathname(__FILE__).dirname / 'mikutter_window.glade').to_s
+      s = (Pathname(__FILE__).dirname / 'mikutterwindow.glade').to_s
       builder.add_from_file s
       window = builder.get_object 'window'
       window.extend self
