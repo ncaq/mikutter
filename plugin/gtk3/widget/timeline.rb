@@ -41,7 +41,7 @@ module Plugin::Gtk3
         grid.orientation = :vertical
       end
       @listbox = Gtk::ListBox.new.tap do |listbox|
-        listbox.selection_mode = :multiple
+        listbox.selection_mode = :single
         listbox.set_sort_func do |row1, row2|
           (@order.call row2.model) <=> (@order.call row1.model)
         end
