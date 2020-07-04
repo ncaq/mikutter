@@ -14,6 +14,7 @@ class Gdk::SubPartsMessageBase < Gdk::SubParts
   extend Memoist
 
   DEFAULT_ICON_SIZE = 32
+  WHITE = [1.0, 1.0, 1.0].freeze
 
   # SubPartsに表示する _Message_ 。
   # 複数表示可能なので、それらを上に表示されるものから順番に返す。
@@ -121,10 +122,8 @@ class Gdk::SubPartsMessageBase < Gdk::SubParts
   # Array :: red, green, blueの配列。各要素は0.0..1.0の範囲。
   def background_color(model)
     color = Plugin.filtering(:message_bg_color, model, nil).last
-    if color.is_a? Array and 3 == color.size
-      color.map{ |c| c.to_f / 65536 }
-    else
-      [1.0]*3 end end
+    rgb(color || WHITE)
+  end
 
   # SubParts内の _Message_ の枠の色を返す
   # ==== Args
@@ -133,6 +132,13 @@ class Gdk::SubPartsMessageBase < Gdk::SubParts
   # Array :: red, green, blueの配列。各要素は0.0..1.0の範囲。
   def edge_color(message)
     [0.5]*3 end
+
+  # GTK2のGtk::ColorとGTK3のGdk::RGBAをRGBの_Float_値に変換する
+  def rgb(color)
+    r, g, b = color
+    return [r, g, b] if r.is_a? Float
+    [r.fdiv(65536), g.fdiv(65536), b.fdiv(65536)].freeze
+  end
 
   # アイコンのサイズを返す。
   # ==== Return
