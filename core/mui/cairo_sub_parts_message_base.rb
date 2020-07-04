@@ -348,7 +348,7 @@ class Gdk::SubPartsMessageBase < Gdk::SubParts
       photo = shape.data
       if photo
         width, height = shape.ink_rect.width/Pango::SCALE, shape.ink_rect.height/Pango::SCALE
-        pixbuf = photo.load_pixbuf(width: width, height: height){ helper.on_modify }
+        pixbuf = photo.load_pixbuf(width: width, height: height){ helper.queue_resize }
         x = layout.index_to_pos(shape.start_index).x / Pango::SCALE
         y = layout.index_to_pos(shape.start_index).y / Pango::SCALE
         c.translate(x, y)
@@ -451,7 +451,7 @@ class Gdk::SubPartsMessageBase < Gdk::SubParts
       context.paint end end
 
   def main_icon(message)
-    message.user.icon.load_pixbuf(width: icon_size.width, height: icon_size.width){ helper.on_modify }
+    message.user.icon.load_pixbuf(width: icon_size.width, height: icon_size.width){ helper.queue_draw }
   end
 
   # 表示する際に本文に適用すべき装飾オブジェクトを作成する

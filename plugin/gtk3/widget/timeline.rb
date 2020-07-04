@@ -7,21 +7,25 @@ module Plugin::Gtk3
   投稿ボックスとスクロール可能のリストビューを備えたウィジェット
 =end
   class Timeline < Gtk::Grid
+    class << self
+      @@instances = []
 
-    Delayer.new do
-      plugin = Plugin::create :core
-      plugin.add_event :message_modified do |model|
-        notice "TODO message_modified"
+      def update_rows(model)
+        @@instances.each do |instance|
+          instance.push! model
+        end
       end
-      plugin.add_event :destroyed do |models|
-        notice "TODO destroyed"
+
+      def remove_rows(model)
+        @@instances.each do |instance|
+          instance.remove! model
+        end
       end
     end
 
     # used for deprecation year and month
     YM = [2019, 10].freeze
 
-    include Enumerable
     extend Gem::Deprecate
 
     attr_reader :postbox
@@ -30,6 +34,8 @@ module Plugin::Gtk3
 
     def initialize(imaginary=nil)
       super()
+
+      @@instances.push self
 
       self.name = 'timeline'
       self.orientation = :vertical
@@ -53,16 +59,6 @@ module Plugin::Gtk3
         sw.expand = true
         sw.add @listbox
       end)
-    end
-
-    def size
-      children.size
-    end
-
-    # iterate over _Diva::Model_s
-    # implement _Enumerable_
-    def each(&blk)
-      foreach { |row| blk.call row.child.model }
     end
 
     def include?(model)
@@ -100,6 +96,11 @@ module Plugin::Gtk3
     deprecate :remove_if_exists_all, :push_all!, *YM
     alias add_retweets push_all!
     deprecate :add_retweets, :push_all!, *YM
+
+    def remove!(model)
+      row = @hash[model.uri.hash] or return
+      @listbox.remove row
+    end
 
     def clear!
       # TODO

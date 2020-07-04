@@ -467,16 +467,30 @@ Plugin.create :gtk3 do
   on_posted do |service, messages|
     messages.each{ |message|
       if(replyto_source = message.replyto_source)
-        # Gdk::MiraclePainter.findbymessage(replyto_source).each{ |mp| mp.on_modify }
+        pg::Timeline.update_rows replyto_source
       end
     }
   end
 
-  on_favorite do |service, user, message|
-    if(user.me?)
-      # Gdk::MiraclePainter.findbymessage(message).each{ |mp| mp.on_modify }
-    end
+  on_message_modified(&pg::Timeline.method(:update_rows))
+  on_destroyed(&pg::Timeline.method(:remove_rows))
+
+  share = proc do |_, model|
+    pg::Timeline.update_rows model
   end
+
+  on_share(&share)
+  on_before_share(&share)
+  on_fail_share(&share)
+  on_destroy_share(&share)
+
+  favorite = proc do |_, _, model|
+    pg::Timeline.update_rows model
+  end
+
+  on_favorite(&favorite)
+  on_before_favorite(&favorite)
+  on_fail_favorite(&favorite)
 
   on_konami_activate do
     Gtk.konami_load
@@ -707,7 +721,6 @@ Plugin.create :gtk3 do
     end
     [i_tl, y]
   end
-
 end
 
 module Plugin::Gtk3

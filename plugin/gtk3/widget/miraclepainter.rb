@@ -79,40 +79,6 @@ class Plugin::Gtk3::MiraclePainter < Gtk::ListBoxRow
     @score ||= Plugin[:gtk3].score_of(model)
   end
 
-=begin
-  @@miracle_painters = Hash.new
-
-  # _message_ を内部に持っているGdk::MiraclePainterの集合をSetで返す。
-  # ログ数によってはかなり重い処理なので注意
-  def self.findbymessage(message)
-    result = Set.new
-    Gtk::TimeLine.timelines.each{ |tl|
-      found = tl.get_record_by_message(message)
-      result << found.miracle_painter if found }
-    result.freeze
-  end
-
-  # findbymessage のdeferred版。
-  def self.findbymessage_d(message)
-    result = Set.new
-    Gtk::TimeLine.timelines.deach{ |tl|
-      if not tl.destroyed?
-        found = tl.get_record_by_message(message)
-        result << found.miracle_painter if found end
-    }.next{
-      result.freeze }
-  end
-
-  def self.mp_modifier
-    @mp_modifier ||= lambda { |miracle_painter|
-      if (not miracle_painter.destroyed?) and (not miracle_painter.tree.destroyed?)
-        miracle_painter.tree.model.each{ |model, path, iter|
-          if iter[0] == miracle_painter.message.uri.to_s
-            miracle_painter.tree.queue_draw
-            break end } end
-      false } end
-=end
-
   def initialize(model)
     super()
 
@@ -440,7 +406,6 @@ private
     layout.context.set_shape_renderer do |c, shape, _|
       return layout until photo = shape.data
       width, height = shape.ink_rect.width/Pango::SCALE, shape.ink_rect.height/Pango::SCALE
-      # pixbuf = photo.load_pixbuf(width: width, height: height){ on_modify }
       pixbuf = photo.load_pixbuf(width: width, height: height) do
         queue_draw
       end
@@ -574,7 +539,6 @@ private
     context.save do
       context.save do
         context.translate(main_icon_rect.x, main_icon_rect.y + icon_height*13/14)
-        # context.set_source_pixbuf(gb_foot.load_pixbuf(width: icon_width, height: icon_width*9/20){|_pb, _s| on_modify })
         w, = ICON_SIZE
         context.set_source_pixbuf(
           gb_foot.load_pixbuf(width: w, height: 9 / 20 * w) { queue_draw }
