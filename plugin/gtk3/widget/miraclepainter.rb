@@ -51,6 +51,9 @@ class Plugin::Gtk3::MiraclePainter < Gtk::ListBoxRow
   type_register
 
   signal_new :clicked, GLib::Signal::RUN_FIRST | GLib::Signal::ACTION, nil, nil, Gdk::EventButton
+  
+  signal_new :click, GLib::Signal::RUN_FIRST | GLib::Signal::ACTION, nil, nil, Gdk::EventButton # 互換性
+  signal_new :expose_event, GLib::Signal::RUN_FIRST, nil, nil # 互換性
 
   include Gdk::IconOverButton
   include Gdk::TextSelector
@@ -253,6 +256,12 @@ class Plugin::Gtk3::MiraclePainter < Gtk::ListBoxRow
     end
   end
 
+  # 互換性
+  def signal_do_click(ev)
+    signal_do_clicked ev
+  end
+  deprecate :signal_do_click, :signal_do_clicked, 2020, 7
+
   def signal_do_button_press_event(ev)
     notice "#{self}*button_press_event(ev=#{ev.inspect})" if VERBOSE
 
@@ -267,8 +276,10 @@ class Plugin::Gtk3::MiraclePainter < Gtk::ListBoxRow
     x, y = ev.x, ev.y
     ev.button == 1 \
       and textselector_release(*main_pos_to_index_forclick(x, y)[1..2])
-    @mouse_in_row || ev.event_type == Gdk::EventType::TOUCH_END \
-      and signal_emit :clicked, ev
+    if @mouse_in_row || ev.event_type == Gdk::EventType::TOUCH_END
+      signal_emit :clicked, ev
+      signal_emit :click, ev # 互換性
+    end
     false # propagate event
   end
 
@@ -366,6 +377,18 @@ class Plugin::Gtk3::MiraclePainter < Gtk::ListBoxRow
       ICON_SIZE[1],
     ].max + MARGIN
   end
+
+  # 互換性
+  def reset_height
+    queue_resize
+  end
+  deprecate :reset_height, :queue_resize, 2020, 7
+
+  # 互換性
+  def on_modify
+    queue_resize
+  end
+  deprecate :on_modify, :queue_resize, 2020, 7
 
   def inspect
     "MP(#{model.description[0, 5].gsub("\n", ' ').inspect})"
