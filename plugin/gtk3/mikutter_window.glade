@@ -125,6 +125,7 @@
               <object class="GtkGrid" id="status_button_container">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
+                <property name="valign">center</property>
                 <child>
                   <placeholder/>
                 </child>
