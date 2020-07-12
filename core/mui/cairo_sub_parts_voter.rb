@@ -21,7 +21,7 @@ class ::Gdk::SubPartsVoter < Gdk::SubParts
         break if part == self
         ofsty += part.height }
       if ofsty <= y and (ofsty + height) >= y
-        case e.button
+        case ev.button
         when 1
           if(x >= @icon_ofst)
             user = get_user_by_point(x)
