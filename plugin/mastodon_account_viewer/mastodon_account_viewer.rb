@@ -20,22 +20,15 @@ Plugin.create(:mastodon_account_viewer) do
     set_icon user.icon
     score = score_of(user.profile)
     bio = ::Gtk::IntelligentTextview.new(score)
-    container = ::Gtk::VBox.new.
-                  closeup(bio).
-                  closeup(relation_bar(user))
-    scrolledwindow = ::Gtk::ScrolledWindow.new
-    scrolledwindow.set_policy(::Gtk::POLICY_AUTOMATIC, ::Gtk::POLICY_AUTOMATIC)
-    scrolledwindow.add_with_viewport(container)
-    scrolledwindow.style = container.style
-    wrapper = Gtk::EventBox.new
-    wrapper.no_show_all = true
-    wrapper.show
-    nativewidget wrapper.add(scrolledwindow)
-    wrapper.ssc(:expose_event) do
-      wrapper.no_show_all = false
-      wrapper.show_all
-      false
-    end
+    bio.hexpand = true
+
+    grid = Gtk::Grid.new
+    grid.orientation = :vertical
+    grid.row_spacing = 8
+    grid.margin = 4
+    grid << bio << relation_bar(user)
+
+    nativewidget grid
   end
 
   # フォロー関係の表示・操作用ウィジェット
