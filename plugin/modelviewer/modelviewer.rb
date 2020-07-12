@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+UserConfig[:profile_icon_size] ||= 48
+UserConfig[:profile_icon_margin] ||= 4
+
 Plugin.create :modelviewer do
   defdsl :defmodelviewer do |model_class, &block|
     model_class = Diva::Model(model_class) unless model_class.is_a?(Class)
@@ -66,27 +69,23 @@ Plugin.create :modelviewer do
 
   def header(intent_token, &column_generator)
     model = intent_token.model
-    eventbox = ::Gtk::EventBox.new
-    eventbox.ssc(:visibility_notify_event){
-      eventbox.style = background_color
-      false
-    }
 
-    icon_alignment = Gtk::Alignment.new(0.5, 0, 0, 0)
-                       .set_padding(*[UserConfig[:profile_icon_margin]]*4)
+    icon = model_icon model
+    icon.margin = UserConfig[:profile_icon_margin]
+    icon.valign = :start
 
-    eventbox.add(
-      ::Gtk::VBox.new(false, 0).
-        add(
-          ::Gtk::HBox.new
-            .closeup(icon_alignment.add(model_icon(model)))
-            .add(
-              ::Gtk::VBox.new
-                .closeup(title_widget(model, intent_token))
-                .closeup(header_table(model, column_generator.(model)))
-            )
-        )
-    )
+    title = title_widget model
+    title.hexpand = true
+
+    table = header_table(model, column_generator.(model))
+    table.hexpand = true
+
+    grid = Gtk::Grid.new
+    grid.margin_top = grid.margin_bottom = 4
+    grid.attach_next_to icon, nil, :left, 1, 2
+    grid.attach_next_to title, icon, :right, 1, 1
+    grid.attach_next_to table, title, :bottom, 1, 1
+    grid
   end
 
   def model_icon(model)
@@ -97,7 +96,7 @@ Plugin.create :modelviewer do
       true
     end
     icon.ssc(:realize) do |this|
-      this.window.set_cursor(Gdk::Cursor.new(Gdk::Cursor::HAND2))
+      this.window.set_cursor(Gdk::Cursor.new(:hand2))
       false
     end
     icon
@@ -109,14 +108,14 @@ Plugin.create :modelviewer do
   # [intent_token] ユーザを開くときに利用するIntent
   # ==== Return
   # ユーザの名前の部分のGtkコンテナ
-  def title_widget(model, intent_token)
+  def title_widget(model)
     score = [
       Plugin::Score::HyperLinkNote.new(
         description: model.title,
         uri: model.uri
       )
     ]
-    ::Gtk::IntelligentTextview.new(score, style: style)
+    ::Gtk::IntelligentTextview.new(score)
   end
 
   # modelのtitleを表示する
@@ -130,42 +129,27 @@ Plugin.create :modelviewer do
     when Diva::Model
       ::Gtk::IntelligentTextview.new(
         Plugin[:modelviewer].score_of(model_or_str),
-        style: style
       )
     else
-      ::Gtk::IntelligentTextview.new(model_or_str.to_s, style: style)
+      Gtk::Label.new model_or_str.to_s
     end
   end
 
-  def header_table(model, header_columns)
-    ::Gtk::Table.new(2, header_columns.size).tap{|table|
-      header_columns.each_with_index do |column, index|
-        key, value = column
-        table.
-          attach(::Gtk::Label.new(key.to_s).right, 0, 1, index, index+1).
-          attach(cell_widget(value), 1, 2, index, index+1)
-      end
-    }.set_row_spacing(0, 4).
-      set_row_spacing(1, 4).
-      set_column_spacing(0, 16)
-  end
+  def header_table(model, rows)
+    grid = Gtk::Grid.new
+    grid.row_spacing = 4
+    grid.column_spacing = 16
 
-  def style
-    -> do
-      Gtk::Style.new().tap do |bg_style|
-        color = UserConfig[:mumble_basic_bg]
-        bg_style.set_bg(Gtk::STATE_ACTIVE, *color)
-        bg_style.set_bg(Gtk::STATE_NORMAL, *color)
-        bg_style.set_bg(Gtk::STATE_SELECTED, *color)
-        bg_style.set_bg(Gtk::STATE_PRELIGHT, *color)
-        bg_style.set_bg(Gtk::STATE_INSENSITIVE, *color)
-      end
+    rows.each do |header, content|
+      label_header = Gtk::Label.new header
+      label_header.halign = :end
+
+      widget_content = cell_widget content
+      widget_content.halign = :start
+
+      grid.attach_next_to label_header, nil, :bottom, 1, 1
+      grid.attach_next_to widget_content, label_header, :right, 1, 1
     end
-  end
-
-  def background_color
-    style = ::Gtk::Style.new()
-    style.set_bg(::Gtk::STATE_NORMAL, 0xFF ** 2, 0xFF ** 2, 0xFF ** 2)
-    style
+    grid
   end
 end
