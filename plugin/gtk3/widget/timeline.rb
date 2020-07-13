@@ -23,6 +23,8 @@ module Plugin::Gtk3
       end
     end
 
+    type_register
+
     # used for deprecation year and month
     YM = [2019, 10].freeze
 
@@ -108,6 +110,35 @@ module Plugin::Gtk3
     end
     alias clear clear!
     deprecate :clear, :clear!, *YM
+
+    def get_active_messages
+      models = []
+      @listbox.selected_foreach do |_, row|
+        models << row.model
+      end
+      models
+    end
+
+    def selected_rows
+      rows = []
+      @listbox.selected_foreach do |_, row|
+        rows << row
+      end
+      rows
+    end
+
+    def popup_menu(event)
+      menu = Gtk::Menu.new
+      menu.ssc(:deactivate, &:destroy)
+      menu.attach_to_widget self
+
+      ev, menus = Plugin::GUI::Command.get_menu_items @imaginary
+      notice menus
+      Gtk::ContextMenu.new(*menus).build!(self, ev, menu = menu)
+
+      menu.show_all
+      menu.popup_at_pointer event
+    end
 
   private
 

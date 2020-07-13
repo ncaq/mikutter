@@ -523,9 +523,9 @@ Plugin.create :gtk3 do
   filter_gui_timeline_selected_text do |i_timeline, message, text|
     timeline = widgetof(i_timeline)
     next [i_timeline, message, text] if not timeline
-    record = timeline.get_record_by_message(message)
+    record = timeline.selected_rows.find { |row| row.model == message }
     next [i_timeline, message, text] if not record
-    range = record.miracle_painter.textselector_range
+    range = record.textselector_range
     next [i_timeline, message, text] if not range
     if UserConfig[:miraclepainter_expand_custom_emoji]
       adjust = score_of(message).each_with_object(Hash.new(0)) do |note, state|

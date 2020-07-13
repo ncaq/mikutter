@@ -217,8 +217,6 @@ class Plugin::Gtk3::MiraclePainter < Gtk::ListBoxRow
           Plugin.call(:open, clicked_note) if clickable?(clicked_note)
         end
       end
-    when 3
-      Plugin::GUI::Command.menu_pop
     end
   end
 
@@ -231,8 +229,14 @@ class Plugin::Gtk3::MiraclePainter < Gtk::ListBoxRow
   def signal_do_button_press_event(ev)
     notice "#{self}*button_press_event(ev=#{ev.inspect})" if VERBOSE
 
-    return false if ev.button != 1
-    textselector_press(*main_pos_to_index_forclick(ev.x, ev.y)[1..2])
+    if ev.triggers_context_menu
+      popup_menu ev
+      return true
+    end
+
+    if ev.button == 1
+      textselector_press(*main_pos_to_index_forclick(ev.x, ev.y)[1..2])
+    end
     false # propagate event
   end
 
@@ -278,6 +282,13 @@ class Plugin::Gtk3::MiraclePainter < Gtk::ListBoxRow
       "state_flags=#{state_flags.inspect}" if VERBOSE
 
     (state_flags & Gtk::StateFlags::SELECTED).zero? and textselector_unselect
+  end
+
+  # for keybindings (Shift-F10 or Menu)
+  # see https://developer.gnome.org/gtk3/stable/gtk-migrating-checklist.html#checklist-popup-menu
+  def signal_do_popup_menu
+    popup_menu(nil)
+    true
   end
 
   def iob_icon_pixbuf
@@ -362,6 +373,10 @@ class Plugin::Gtk3::MiraclePainter < Gtk::ListBoxRow
   alias to_s inspect
 
 private
+
+  def popup_menu(event)
+    get_ancestor(Plugin::Gtk3::Timeline).popup_menu event
+  end
 
   def main_icon_rect
     @main_icon_rect ||= Rect.new(MARGIN, MARGIN, *ICON_SIZE)
