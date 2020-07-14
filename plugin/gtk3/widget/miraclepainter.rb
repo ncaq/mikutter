@@ -277,6 +277,15 @@ class Plugin::Gtk3::MiraclePainter < Gtk::ListBoxRow
     false # propagate event
   end
 
+  def signal_do_focus_in_event(event)
+    get_ancestor(Plugin::Gtk3::Timeline).active
+  end
+
+  def signal_do_key_press_event(event)
+    timeline = get_ancestor(Plugin::Gtk3::Timeline)
+    timeline.keypress(Gtk.keyname [event.keyval, event.state])
+  end
+
   def signal_do_state_flags_changed(prev_flags)
     notice "#{self}*state_flags_changed(prev_flags=#{prev_flags.inspect}) " \
       "state_flags=#{state_flags.inspect}" if VERBOSE
@@ -375,7 +384,7 @@ class Plugin::Gtk3::MiraclePainter < Gtk::ListBoxRow
 private
 
   def popup_menu(event)
-    get_ancestor(Plugin::Gtk3::Timeline).popup_menu event
+    get_ancestor(Plugin::Gtk3::Timeline).popup_menu(event)
   end
 
   def main_icon_rect

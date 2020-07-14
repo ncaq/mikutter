@@ -3,3 +3,4 @@ source 'https://rubygems.org'
 git 'https://github.com/yuntan/ruby-gnome', branch: 'hook-up-vfunc' do
   gem 'gtk3'
 end
+gem 'pqueue', '~> 2.1'

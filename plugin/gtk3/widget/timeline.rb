@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'pqueue'
+
 require 'mui/gtk_postbox'
 
 module Plugin::Gtk3
@@ -12,13 +14,13 @@ module Plugin::Gtk3
 
       def update_rows(model)
         @@instances.each do |instance|
-          instance.push! model
+          instance.bulk_add [model]
         end
       end
 
       def remove_rows(model)
         @@instances.each do |instance|
-          instance.remove! model
+          instance.bulk_remove [model]
         end
       end
     end
@@ -31,8 +33,7 @@ module Plugin::Gtk3
     extend Gem::Deprecate
 
     attr_reader :postbox
-    attr_reader :listbox
-    attr_accessor :order
+    attr_reader :order
 
     def initialize(imaginary=nil)
       super()
@@ -44,6 +45,7 @@ module Plugin::Gtk3
 
       @imaginary = imaginary
       @hash = {} # Diva::URI => Row
+      @pq = PQueue.new { |a, b| a.modified < b.modified }
       @order = ->(m) { m.modified.to_i }
       @postbox = Gtk::Grid.new.tap do |grid|
         grid.orientation = :vertical
@@ -54,6 +56,9 @@ module Plugin::Gtk3
           (@order.call row2.model) <=> (@order.call row1.model)
         end
       end
+      @listbox.ssc :destroy do
+        @imaginary.destroy
+      end
 
       add @postbox
       add(Gtk::ScrolledWindow.new.tap do |sw|
@@ -63,68 +68,60 @@ module Plugin::Gtk3
       end)
     end
 
+    def order=(order)
+      @order = order
+      @listbox.invalidate_sort
+    end
+
     def include?(model)
       ! @hash[model.uri.hash].nil?
     end
 
-    def destroyed?
-      # TODO
-      false
+    def active
+      @imaginary.active!
     end
 
-    def active!
-      # TODO
+    def keypress(keyname)
+      Plugin::GUI.keypress keyname, @imaginary
+    end
+
+    def bulk_add(models)
+      models.each(&method(:check_and_add))
+    end
+
+    def bulk_remove(models)
+
+      models.each(&method(:check_and_remove))
+    end
+
+    def clear
       raise NotImplementedError
     end
-    alias active active!
-    deprecate :active, :active!, *YM
 
-    def push!(model)
-      check_and_push! model
-    end
-    alias modified push!
-    deprecate :modified, :push!, *YM
-    alias favorite push!
-    deprecate :favorite, :push!, *YM
-    alias unfavorite push!
-    deprecate :unfavorite, :push!, *YM
-
-    def push_all!(models)
-      models.each(&method(:check_and_push!))
-    end
-    alias block_add_all push_all!
-    deprecate :block_add_all, :push_all!, *YM
-    alias remove_if_exists_all push_all!
-    deprecate :remove_if_exists_all, :push_all!, *YM
-    alias add_retweets push_all!
-    deprecate :add_retweets, :push_all!, *YM
-
-    def remove!(model)
-      row = @hash[model.uri.hash] or return
-      @listbox.remove row
+    def size
+      @listbox.children.size
     end
 
-    def clear!
-      # TODO
-      raise NotImplementedError
-    end
-    alias clear clear!
-    deprecate :clear, :clear!, *YM
-
-    def get_active_messages
-      models = []
-      @listbox.selected_foreach do |_, row|
-        models << row.model
+    def select_row_at_index(index)
+      selected_rows.each do |row|
+        @listbox.unselect_row row
       end
-      models
+      @listbox.select_row @listbox.get_row_at_index index
+    end
+
+    def jump_to(to)
+      case to
+      when :top
+        @listbox.adjustment.value = @listbox.adjustment.lower
+      when :up
+        @listbox.adjustment.value -= @listbox.adjustment.page_increment
+      when :down
+        @listbox.adjustment.value += @listbox.adjustment.page_increment
+      end
     end
 
     def selected_rows
-      rows = []
-      @listbox.selected_foreach do |_, row|
-        rows << row
-      end
-      rows
+      @listbox.selected_rows
     end
 
     def popup_menu(event)
@@ -142,14 +139,30 @@ module Plugin::Gtk3
 
   private
 
-    def check_and_push!(model)
-      row = @hash[model.uri.hash]
+    def check_and_add(model)
+      row = @hash[model.uri.to_s]
       row and @listbox.remove row
 
       row = MiraclePainter.new model
       row.show_all
       @listbox.add row
-      @hash[model.uri.hash] = row
+      @hash[model.uri.to_s] = row
+      @pq.push model
+
+      resize if size > 1000
+    end
+
+    def check_and_remove(model)
+      row = @hash[model.uri.to_s] or return
+      @hash.delete model.uri.to_s
+      @listbox.remove row
+    end
+
+    def resize
+      model = @pq.pop or return
+      row = @hash[model.uri.to_s] or return
+      @listbox.remove row
+      @hash.delete row
     end
   end
 end

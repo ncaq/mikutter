@@ -207,41 +207,8 @@ Plugin.create :gtk3 do
   on_timeline_created do |i_timeline|
     timeline = pg::Timeline.new(i_timeline)
     @slug_dictionary.add(i_timeline, timeline)
-    timeline.listbox.ssc(key_press_event: timeline_key_press_event(i_timeline),
-                         focus_in_event:  timeline_focus_in_event(i_timeline),
-                         destroy:         timeline_destroy_event(i_timeline))
     timeline.show_all
   end
-
-  # Timelineウィジェットのfocus_in_eventのコールバックを返す
-  # ==== Args
-  # [i_timeline] タイムラインのインターフェイス
-  # ==== Return
-  # Proc
-  def timeline_focus_in_event(i_timeline)
-    lambda { |this, event|
-      if this.focus?
-        i_timeline.active!(true, true) end
-      false } end
-
-  # Timelineウィジェットのkey_press_eventのコールバックを返す
-  # ==== Args
-  # [i_timeline] タイムラインのインターフェイス
-  # ==== Return
-  # Proc
-  def timeline_key_press_event(i_timeline)
-    lambda { |widget, event|
-      Plugin::GUI.keypress(::Gtk::keyname([event.keyval ,event.state]), i_timeline) } end
-
-  # Timelineウィジェットのdestroyのコールバックを返す
-  # ==== Args
-  # [i_timeline] タイムラインのインターフェイス
-  # ==== Return
-  # Proc
-  def timeline_destroy_event(i_timeline)
-    lambda { |this|
-      i_timeline.destroy
-      false } end
 
   on_gui_pane_join_window do |i_pane, i_window|
     window = widgetof(i_window)
@@ -285,7 +252,7 @@ Plugin.create :gtk3 do
 
   on_gui_timeline_add_messages do |i_timeline, messages|
     timeline = widgetof(i_timeline)
-    timeline.push_all!(messages) if timeline and not timeline.destroyed? end
+    timeline.bulk_add(messages) if timeline and not timeline.destroyed? end
 
   on_gui_postbox_join_widget do |i_postbox|
     type_strict i_postbox => Plugin::GUI::Postbox
@@ -331,38 +298,27 @@ Plugin.create :gtk3 do
     if timeline
       timeline.clear end end
 
-  on_gui_timeline_scroll do |i_timeline, msg|
-    tl = widgetof(i_timeline) or next
-
-    case msg
-    when :top
-      iter = tl.model.iter_first or next
-      tl.set_cursor iter.path, nil, false
-
-    when :up
-      tl.move_cursor ::Gtk::MovementStep::PAGES, -1
-
-    when :down
-      tl.move_cursor ::Gtk::MovementStep::PAGES, 1
-    end
+  on_gui_timeline_scroll do |i_timeline, to|
+    timeline = widgetof(i_timeline) or next
+    timeline.jump_to to
   end
 
-  on_gui_timeline_move_cursor_to do |i_timeline, message|
-    tl = widgetof(i_timeline)
-    if tl
-      path, column = tl.cursor
-      if path and column
-        case message
+  on_gui_timeline_move_cursor_to do |i_timeline, direction_or_index|
+    timeline = widgetof(i_timeline) or next
+
+    row = timeline.selected_rows.first or next
+    i = case direction_or_index
         when :prev
-          path.prev!
-          tl.set_cursor(path, column, false)
+          [row.index - 1, 0].max
         when :next
-          path.next!
-          tl.set_cursor(path, column, false)
+          [row.index + 1, timeline.size].min
         else
-          if message.is_a? Integer
-            path, = *tl.get_path(0, message)
-              tl.set_cursor(path, column, false) if path end end end end end
+          next unless direction_or_index.is_a? Integer
+          direction_or_index
+        end
+
+    timeline.select_row_at_index i
+  end
 
   on_gui_timeline_set_order do |i_timeline, order|
     widgetof(i_timeline).order = order
@@ -504,19 +460,13 @@ Plugin.create :gtk3 do
       [i_postbox, editable] end end
 
   filter_gui_timeline_cursor_position do |i_timeline, y|
-    timeline = widgetof(i_timeline)
-    if timeline
-      path, column = *timeline.cursor
-      if path
-        rect = timeline.get_cell_area(path, column)
-        next [i_timeline, rect.y + (rect.height / 2).to_i] end
-    end
-    [i_timeline, y] end
+    raise NotImplementedError
+  end
 
   filter_gui_timeline_selected_messages do |i_timeline, messages|
     timeline = widgetof(i_timeline)
     if timeline
-      [i_timeline, messages + timeline.get_active_messages]
+      [i_timeline, messages + timeline.selected_rows.map(&:model)]
     else
       [i_timeline, messages] end end
 
