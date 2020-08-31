@@ -21,11 +21,11 @@ group :default do
 end
 
 group :test do
-  gem 'test-unit','>= 3.3.4', '< 4.0'
+  gem 'test-unit','>= 3.3.6', '< 4.0'
   gem 'rake','>= 13.0.1'
-  gem 'mocha','>= 1.11.1'
-  gem 'webmock','>= 3.7.6'
-  gem 'ruby-prof','>= 1.1.0'
+  gem 'mocha','>= 1.11.2'
+  gem 'webmock','>= 3.8.3'
+  gem 'ruby-prof','>= 1.4.1'
 end
 
 
