@@ -97,7 +97,7 @@ Style/IfWithSemicolon:
   Enabled: false
 
 Layout/IndentationConsistency:
-  EnforcedStyle: indented_internal_methods
+  EnforcedStyle: normal
 
 Style/InlineComment:
   Enabled: false
@@ -262,4 +262,13 @@ Style/BlockDelimiters:
   EnforcedStyle: braces_for_chaining
 
 Metrics/AbcSize:
-  Max: 21.95
+  Max: 24.27
+
+Style/MultilineBlockChain:
+  Enabled: false
+
+Layout/MultilineMethodCallIndentation:
+  EnforcedStyle: indented_relative_to_receiver
+
+Naming/MemoizedInstanceVariableName:
+  EnforcedStyleForLeadingUnderscores: optional
