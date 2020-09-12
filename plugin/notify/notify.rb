@@ -6,7 +6,7 @@ Plugin.create(:notify) do
 
   settings(_("通知")) do
     def self.defnotify(label, kind)
-      settings (label) do
+      settings(label) do
         boolean _('ポップアップ'), "notify_#{kind}".to_sym
         fileselect(_('サウンド'), "notify_sound_#{kind}".to_sym,
                    dir: DEFAULT_SOUND_DIRECTORY,

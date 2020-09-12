@@ -35,14 +35,16 @@ module Plugin::GUI::HierarchyChild
   # ==== Args
   # [klass] 探すクラス
   # ==== Return
-  # マッチしたウィジェットかfalse
+  # マッチしたウィジェットかnil
   def ancestor_of(klass)
-    if self.is_a? klass
-      self
-    elsif @parent.is_a? Plugin::GUI::HierarchyChild
+    return self if is_a?(klass)
+    case @parent
+    when Plugin::GUI::HierarchyChild
       @parent.ancestor_of(klass)
-    else @parent.is_a? klass
-      @parent end end
+    when klass
+      @parent
+    end
+  end
 
   # 親を再帰的に辿り、selfをアクティブに設定する
   # ==== Args
