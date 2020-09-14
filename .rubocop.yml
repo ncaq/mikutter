@@ -64,7 +64,7 @@ Style/Documentation:
   Enabled: false
 
 Layout/DotPosition:
-  EnforcedStyle: trailing
+  EnforcedStyle: leading
 
 Style/DoubleNegation:
   Enabled: false
@@ -272,3 +272,9 @@ Layout/MultilineMethodCallIndentation:
 
 Naming/MemoizedInstanceVariableName:
   EnforcedStyleForLeadingUnderscores: optional
+
+Layout/SpaceAroundOperators:
+  EnforcedStyleForExponentOperator: space
+
+Layout/SpaceAroundEqualsInParameterDefault:
+  EnforcedStyle: no_space
