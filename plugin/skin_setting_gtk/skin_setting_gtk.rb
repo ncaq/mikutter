@@ -16,10 +16,7 @@ Plugin.create :skin do
     box = Gtk::HBox.new(false)
 
     preview_icons(info[:dir]).each { |path|
-      image = Gtk::WebIcon.new(
-        Plugin.collect(:photo_filter, File.join(info[:dir], path), Pluggaloid::COLLECT),
-        32, 32
-      )
+      image = Gtk::WebIcon.new(File.join(info[:dir], path), 32, 32)
       box.pack_start(image, false, false)
     }
 
