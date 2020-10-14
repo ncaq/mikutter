@@ -140,7 +140,9 @@ Plugin.create(:mastodon_account_viewer) do
     acct, domain = user.acct.split('@', 2)
     if domain != world.domain
       Plugin::Mastodon::API.call(
-        :get, domain, "/users/#{acct}/outbox?page=true",
+        :get,
+        domain,
+        "/users/#{acct}/outbox?page=true",
         nil,
         {},
         { 'Accept' => 'application/activity+json' }

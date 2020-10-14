@@ -14,7 +14,7 @@ module Plugin::MastodonAccountViewer
       @my_account = my_account
       @counterpart = counterpart
       @updater = updater
-      @following = @followed = @blocked = :unknown
+      @following = @follower = @blocked = @mute = :unknown
       @transaction_level = 0
 
       closeup(Gtk::WebIcon.new(my_account.account.icon, ICON_SIZE).tooltip(my_account.title))
@@ -31,12 +31,12 @@ module Plugin::MastodonAccountViewer
       my_account.account == counterpart
     end
 
-    def following?
+    def followee?
       @following == true
     end
 
-    def followed?
-      @followed == true
+    def follower?
+      @follower == true
     end
 
     def blocked?
@@ -44,7 +44,7 @@ module Plugin::MastodonAccountViewer
     end
 
     def mute?
-      Plugin::Mastodon::Status.muted?(counterpart.acct)
+      @mute == true
     end
 
     # 対象をフォロー／リムーブする。
@@ -55,11 +55,13 @@ module Plugin::MastodonAccountViewer
                 else
                   @updater.request_unfollow(my_account, counterpart)
                 end
-      input_exclusive promise.next do
-        relation_transaction do
-          @followed = !new_follow_status
+      input_exclusive(
+        promise.next do
+          relation_transaction do
+            @follower = new_follow_status
+          end
         end
-      end
+      )
     end
 
     # 対象をミュート／解除する。
@@ -70,9 +72,13 @@ module Plugin::MastodonAccountViewer
                 else
                   @updater.request_unmute(my_account, counterpart)
                 end
-      input_exclusive promise.next do
-        refresh_following_pict
-      end
+      input_exclusive(
+        promise.next do
+          relation_transaction do
+            @mute = new_mute_status
+          end
+        end
+      )
     end
 
     # 対象をブロック／解除する。
@@ -83,11 +89,13 @@ module Plugin::MastodonAccountViewer
                 else
                   @updater.request_unblock(my_account, counterpart)
                 end
-      input_exclusive promise.next do
-        relation_transaction do
-          @blocked = !new_block_status
+      input_exclusive(
+        promise.next do
+          relation_transaction do
+            @blocked = new_block_status
+          end
         end
-      end
+      )
     end
 
     private
@@ -106,34 +114,26 @@ module Plugin::MastodonAccountViewer
       @followed_label ||= Gtk::Label.new('')
     end
 
-    def eventbox_image_following
-      @eventbox_image_following ||= Gtk::EventBox.new
-    end
-
-    def eventbox_image_followed
-      @eventbox_image_followed ||= Gtk::EventBox.new
-    end
-
     def gen_follow_relation
-      Gtk::VBox.new.
-        closeup(gen_following_relation).
-        closeup(gen_followed_relation)
+      Gtk::VBox.new
+        .closeup(gen_following_relation)
+        .closeup(gen_followed_relation)
     end
 
     def gen_following_relation
       if me?
         Gtk::Label.new(_('それはあなたです！'))
       else
-        Gtk::HBox.new.
-          closeup(eventbox_image_following).
-          closeup(following_label)
+        Gtk::HBox.new
+          .closeup(following_arrow_widget)
+          .closeup(following_label)
       end
     end
 
     def gen_followed_relation
-      Gtk::HBox.new.
-        closeup(eventbox_image_followed).
-        closeup(followed_label)
+      Gtk::HBox.new
+        .closeup(followed_arrow_widget)
+        .closeup(followed_label)
     end
 
     def followbutton
@@ -143,7 +143,7 @@ module Plugin::MastodonAccountViewer
           if blocked?
             request_update_block_status(false)
           else
-            request_update_follow_status(!following?)
+            request_update_follow_status(!followee?)
           end
         end
       end
@@ -160,34 +160,24 @@ module Plugin::MastodonAccountViewer
     end
 
     def refresh_following_pict
-      return if eventbox_image_following.destroyed?
+      return if destroyed?
 
-      unless eventbox_image_following.children.empty?
-        eventbox_image_following.remove(eventbox_image_following.children.first)
-      end
-
-      eventbox_image_following.style = eventbox_image_following.parent.style
-      eventbox_image_following.add(gen_following_arrow_widget)
+      following_arrow_widget.load_model(following_arrow_photo, ARROW_SIZE)
       following_label.text = gen_follow_status_label_string
       followbutton.label = gen_follow_button_label_string
     end
 
     def refresh_follower_pict
-      return if eventbox_image_followed.destroyed?
+      return if destroyed?
 
-      unless eventbox_image_followed.children.empty?
-        eventbox_image_followed.remove(eventbox_image_followed.children.first)
-      end
-
-      eventbox_image_followed.style = eventbox_image_followed.parent.style
-      eventbox_image_followed.add(gen_followed_arrow_widget)
+      followed_arrow_widget.load_model(followed_arrow_photo, ARROW_SIZE)
       followed_label.text = gen_followed_status_label_string
     end
 
     def gen_follow_status_label_string
       if blocked?
         _('ﾌﾞﾖｯｸしている')
-      elsif following?
+      elsif followee?
         _('ﾌｮﾛｰしている')
       else
         _('ﾌｮﾛｰしていない')
@@ -195,7 +185,7 @@ module Plugin::MastodonAccountViewer
     end
 
     def gen_followed_status_label_string
-      if followed?
+      if follower?
         _('ﾌｮﾛｰされている')
       else
         _('ﾌｮﾛｰされていない')
@@ -203,41 +193,76 @@ module Plugin::MastodonAccountViewer
     end
 
     def gen_follow_button_label_string
-      if blocked? || following?
+      if blocked? || followee?
         _('解除')
       else
         _('ﾌｮﾛｰ')
       end
     end
 
-    def gen_following_arrow_widget
-      Gtk::WebIcon.new(Skin[following? ? :arrow_following : :arrow_notfollowing], ARROW_SIZE).show_all
+    def following_arrow_photo
+      return Skin[:loading] if @following == :unknown
+      pict = case [followee?, mute?]
+             when [true, true]
+               :arrow_following_muted
+             when [true, false]
+               :arrow_following
+             when [false, true]
+               :arrow_notfollowing_muted
+             when [false, false]
+               :arrow_notfollowing
+             end
+      Skin[pict]
     end
 
-    def gen_followed_arrow_widget
-      Gtk::WebIcon.new(Skin.get_path(followed? ? :arrow_followed : :arrow_notfollowed), ARROW_SIZE).show_all
+    def following_arrow_widget
+      @following_arrow_widget ||= Gtk::WebIcon.new(following_arrow_photo, ARROW_SIZE).show_all
+    end
+
+    def followed_arrow_photo
+      return Skin[:loading] if @follower == :unknown
+      pict = case [follower?, blocked?]
+             when [true, true]
+               :arrow_blocked
+             when [true, false]
+               :arrow_followed
+             when [false, true]
+               :arrow_blocked
+             when [false, false]
+               :arrow_notfollowed
+             end
+      Skin[pict]
+    end
+
+    def followed_arrow_widget
+      @followed_arrow_widget ||= Gtk::WebIcon.new(followed_arrow_photo, ARROW_SIZE).show_all
     end
 
     # Mastodonにアクセスして、現在のフォロー状況を取得し、画面上に反映する
     def retrieve_relation_status
-      input_exclusive (Plugin::Mastodon::API.get_local_account_id(my_account, counterpart).next { |aid|
-        Plugin::Mastodon::API.call(
-          :get,
-          my_account.domain,
-          '/api/v1/accounts/relationships',
-          my_account.access_token,
-          id: [aid]
-        ).next { |resp| resp[0] }
-      }.next { |relationship|
-        relation_transaction do
-          @following = relationship[:following]
-          @followed = relationship[:followed_by]
-          @blocked = relationship[:blocking]
+      input_exclusive(
+        Plugin::Mastodon::API.get_local_account_id(my_account, counterpart).next { |aid|
+          Plugin::Mastodon::API.call(
+            :get,
+            my_account.domain,
+            '/api/v1/accounts/relationships',
+            my_account.access_token,
+            id: [aid]
+          ).next { |resp| resp[0] }
+        }.next { |relationship|
+          relation_transaction do
+            @following = relationship[:following]
+            @follower = relationship[:followed_by]
+            @blocked = relationship[:blocking]
+          end
+        }.trap do |err|
+          following_label.text = _('取得できませんでした')
+          Deferred.fail(err)
         end
-      }.trap do |err|
-        following_label.text = _('取得できませんでした')
-        Deferred.fail(err)
-      end)
+      )
+      relation_transaction do
+        @mute = Plugin::Mastodon::Status.muted?(counterpart.acct)
+      end
     end
 
     def input_exclusive(promise)
@@ -252,13 +277,13 @@ module Plugin::MastodonAccountViewer
     def relation_transaction(&block)
       if @transaction_level == 0
         begin
-          following, followed, blocked = @following, @followed, @blocked
+          following, follower, blocked, mute = @following, @follower, @blocked, @mute
           @transaction_level = 1
           result = block.call
-          if following != @following || blocked != @blocked
+          if following != @following || blocked != @blocked || mute != @mute
             refresh_following_pict
           end
-          if followed != @followed
+          if follower != @follower || blocked != @blocked
             refresh_follower_pict
           end
           result
