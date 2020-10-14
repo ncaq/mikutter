@@ -10,17 +10,18 @@ Plugin.create :modelviewer do
       models << model_class.spec
       [models]
     end
-    intent(model_class,
-           label: _('%{model}の詳細') % {model: model_class.spec&.name || model_class.name},
-           slug: :"modelviewer:#{model_class.slug}"
-          ) do |token|
+    intent(
+      model_class,
+      label: _('%{model}の詳細') % { model: model_class.spec&.name || model_class.name },
+      slug: :"modelviewer:#{model_class.slug}"
+    ) do |token|
       model = token.model
       tab_slug = :"modelviewer:#{model_class.slug}:#{model.uri.hash}"
       cluster_slug = :"modelviewer-cluster:#{model_class.slug}:#{model.uri.hash}"
       if Plugin::GUI::Tab.exist?(tab_slug)
         Plugin::GUI::Tab.instance(tab_slug).active!
       else
-        tab(tab_slug, _('%{title}について') % {title: model.title}) do
+        tab(tab_slug, _('%{title}について') % { title: model.title }) do
           set_icon model.icon if model.respond_to?(:icon)
           set_deletable true
           temporary_tab true
@@ -48,7 +49,7 @@ Plugin.create :modelviewer do
     end
   end
 
-  on_gui_child_reordered do |i_cluster, i_fragment, order|
+  on_gui_child_reordered do |i_cluster, i_fragment, _|
     kind, = i_fragment.slug.to_s.split(':', 2)
     if kind == 'modelviewer-fragment'
       _, cluster_kind, = i_cluster.slug.to_s.split(':', 3)
@@ -70,17 +71,17 @@ Plugin.create :modelviewer do
   def header(intent_token, &column_generator)
     model = intent_token.model
     eventbox = ::Gtk::EventBox.new
-    eventbox.ssc(:visibility_notify_event){
+    eventbox.ssc(:visibility_notify_event) do
       eventbox.style = background_color
       false
-    }
+    end
 
     icon_alignment = Gtk::Alignment.new(0.5, 0, 0, 0)
-                       .set_padding(*[UserConfig[:profile_icon_margin]]*4)
+                       .set_padding(*[UserConfig[:profile_icon_margin]] * 4)
 
     eventbox.add(
-      ::Gtk::VBox.new(false, 0).
-        add(
+      ::Gtk::VBox.new(false, 0)
+        .add(
           ::Gtk::HBox.new
             .closeup(icon_alignment.add(model_icon(model)))
             .add(
@@ -95,7 +96,7 @@ Plugin.create :modelviewer do
   def model_icon(model)
     return ::Gtk::EventBox.new unless model.respond_to?(:icon)
     icon = ::Gtk::EventBox.new.add(::Gtk::WebIcon.new(model.icon, UserConfig[:profile_icon_size], UserConfig[:profile_icon_size]).tooltip(_('アイコンを開く')))
-    icon.ssc(:button_press_event) do |this, event|
+    icon.ssc(:button_press_event) do
       Plugin.call(:open, model.icon)
       true
     end
@@ -141,21 +142,21 @@ Plugin.create :modelviewer do
   end
 
   def header_table(model, header_columns)
-    ::Gtk::Table.new(2, header_columns.size).tap{|table|
+    ::Gtk::Table.new(2, header_columns.size).tap { |table|
       header_columns.each_with_index do |column, index|
         key, value = column
-        table.
-          attach(::Gtk::Label.new(key.to_s).right, 0, 1, index, index+1).
-          attach(cell_widget(value), 1, 2, index, index+1)
+        table
+          .attach(::Gtk::Label.new(key.to_s).right, 0, 1, index, index + 1)
+          .attach(cell_widget(value), 1, 2, index, index + 1)
       end
-    }.set_row_spacing(0, 4).
-      set_row_spacing(1, 4).
-      set_column_spacing(0, 16)
+    }.set_row_spacing(0, 4)
+      .set_row_spacing(1, 4)
+      .set_column_spacing(0, 16)
   end
 
   def style
     -> do
-      Gtk::Style.new().tap do |bg_style|
+      Gtk::Style.new.tap do |bg_style|
         color = UserConfig[:mumble_basic_bg]
         bg_style.set_bg(Gtk::STATE_ACTIVE, *color)
         bg_style.set_bg(Gtk::STATE_NORMAL, *color)
@@ -167,7 +168,7 @@ Plugin.create :modelviewer do
   end
 
   def background_color
-    style = ::Gtk::Style.new()
+    style = ::Gtk::Style.new
     style.set_bg(::Gtk::STATE_NORMAL, 0xFF ** 2, 0xFF ** 2, 0xFF ** 2)
     style
   end

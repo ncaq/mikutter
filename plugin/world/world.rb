@@ -23,7 +23,7 @@ Plugin.create(:world) do
   defevent :world_destroy, prototype: [Diva::Model]
 
   world_struct = Struct.new(:slug, :name, :proc)
-  @world_slug_dict = {}         # world_slug(Symbol) => World URI(Diva::URI)
+  @world_slug_dict = {} # world_slug(Symbol) => World URI(Diva::URI)
 
   defdsl :world_setting do |world_slug, world_name, &proc|
     filter_world_setting_list do |settings|
@@ -46,8 +46,8 @@ Plugin.create(:world) do
         if provider
           provider.new(serialized)
         else
-          activity :system, _('アカウント「%{world}」のためのプラグインが読み込めなかったため、このアカウントは現在利用できません。') % {world: id},
-                   description: _('アカウント「%{world}」に必要な%{plugin}プラグインが見つからなかったため、このアカウントは一時的に利用できません。%{plugin}プラグインを意図的に消したのであれば、このアカウントの登録を解除してください。') % {plugin: serialized[:provider], world: id}
+          activity :system, _('アカウント「%{world}」のためのプラグインが読み込めなかったため、このアカウントは現在利用できません。') % { world: id },
+                   description: _('アカウント「%{world}」に必要な%{plugin}プラグインが見つからなかったため、このアカウントは一時的に利用できません。%{plugin}プラグインを意図的に消したのであれば、このアカウントの登録を解除してください。') % { plugin: serialized[:provider], world: id }
           Plugin::World::LostWorld.new(serialized)
         end
       end
@@ -62,7 +62,7 @@ Plugin.create(:world) do
 
   def check_world_uri(new_worlds)
     new_worlds.each do |w|
-      if @world_slug_dict.key?(w.slug)
+      if @world_slug_dict.has_key?(w.slug)
         if @world_slug_dict[w.slug] != w.uri
           warn "The URI of World `#{w.slug}' is not defined. You must define a consistent URI for World Model. see: https://dev.mikutter.hachune.net/issues/1231"
         end
@@ -88,8 +88,9 @@ Plugin.create(:world) do
     rescue Plugin::World::AlreadyExistError
       description = {
         new_world: new.title,
-        duplicated_world: collect(:worlds).find{|w| w.slug == new.slug }&.title,
-        world_slug: new.slug }
+        duplicated_world: collect(:worlds).find { |w| w.slug == new.slug }&.title,
+        world_slug: new.slug
+      }
       activity :system, _('既に登録されているアカウントと重複しているため、登録に失敗しました。'),
                description: _('登録しようとしたアカウント「%{new_world}」は、既に登録されている「%{duplicated_world}」と同じ識別子「%{world_slug}」を持っているため、登録に失敗しました。') % description
     end
