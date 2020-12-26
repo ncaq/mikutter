@@ -29,7 +29,6 @@ end
 ENV['LIBOVERLAY_SCROLLBAR'] = '0'
 
 require 'benchmark'
-require 'webrick'
 require 'thread'
 require 'fileutils'
 
@@ -44,6 +43,7 @@ require 'lib/weakstorage'
 
 require_relative 'core/utils'
 
+require_if_exist 'webrick'
 require 'boot/check_config_permission'
 require 'boot/mainloop'
 require 'boot/delayer'
