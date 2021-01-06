@@ -7,7 +7,14 @@ UIを定義するためのDSLメソッドをクラスに追加するmix-in。
 module Gtk::FormDSL
   extend Memoist
 
-  PIXBUF_PHOTO_FILTER = Hash[GdkPixbuf::Pixbuf.formats.map{|f| ["#{f.description} (#{f.name})", f.extensions.flat_map{|x| [x.downcase.freeze, x.upcase.freeze] }.freeze] }].freeze
+  PIXBUF_PHOTO_FILTER = GdkPixbuf::Pixbuf.formats.to_h { |f|
+    [
+      "#{f.description} (#{f.name})",
+      f.extensions.flat_map { |x|
+        [x.downcase.freeze, x.upcase.freeze]
+      }.freeze
+    ]
+  }.freeze
   PHOTO_FILTER = {'All images' => PIXBUF_PHOTO_FILTER.values.flatten}.merge(PIXBUF_PHOTO_FILTER).merge('All files' => ['*'])
 
   def initialize(*args, &block)

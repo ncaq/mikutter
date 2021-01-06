@@ -310,7 +310,9 @@ Plugin.create :extract do
     else
       begin
         before = Set.new
-        extract_condition ||= Hash[Plugin.filtering(:extract_condition, []).first.map{ |condition| [condition.slug, condition] }]
+        extract_condition ||= Plugin.filtering(:extract_condition, []).first.to_h do |condition|
+          [condition.slug, condition]
+        end
         evaluated =
           MIKU::Primitive.new(:to_ruby_ne).call(
             MIKU::SymbolTable.new,
@@ -336,7 +338,9 @@ Plugin.create :extract do
 
   # 条件をこう、くいっと変形させてな
   def metamorphose(code: raise, assign: Set.new, extract_condition: nil)
-    extract_condition ||= Hash[Plugin.filtering(:extract_condition, []).first.map{ |condition| [condition.slug, condition] }]
+    extract_condition ||= Plugin.filtering(:extract_condition, []).first.to_h do |condition|
+      [condition.slug, condition]
+    end
     case code
     when MIKU::Atom
       return code

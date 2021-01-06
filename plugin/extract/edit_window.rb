@@ -98,7 +98,7 @@ class  Plugin::Extract::EditWindow < Gtk::Window
                  }
         boolean _('ポップアップ'), :popup
       end
-      select(_('並び順'), :order, Hash[Plugin.collect(:extract_order).map{|o| [o.slug.to_s, o.name] }])
+      select(_('並び順'), :order, Plugin.collect(:extract_order).to_h { |o| [o.slug.to_s, o.name] })
     end
   end
 

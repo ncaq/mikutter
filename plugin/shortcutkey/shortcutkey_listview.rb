@@ -88,18 +88,15 @@ module Plugin::Shortcutkey
     end
 
     def command_dict_slug_to_name
-      @command_dict_slug_to_name ||= Hash[
+      @command_dict_slug_to_name ||=
         Plugin.filtering(:command, Hash.new)
           .first
           .values
-          .map {|x| [x[:slug], x[:name]] }
-      ]
+          .to_h {|x| [x[:slug], x[:name]] }
     end
 
     def worlds_dict_slug_to_name
-      Hash[
-        Plugin.collect(:worlds).map {|x| [x.uri, x.title] }
-      ]
+      Plugin.collect(:worlds).to_h {|x| [x.uri, x.title] }
     end
 
     def shortcutkeys
@@ -250,10 +247,12 @@ module Plugin::Shortcutkey
     end
 
     def world_selections(key: :itself, value: :itself)
-      Hash[[[:current, @plugin._('カレントアカウント')],
-            *Plugin.collect(:worlds).map { |w|
-              [key.to_proc.call(w), value.to_proc.call(w)]
-            }]]
+      {
+        current: @plugin._('カレントアカウント'),
+        **Plugin.collect(:worlds).to_h do |w|
+          [key.to_proc.call(w), value.to_proc.call(w)]
+        end
+      }
     end
 
     class KeyConfigWindow < ::Gtk::Window
