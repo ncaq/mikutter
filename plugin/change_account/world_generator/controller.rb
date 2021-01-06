@@ -24,8 +24,12 @@ class Plugin::ChangeAccount::WorldGenerator::Controller
     @values[key.to_sym] = value
   end
 
-  def to_h
-    @values.dup
+  def to_h(&block)
+    if block
+      @values.to_h(&block)
+k    else
+      @values.dup
+    end
   end
 
   def method_missing_at_select_dsl(*args, &block)

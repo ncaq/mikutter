@@ -112,8 +112,8 @@ module Plugin::Gtk
           @values[k.to_sym]
         end
 
-        def to_h
-          @values.to_h
+        def to_h(&block)
+          @values.to_h(&block)
         end
       end
 
@@ -242,8 +242,12 @@ module Plugin::Gtk
       self
     end
 
-    def to_h
-      @values.dup
+    def to_h(&block)
+      if block
+        @values.to_h(&block)
+      else
+        @values.dup
+      end
     end
   end
 end

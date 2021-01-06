@@ -85,12 +85,15 @@ module Plugin::GUI::Widget
   # 自分以下の子を、{slug: {slug: ...}}形式の連想配列で返す
   # ==== Return
   # 親子関係の連想配列
-  def to_h
-    if is_a? Plugin::GUI::HierarchyParent
-      result = {}
-      children.each{ |child|
-        result[child.slug] = child.to_h }
-      result end end
+  def to_h(&block)
+    if is_a?(Plugin::GUI::HierarchyParent)
+      if block
+        children.to_h { |child| block.call(child.slug, child.to_h) }
+      else
+        children.to_h { |child| [child.slug, child.to_h] }
+      end
+    end
+  end
 
   def method_missing(*args, &block)
     if defined?(@delegate) and @delegate
