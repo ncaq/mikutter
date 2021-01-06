@@ -6,7 +6,7 @@ Plugin.create :change_account do
   # アカウント変更用の便利なコマンド
   command(:account_previous,
           name: _('前のアカウント'),
-          condition: lambda{ |opt| Plugin.collect(:worlds).take(2).to_a.size == 2 },
+          condition: lambda{ |opt| Plugin.collect(:worlds).take(2).size == 2 },
           visible: true,
           role: :window) do |opt|
     worlds = Plugin.collect(:worlds).to_a
@@ -16,7 +16,7 @@ Plugin.create :change_account do
 
   command(:account_forward,
           name: _('次のアカウント'),
-          condition: lambda{ |opt| Plugin.collect(:worlds).take(2).to_a.size == 2 },
+          condition: lambda{ |opt| Plugin.collect(:worlds).take(2).size == 2 },
           visible: true,
           role: :window) do |opt|
     worlds = Plugin.collect(:worlds).to_a

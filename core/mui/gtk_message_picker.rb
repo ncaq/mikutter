@@ -20,7 +20,7 @@ class Gtk::MessagePicker < Gtk::EventBox
     @changed_hook = block
     shell = Gtk::VBox.new
     @container = Gtk::VBox.new
-    @function, *exprs = *conditions.to_a
+    @function, *exprs = *conditions
     @function ||= :and
     shell.add(@container)
     shell.closeup(add_button.center)
@@ -94,7 +94,7 @@ class Gtk::MessagePicker < Gtk::EventBox
     def initialize(conditions = DEFAULT_CONDITION, *args, &block)
       super(*args)
       @changed_hook = block
-      @condition, @subject, @expr = *conditions.to_a
+      @condition, @subject, @expr = *conditions
       build
     end
 

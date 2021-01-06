@@ -85,7 +85,7 @@ class Gtk::WorldShifter < Gtk::EventBox
     when :always
       true
     when :auto
-      1 < Plugin.collect(:worlds).take(2).to_a.size
+      1 < Plugin.collect(:worlds).take(2).size
     else
       false
     end

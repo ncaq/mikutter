@@ -142,7 +142,7 @@ module Plugin::Mastodon
 
     def following?(acct)
       acct = acct.acct if acct.is_a?(Account)
-      @@followings[uri.to_s].to_a.any? { |account| account.acct == acct }
+      @@followings[uri.to_s].any? { |account| account.acct == acct }
     end
 
     def followings(cache: true, **opts)
@@ -189,7 +189,7 @@ module Plugin::Mastodon
     end
 
     def block?(acct)
-      @@blocks[uri.to_s].to_a.any? { |acc| acc.acct == acct }
+      @@blocks[uri.to_s].any? { |acc| acc.acct == acct }
     end
 
     def account_action(account, type)

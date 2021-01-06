@@ -182,11 +182,11 @@ Plugin.create :command do
           name: _('リンクを開く'),
           condition: ->opt{
             opt.messages.size == 1 &&
-              opt.messages[0].entity.to_a.any? {|u| [:urls, :media].include?(u[:slug]) }
+              opt.messages[0].entity.any? { |u| %i[urls media].include?(u[:slug]) }
           },
           visible: true,
           role: :timeline) do |opt|
-    opt.messages[0].entity.to_a.each {|u|
+    opt.messages[0].entity.each do |u|
       url =
         case u[:slug]
         when :urls
@@ -194,18 +194,22 @@ Plugin.create :command do
         when :media
           u[:media_url]
         end
-      ::Gtk::TimeLine.openurl(url) if url } end
+      ::Gtk::TimeLine.openurl(url) if url
+    end
+  end
 
   command(:copy_link,
           name: _('リンクをコピー'),
           condition: ->opt{
             opt.messages.size == 1 &&
-              opt.messages[0].entity.to_a.any? {|u| u[:slug] == :urls }
+              opt.messages[0].entity.any? {|u| u[:slug] == :urls }
           },
           visible: true,
           role: :timeline) do |opt|
-    opt.messages[0].entity.to_a.each {|u|
-    ::Gtk::Clipboard.copy(u[:url]) if u[:slug] == :urls } end
+    opt.messages[0].entity.each do |u|
+      ::Gtk::Clipboard.copy(u[:url]) if u[:slug] == :urls
+    end
+  end
 
   command(:new_pane,
           name: _('新規ペインに移動'),

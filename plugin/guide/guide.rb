@@ -152,7 +152,7 @@ Plugin.create :guide do
                  hint: _('← こんなアイコンのタブが右にあると思うので、クリックしてください'),
                  icon: Skin[:icon]
                 ) do |ach|
-    if Plugin.collect(:worlds).take(1).to_a.empty?
+    if Plugin.collect(:worlds).take(1).empty?
       guide_start(ach)
     else
       ach.take!
