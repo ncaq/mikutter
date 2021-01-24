@@ -54,27 +54,37 @@ module Mopt
         puts Environment::NAME + ' ' +  Environment::VERSION.to_s
         exit }
       opt.on('-h', '--help', "Show this message"){
+        @opts[:help] = true }
+
+      opt.parse!(argv)
+
+      if exec_command
+        require 'boot/prepare_plugin'
+        Prelude.load_all
+      end
+      if @opts[:help]
         puts opt
         puts "command are:"
         puts "        generate [plugin_slug]       generate plugin template at ~/.mikutter/plugin/"
         puts "        spec [directory]             generate plugin spec. ex) mikutter spec ~/.mikutter/plugin/test"
         puts "        makepot                      generate .pot file all plugins."
         puts "        plugin_depends               Output plugin dependencies."
-        exit }
 
-      opt.parse!(argv)
-
-      if exec_command and argv[0]
-        require_relative '../utils'
-        require 'boot/check_config_permission'
-        file = File.join(__dir__, "shell/#{argv[0]}.rb")
-        if FileTest.exist?(file)
-          require file
-        else
-          puts "no such command: #{argv[0]}"
+        unless Prelude.commands.empty?
+          puts "plugin commands are:"
+          length = [29, Prelude.commands.map { |cmd| cmd.full_name.size }.max + 1].max
+          Prelude.commands.each do |cmd|
+            puts "        #{cmd.full_name.ljust(length)}#{cmd.description}"
+          end
         end
         exit
+      end
+
+      if exec_command and argv[0]
+        Prelude.execute!(argv[0])
       end
     end
   end
 end
+
+require_relative 'prelude'
