@@ -67,7 +67,6 @@ module Mopt
         puts "        generate [plugin_slug]       generate plugin template at ~/.mikutter/plugin/"
         puts "        spec [directory]             generate plugin spec. ex) mikutter spec ~/.mikutter/plugin/test"
         puts "        makepot                      generate .pot file all plugins."
-        puts "        plugin_depends               Output plugin dependencies."
 
         unless Prelude.commands.empty?
           puts "plugin commands are:"
