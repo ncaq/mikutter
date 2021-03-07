@@ -59,8 +59,7 @@ module Mopt
       opt.parse!(argv)
 
       if exec_command
-        require 'boot/prepare_plugin'
-        Prelude.load_all
+        require 'boot/prepare_plugin' # TODO: これも消したい
       end
       if @opts[:help]
         puts opt

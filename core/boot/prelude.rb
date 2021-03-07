@@ -9,15 +9,20 @@ module Prelude
     end
 
     def command(name, description: nil, &block)
-      @commands ||= {}
-      if @commands[name]
+      @commands_dict ||= {}
+      if @commands_dict[name]
         warn "already defined command `#{[full_name, name].compact.join(':')}`"
       end
-      @commands[name] = Command.new(self, name, action: block, description: description)
+      @commands_dict[name] = Command.new(self, name, action: block, description: description)
     end
 
     def commands
-      [@namespaces&.values&.map(&:commands), @commands&.values].compact.flatten
+      @commands ||= commands_nocached
+    end
+
+    def commands_nocached
+      Prelude.load_all
+      [@namespaces&.values&.map(&:commands), @commands_dict&.values].compact.flatten.freeze
     end
   end
 
@@ -86,13 +91,11 @@ module Prelude
       Miquire::Plugin.each_spec do |spec|
         Prelude.plugin_context = spec
         Array(spec[:prelude]).each do |file|
-          load File.join(spec[:path], file)
+          require File.join(spec[:path], file)
         end
       ensure
         Prelude.plugin_context = nil
       end
-
-      commands
     end
 
     def execute!(command_name)
