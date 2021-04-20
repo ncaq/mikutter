@@ -707,6 +707,14 @@ Plugin.create :gtk do
     [i_tl, y]
   end
 
+  on_clipboard_write do |value|
+    Gtk::Clipboard.copy(value)
+  end
+
+  filter_clipboard_read do |_|
+    [Gtk::Clipboard.paste]
+  end
+
 end
 
 module Plugin::Gtk

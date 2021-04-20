@@ -14,7 +14,8 @@ Plugin.create :command do
           visible: true,
           icon: Skin[:copy],
           role: :timeline) do |opt|
-    ::Gtk::Clipboard.copy(opt.widget.selected_text(opt.messages.first)) end
+    Plugin.call(:clipboard_write, opt.widget.selected_text(opt.messages.first))
+  end
 
   command(:copy_description,
           name: _('本文をコピー'),
@@ -22,7 +23,8 @@ Plugin.create :command do
           visible: true,
           icon: Skin[:copy_all],
           role: :timeline) do |opt|
-    ::Gtk::Clipboard.copy(opt.messages.first.description) end
+    Plugin.call(:clipboard_write, opt.messages.first.description)
+  end
 
   command(:reply,
           name: _('返信'),
@@ -207,7 +209,7 @@ Plugin.create :command do
           visible: true,
           role: :timeline) do |opt|
     opt.messages[0].entity.each do |u|
-      ::Gtk::Clipboard.copy(u[:url]) if u[:slug] == :urls
+      Plugin.call(:clipboard_write, u[:url]) if u[:slug] == :urls
     end
   end
 
