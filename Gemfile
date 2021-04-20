@@ -34,6 +34,6 @@ group :plugin do
     eval File.open(path).read
   }
   Dir.glob(File.join(File.expand_path(ENV['MIKUTTER_CONFROOT'] || '~/.mikutter'), 'plugin/*/Gemfile')){ |path|
-    eval File.open(path).read
+    eval File.open(path).read, binding, path
   }
 end
