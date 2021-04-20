@@ -66,13 +66,18 @@ Plugin.create :command do
           icon: Skin[:retweet],
           role: :timeline) do |opt|
     target = opt.messages.select{|m| share?(m, opt.world) }.reject{|m| shared?(m, opt.world) }.map(&:introducer)
-    if target.any?{|message| message.from_me?([opt.world]) }
-      if ::Gtk::Dialog.confirm(_('過去の栄光にすがりますか？'))
-        target.each{|m| share(m, opt.world) }
+    target.deach { |m|
+      if m.from_me?([opt.world])
+        +dialog(_('リツイート')) {
+          label _('過去の栄光にすがりますか？')
+          link m
+        }.next {
+          share(m, opt.world)
+        }
+      else
+        share(m, opt.world)
       end
-    else
-      target.each{|m| share(m, opt.world) }
-    end
+    }
   end
 
   command(:delete_retweet,
