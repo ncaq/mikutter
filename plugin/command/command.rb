@@ -176,7 +176,7 @@ Plugin.create :command do
           visible: true,
           icon: "https://www.google.co.jp/images/google_favicon_128.png",
           role: :timeline) do |opt|
-    ::Gtk::openurl("http://www.google.co.jp/search?q=" + URI.escape(opt.widget.selected_text(opt.messages.first)).to_s) end
+    Plugin.call(:open, "http://www.google.co.jp/search?q=" + URI.escape(opt.widget.selected_text(opt.messages.first)).to_s) end
 
   command(:open_in_browser,
           name: _('ブラウザで開く'),
@@ -201,7 +201,7 @@ Plugin.create :command do
         when :media
           u[:media_url]
         end
-      ::Gtk::TimeLine.openurl(url) if url
+      Plugin.call(:open, url) if url
     end
   end
 
