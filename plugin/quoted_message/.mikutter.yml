@@ -3,7 +3,6 @@ slug: quoted_message
 depends:
   mikutter: 3.0.0
   plugin:
-  - gtk
   - gui
   - command
   - skin
