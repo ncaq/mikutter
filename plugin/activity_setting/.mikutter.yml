@@ -1,0 +1,12 @@
+---
+slug: :activity_setting
+depends:
+  mikutter: '4.1'
+  plugin:
+  - activity
+  - settings
+  - uitranslator
+version: '4.1'
+author: toshi_a
+name: Activity setting
+description: アクティビティに関する設定を提供する
