@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-module Plugin::Activity
+module Plugin::ActivityGtk
   class ModelSelector < Gtk::TreeView
     ICON = 0
     MODEL_KIND = 1
