@@ -2,16 +2,15 @@
 
 require 'mui/gtk_hierarchycal_selectbox'
 
-require_relative 'model/setting'
 require_relative 'option_widget'
 require_relative 'datasource_select_box'
 
 require 'observer'
 
-module Plugin::Extract
+module Plugin::ExtractGtk
 end
 
-class  Plugin::Extract::EditWindow < Gtk::Window
+class  Plugin::ExtractGtk::EditWindow < Gtk::Window
   attr_reader :extract
 
   # ==== Args
@@ -65,7 +64,7 @@ class  Plugin::Extract::EditWindow < Gtk::Window
 
   def source_widget
     @source_widget ||= Gtk::HBox.new.tap do |source_widget|
-      datasources_box = Plugin::Extract::DatasourceSelectBox.new(sources) do
+      datasources_box = Plugin::ExtractGtk::DatasourceSelectBox.new(sources) do
         modify_value(sources: datasources_box.selected.to_a)
       end
       scrollbar = ::Gtk::VScrollbar.new(datasources_box.vadjustment)
@@ -83,7 +82,7 @@ class  Plugin::Extract::EditWindow < Gtk::Window
     } end
 
   def option_widget
-    Plugin::Extract::OptionWidget.new(@plugin, @extract) do
+    Plugin::ExtractGtk::OptionWidget.new(@plugin, @extract) do
       input _('名前'), :name
       photoselect _('アイコン'), :icon, Skin.path, shortcuts: [Skin.default_dir, Skin.user_dir]
       settings _('通知') do

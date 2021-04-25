@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class Plugin::Extract::DatasourceSelectBox < Gtk::HierarchycalSelectBox
+class Plugin::ExtractGtk::DatasourceSelectBox < Gtk::HierarchycalSelectBox
   def initialize(sources, &block)
     super(datasources, sources, &block)
   end

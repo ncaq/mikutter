@@ -4,7 +4,10 @@ require 'mui/gtk_form_dsl'
 require 'mui/gtk_form_dsl_multi_select'
 require 'mui/gtk_form_dsl_select'
 
-class Plugin::Extract::OptionWidget < Gtk::VBox
+module Plugin::ExtractGtk
+end
+
+class Plugin::ExtractGtk::OptionWidget < Gtk::VBox
   include Gtk::FormDSL
 
   def create_inner_setting

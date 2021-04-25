@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
-module Plugin::Extract
+module Plugin::ExtractGtk
 end
 
 =begin rdoc
   抽出タブの一覧
 =end
 
-class Plugin::Extract::ExtractTabList < ::Gtk::TreeView
+class Plugin::ExtractGtk::ExtractTabList < ::Gtk::TreeView
   ICON_SIZE = 16
 
   COL_ICON  = 0
