@@ -1,0 +1,11 @@
+---
+slug: :mastodon_gtk
+depends:
+  mikutter: '4.1'
+  plugin:
+    - mastodon
+    - gtk
+version: '1.0'
+author: cobodo
+name: Mastodon GTK
+description: MastodonプラグインのGTK環境向け拡張
