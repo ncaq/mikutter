@@ -1,8 +1,6 @@
 require_relative 'instance_setting_list'
 
-Plugin.create(:mastodon) do
-  pm = Plugin::Mastodon
-
+Plugin.create :mastodon_setting do
   # 設定の初期化
   defaults = {
     mastodon_enable_streaming: true,
@@ -15,13 +13,6 @@ Plugin.create(:mastodon) do
   defaults.each do |key, value|
     UserConfig[key] ||= value
   end
-
-  instance_config = at(:instances)
-  if instance_config
-    UserConfig[:mastodon_instances] = instance_config.merge(UserConfig[:mastodon_instances])
-    store(:instances, nil)
-  end
-
 
   # 追加
   on_mastodon_instances_open_create_dialog do
@@ -41,7 +32,7 @@ Plugin.create(:mastodon) do
           error_msg = _('既に登録済みのドメインです。入力し直してください。')
           next
         end
-        instance = await pm::Instance.add(result[:domain]).trap{ nil }
+        instance = await Plugin::Mastodon::Instance.add(result[:domain]).trap{ nil }
         unless instance
           error_msg = _('接続に失敗しました。もう一度確認してください。')
           next
@@ -90,7 +81,7 @@ Plugin.create(:mastodon) do
     end
 
     settings _('公開タイムライン') do
-      treeview = Plugin::Mastodon::InstanceSettingList.new
+      treeview = Plugin::MastodonSetting::InstanceSettingList.new
       btn_add = Gtk::Button.new(Gtk::Stock::ADD)
       btn_delete = Gtk::Button.new(Gtk::Stock::DELETE)
       btn_add.ssc(:clicked) do

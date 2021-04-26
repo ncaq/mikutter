@@ -1,4 +1,4 @@
-module Plugin::Mastodon
+module Plugin::MastodonSetting
   class InstanceSettingList < ::Gtk::TreeView
     include Gtk::TreeViewPrettyScroll
     COL_DOMAIN = 0
@@ -8,7 +8,7 @@ module Plugin::Mastodon
       set_model(::Gtk::ListStore.new(String))
       append_column ::Gtk::TreeViewColumn.new("ドメイン名", ::Gtk::CellRendererText.new, text: COL_DOMAIN)
 
-      Instance.domains.each(&method(:add_record))
+      Plugin::Mastodon::Instance.domains.each(&method(:add_record))
     end
 
     def selected_domain
