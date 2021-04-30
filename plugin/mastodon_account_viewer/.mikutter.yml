@@ -4,6 +4,7 @@ depends:
   mikutter: 3.10.0
   plugin:
     - mastodon
+    - modelviewer
     - uitranslator
 version: '1.0'
 author:
