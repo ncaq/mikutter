@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-module Plugin::Openimg
+module Plugin::OpenimgGtk
   class Window < Gtk::Window
     attr_reader :photo
 
