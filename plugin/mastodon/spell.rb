@@ -1,37 +1,6 @@
 # coding: utf-8
 
 Plugin.create(:mastodon) do
-
-  def visibility2select(s)
-    case s
-    when "public"
-      :"1public"
-    when "unlisted"
-      :"2unlisted"
-    when "private"
-      :"3private"
-    when "direct"
-      :"4direct"
-    else
-      nil
-    end
-  end
-
-  def select2visibility(s)
-    case s
-    when :"1public"
-      "public"
-    when :"2unlisted"
-      "unlisted"
-    when :"3private"
-      "private"
-    when :"4direct"
-      "direct"
-    else
-      nil
-    end
-  end
-
   command(
     :mastodon_custom_post,
     name: _('カスタム投稿'),
@@ -60,7 +29,7 @@ Plugin.create(:mastodon) do
         # 返信先がDMの場合はデフォルトでDMにする。但し編集はできるようにするため、この時点でデフォルト値を代入するのみ。
         visibility_default = "direct"
       end
-      self[:visibility] = visibility2select(visibility_default)
+      self[:visibility] = Plugin::Mastodon::Util.visibility2select(visibility_default)
       select _('公開範囲'), :visibility do
         option :"1public", _('公開')
         option :"2unlisted", _('未収載')
@@ -119,7 +88,7 @@ Plugin.create(:mastodon) do
         opts[:spoiler_text] = result[:spoiler_text]
       end
       opts[:sensitive] = result[:sensitive]
-      opts[:visibility] = select2visibility(result[:visibility])
+      opts[:visibility] = Plugin::Mastodon::Util.select2visibility(result[:visibility])
 
       if (1..4).any?{|i| result[:"poll_options#{i}"] }
         opts[:poll] = Hash.new
@@ -467,7 +436,7 @@ Plugin.create(:mastodon) do
       self[:biography] = profiles[:biography]
       self[:locked] = profiles[:locked]
       self[:bot] = profiles[:bot]
-      self[:source_privacy] = visibility2select(profiles[:source][:privacy])
+      self[:source_privacy] = Plugin::Mastodon::Util.visibility2select(profiles[:source][:privacy])
       self[:source_sensitive] = profiles[:source][:sensitive]
       (1..4).each do |i|
         next unless profiles[:source][:fields][i - 1]
@@ -507,7 +476,7 @@ Plugin.create(:mastodon) do
       diff[:icon] = Pathname(result[:icon]) if result[:icon]
       diff[:header] = Pathname(result[:header]) if result[:header]
       diff[:source] = Hash.new
-      diff[:source][:privacy] = select2visibility(result[:source_privacy]) if profiles[:source][:privacy] != select2visibility(result[:source_privacy])
+      diff[:source][:privacy] = Plugin::Mastodon::Util.select2visibility(result[:source_privacy]) if profiles[:source][:privacy] != Plugin::Mastodon::Util.select2visibility(result[:source_privacy])
       diff[:source][:sensitive] = result[:source_sensitive] if profiles[:source][:sensitive] != result[:source_sensitive]
       diff.delete(:source) if diff[:source].empty?
       if (1..4).any?{|i| result[:"field_name#{i}"] && result[:"field_value#{i}"] }
