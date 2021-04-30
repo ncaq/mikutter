@@ -5,7 +5,6 @@ depends:
   plugin:
     - command
     - extract
-    - gtk
     - gui
     - modelviewer
     - openimg

@@ -1,0 +1,12 @@
+---
+slug: :mastodon_custom_post
+depends:
+  mikutter: 4.1.4
+  plugin:
+  - mastodon
+  - settings
+  - gtk
+version: '1.0'
+author: cobodo
+name: Mastodon カスタム投稿
+description: Mastodon向けのカスタム投稿コマンドを提供します
