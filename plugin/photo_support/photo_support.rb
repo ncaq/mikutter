@@ -5,9 +5,11 @@ require 'httpclient'
 require 'json'
 
 module Plugin::PhotoSupport
-  SUPPORTED_IMAGE_FORMATS = GdkPixbuf::Pixbuf.formats.flat_map{|f| f.extensions }.freeze
+  SUPPORTED_IMAGE_FORMATS = %w[jpeg jpg png gif].freeze
+  deprecate_constant :SUPPORTED_IMAGE_FORMATS
+
   INSTAGRAM_PATTERN = %r{\Ahttps?://(?:instagr\.am|(?:www\.)?instagram\.com)/p/([a-zA-Z0-9_\-]+)/}
-  GITHUB_IMAGE_PATTERN = %r<\Ahttps://github\.com/(\w+/\w+)/blob/(.*\.(?:#{SUPPORTED_IMAGE_FORMATS.join('|')}))\z>
+  GITHUB_IMAGE_PATTERN = %r<\Ahttps://github\.com/(\w+/\w+)/blob/(.*\.(?:jpe?g|png|gif))\z>
   YOUTUBE_PATTERN = %r<\Ahttps?://(?:www\.youtube\.com/watch\?v=|youtu\.be/)(\w+)>
   NICOVIDEO_PATTERN = %r<\Ahttps?://(?:(?:www|sp)\.nicovideo\.jp/watch|nico\.ms)/([sn][mo][1-9]\d*)>
 
