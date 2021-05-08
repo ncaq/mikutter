@@ -1,0 +1,141 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the activity package.
+# 
+# Translators:
+# Jan-Peter Rühmann <jan-peter@ruehmann.name>, 2016
+# Ogihara Kota <yukkuri.pro@gmail.com>, 2013
+msgid ""
+msgstr ""
+"Project-Id-Version: mikutter\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2018-01-14 03:49+0900\n"
+"PO-Revision-Date: 2017-09-19 18:29+0000\n"
+"Last-Translator: Jan-Peter Rühmann <jan-peter@ruehmann.name>\n"
+"Language-Team: German (http://www.transifex.com/lindwurm/mikutter/language/de/)\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: de\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: ../activity.rb:47
+msgid "種類"
+msgstr "Typ"
+
+#: ../activity.rb:48
+msgid "説明"
+msgstr "Beschreibung"
+
+#: ../activity.rb:49
+msgid "時刻"
+msgstr "Zeit"
+
+#: ../activity.rb:166 ../activity.rb:315 ../activity.rb:318
+msgid "アクティビティ"
+msgstr "Aktivität"
+
+#: ../activity.rb:222
+msgid "@%{user} がふぁぼふぁぼしました"
+msgstr "@%{user} Favorisiert"
+
+#: ../activity.rb:232
+msgid "@%{user} があんふぁぼしました"
+msgstr "@%{user} Favorisierung aufgehoben"
+
+#: ../activity.rb:244
+msgid "@%{user} がリツイートしました"
+msgstr "@%{user} retweeted"
+
+#: ../activity.rb:250
+msgid "リツイートソースが取得できませんでした"
+msgstr "Retweet Quelle konnte nicht empfangen werden."
+
+#: ../activity.rb:254
+msgid "@%{user}が%{list}に追加されました"
+msgstr "@%{user} ist zur Liste %{list} hinzugefügt worden."
+
+#: ../activity.rb:262 ../activity.rb:279
+msgid "%{description} (by @%{user})"
+msgstr "%{description} (von @%{user})"
+
+#: ../activity.rb:271
+msgid "@%{user}が%{list}から削除されました"
+msgstr "@%{user} wurde aus Liste %{list} entfernt."
+
+#: ../activity.rb:291
+msgid "@%{followee} が @%{follower} をﾌｮﾛｰしました"
+msgstr "@%{followee} Folgt @%{follower}"
+
+#: ../activity.rb:303
+msgid "差出人: @%{sender}"
+msgstr "Sender: @%{sender}"
+
+#: ../activity.rb:304
+msgid "宛先: @%{recipient}"
+msgstr "Empfänger: @%{recipient}"
+
+#: ../activity.rb:335
+msgid "%{name}を表示する"
+msgstr "Zeige %{name}"
+
+#: ../activity.rb:335
+msgid "%{name}を、アクティビティタイムラインに表示します。チェックを外すと、%{name}の他の設定は無効になります。"
+msgstr "Zeige %{name} in der aktivitäten timeline. falls nicht aktiviert, werden alle weiteren Einstellungen in der %{name} section deaktiviert."
+
+#: ../activity.rb:336
+msgid "自分に関係ない%{name}も表示する"
+msgstr "Zeige %{name} nichts mit dir zu tun haben."
+
+#: ../activity.rb:336
+msgid ""
+"自分に関係ない%{name}もアクティビティタイムラインに表示されるようになります。チェックを外すと、自分に関係ない%{name}は表示されません。"
+msgstr "wenn aktiviert, werden alle %{name} welche nichts mit dir zu tun haben in der activity timeline angezeigt."
+
+#: ../activity.rb:337
+msgid "タイムラインに表示"
+msgstr "In der timeline anzeigen"
+
+#: ../activity.rb:337
+msgid "%{name}が通知された時に、システムメッセージで%{name}を通知します"
+msgstr "Benachrichtige %{name} durch eine Systemnachricht.."
+
+#: ../activity.rb:338
+msgid "ステータスバーに表示"
+msgstr "In der status bar anzeigen."
+
+#: ../activity.rb:338
+msgid "%{name}が通知された時に、ステータスバーにしばらく表示します"
+msgstr "Wenn sie %{name} empfangen, behalte die Anzeige für ein paar Sekunden in der status bar."
+
+#: ../activity.rb:343
+msgid "リツイート"
+msgstr "Retweeten "
+
+#: ../activity.rb:344
+msgid "ふぁぼ"
+msgstr "Favorisieren "
+
+#: ../activity.rb:345
+msgid "フォロー"
+msgstr "Folgen"
+
+#: ../activity.rb:346
+msgid "リストに追加"
+msgstr "Listen hinzufügen"
+
+#: ../activity.rb:347
+msgid "リストから削除"
+msgstr "Aus der Liste entfernt"
+
+#: ../activity.rb:348
+msgid "ダイレクトメッセージ"
+msgstr "Direktnachrichten"
+
+#: ../activity.rb:349
+msgid "システムメッセージ"
+msgstr "Systemmeldungen"
+
+#: ../activity.rb:350
+msgid "エラー"
+msgstr "Fehler"

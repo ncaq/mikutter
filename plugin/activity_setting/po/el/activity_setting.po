@@ -1,0 +1,140 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the activity package.
+# 
+# Translators:
+# Klearchos-Angelos <jemadux@cryptolab.net>, 2013
+msgid ""
+msgstr ""
+"Project-Id-Version: mikutter\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2018-01-14 03:49+0900\n"
+"PO-Revision-Date: 2017-09-23 19:14+0000\n"
+"Last-Translator: Toshiaki Asai <toshi.alternative@gmail.com>\n"
+"Language-Team: Greek (http://www.transifex.com/lindwurm/mikutter/language/el/)\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: el\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: ../activity.rb:47
+msgid "種類"
+msgstr "Πληκτρολογήστε "
+
+#: ../activity.rb:48
+msgid "説明"
+msgstr "Περιγραφή"
+
+#: ../activity.rb:49
+msgid "時刻"
+msgstr "Ώρα"
+
+#: ../activity.rb:166 ../activity.rb:315 ../activity.rb:318
+msgid "アクティビティ"
+msgstr "Δραστηριότητες"
+
+#: ../activity.rb:222
+msgid "@%{user} がふぁぼふぁぼしました"
+msgstr "@%{user} το έβαλε στα αγαπημένα"
+
+#: ../activity.rb:232
+msgid "@%{user} があんふぁぼしました"
+msgstr "@%{user} το έβγαλε απο τα αγαπημένα"
+
+#: ../activity.rb:244
+msgid "@%{user} がリツイートしました"
+msgstr "@%{user} το αναδημοσίευσε"
+
+#: ../activity.rb:250
+msgid "リツイートソースが取得できませんでした"
+msgstr "Αποτυχία ανεύρεσης της αναδημοσίευσης"
+
+#: ../activity.rb:254
+msgid "@%{user}が%{list}に追加されました"
+msgstr "@%{user}μπήκε στην λίστα %{list}"
+
+#: ../activity.rb:262 ../activity.rb:279
+msgid "%{description} (by @%{user})"
+msgstr "%{περιγραφή} (από @%{user})"
+
+#: ../activity.rb:271
+msgid "@%{user}が%{list}から削除されました"
+msgstr "@%{user} εχει αφερεθεί απο την λίστα %{list}"
+
+#: ../activity.rb:291
+msgid "@%{followee} が @%{follower} をﾌｮﾛｰしました"
+msgstr "@%{followee} ακουλούθησε @%{follower}"
+
+#: ../activity.rb:303
+msgid "差出人: @%{sender}"
+msgstr ""
+
+#: ../activity.rb:304
+msgid "宛先: @%{recipient}"
+msgstr ""
+
+#: ../activity.rb:335
+msgid "%{name}を表示する"
+msgstr ""
+
+#: ../activity.rb:335
+msgid "%{name}を、アクティビティタイムラインに表示します。チェックを外すと、%{name}の他の設定は無効になります。"
+msgstr ""
+
+#: ../activity.rb:336
+msgid "自分に関係ない%{name}も表示する"
+msgstr ""
+
+#: ../activity.rb:336
+msgid ""
+"自分に関係ない%{name}もアクティビティタイムラインに表示されるようになります。チェックを外すと、自分に関係ない%{name}は表示されません。"
+msgstr ""
+
+#: ../activity.rb:337
+msgid "タイムラインに表示"
+msgstr "Εμφάνιση στο timeline "
+
+#: ../activity.rb:337
+msgid "%{name}が通知された時に、システムメッセージで%{name}を通知します"
+msgstr ""
+
+#: ../activity.rb:338
+msgid "ステータスバーに表示"
+msgstr "Eμφάνιση στο status bar "
+
+#: ../activity.rb:338
+msgid "%{name}が通知された時に、ステータスバーにしばらく表示します"
+msgstr ""
+
+#: ../activity.rb:343
+msgid "リツイート"
+msgstr "RT"
+
+#: ../activity.rb:344
+msgid "ふぁぼ"
+msgstr "Fav"
+
+#: ../activity.rb:345
+msgid "フォロー"
+msgstr "Follow"
+
+#: ../activity.rb:346
+msgid "リストに追加"
+msgstr "Προσθήκη στην λίστα"
+
+#: ../activity.rb:347
+msgid "リストから削除"
+msgstr "Αφαίρεση απο την λίστα"
+
+#: ../activity.rb:348
+msgid "ダイレクトメッセージ"
+msgstr "Άμεσο μύνημα"
+
+#: ../activity.rb:349
+msgid "システムメッセージ"
+msgstr "Μύνημα συστήματος"
+
+#: ../activity.rb:350
+msgid "エラー"
+msgstr "Σφάλμα"
