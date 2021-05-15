@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
-class Plugin::Settings::Listener
+class Plugin::SettingsGtk::Listener
   def self.[](symbol)
-    return symbol if(symbol.is_a? Plugin::Settings::Listener)
-    Plugin::Settings::Listener.new( get: lambda{
+    return symbol if(symbol.is_a? Plugin::SettingsGtk::Listener)
+    Plugin::SettingsGtk::Listener.new( get: lambda{
                                       key = Array(symbol).find{|s| UserConfig.include?(s) }
                                       UserConfig[key] if key
                                     },

@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 require_relative 'setting_dsl'
-require_relative 'phantom'
+require_relative '../settings/phantom'
 
-module Plugin::Settings
+module Plugin::SettingsGtk
   # 設定DSLで設定された設定をリストアップし、選択するリストビュー。
   class Menu < Gtk::TreeView
     COL_LABEL = 0
@@ -58,13 +58,13 @@ module Plugin::Settings
     end
 
     def widget
-      box = Plugin::Settings::SettingDSL.new(Plugin.instance(@plugin))
+      box = Plugin::SettingsGtk::SettingDSL.new(Plugin.instance(@plugin))
       box.instance_eval(&@proc)
       box
     end
 
     def children
-      @ancestor_advice ||= Phantom.new(@plugin, &@proc).detected
+      @ancestor_advice ||= ::Plugin::Settings::Phantom.new(@plugin, &@proc).detected
     end
 
     def inspect

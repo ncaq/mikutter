@@ -1,0 +1,12 @@
+---
+slug: :settings_gtk
+depends:
+  mikutter: 4.1.5
+  plugin:
+  - gtk
+  - settings
+version: '1.0'
+author: toshi_a
+name: settings gtk
+description: >-
+  設定ウィンドウをGtk2で表示します。

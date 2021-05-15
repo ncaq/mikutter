@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+ # -*- coding: utf-8 -*-
 
 module Plugin::Settings
   DSL_METHODS = [
@@ -46,7 +46,7 @@ module Plugin::Settings
     end
 
     def settings(name, &block)
-      @detected << Record.new(name, block, @plugin_slug)
+      @detected << Record.new(name, block, @plugin_slug) # TODO: RecordはSettingGtk
     end
 
     def method_missing(name, *rest, &block)
