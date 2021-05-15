@@ -145,7 +145,7 @@ module Mtk
     container.pack_start(Gtk::Alignment.new(1.0, 0.5, 0, 0).add(input), true, true, 0)
     input.ssc(:changed){ |widget|
       proc.call(widget.text) }
-    callback.call(container, input) if block_given?
+    callback&.call(container, input)
     return container
   end
   deprecate :input, :none, 2020, 8
