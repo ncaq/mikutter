@@ -27,13 +27,9 @@ class Plugin::ChangeAccount::WorldGenerator::Controller
   def to_h(&block)
     if block
       @values.to_h(&block)
-k    else
+    else
       @values.dup
     end
-  end
-
-  def method_missing_at_select_dsl(*args, &block)
-    @plugin.__send__(*args, &block)
   end
 
   def method_missing(*args, &block)

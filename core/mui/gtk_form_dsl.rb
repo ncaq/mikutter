@@ -388,10 +388,6 @@ module Gtk::FormDSL
     self.new()
   end
 
-  def method_missing_at_select_dsl(*args, &block)
-    @plugin.__send__(*args, &block)
-  end
-
   def method_missing(*args, &block)
     @plugin.__send__(*args, &block)
   end
