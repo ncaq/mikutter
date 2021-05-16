@@ -6,8 +6,6 @@ require 'mui/gtk_form_dsl'
 require 'mui/gtk_form_dsl_multi_select'
 require 'mui/gtk_form_dsl_select'
 
-require_relative 'listener'
-
 require 'gtk2'
 
 =begin rdoc
@@ -39,11 +37,11 @@ class Plugin::SettingsGtk::SettingDSL < Gtk::VBox
   end
 
   def [](key)
-    Plugin::SettingsGtk::Listener[key].get
+    Plugin::Settings::Listener[key].get
   end
 
   def []=(key, value)
-    Plugin::SettingsGtk::Listener[key].set(value)
+    Plugin::Settings::Listener[key].set(value)
   end
 
   def add_event(event_name, **kwrest, &callback)

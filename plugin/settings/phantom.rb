@@ -26,17 +26,27 @@ module Plugin::Settings
   ]
   # Setting DSLの、入れ子になったsettingsだけを抜き出すためのクラス。
   class Phantom
-    attr_reader :detected
+    attr_reader :title, :plugin
 
-    def initialize(plugin_slug, &block)
-      @plugin_slug = plugin_slug
-      @detected = []
-      begin
-        instance_eval(&block)
-      rescue
-        @detected = []
-      end
-      @detected.freeze
+    def initialize(title:, plugin:, &block)
+      raise ArgumentError, 'Block requred.' unless block
+      @title = -title
+      @plugin = plugin
+      @proc = block
+      @children = nil
+    end
+
+    def children
+      return @children if @children
+      @children = []
+      instance_eval(&@proc)
+      @children.freeze
+    rescue
+      @children = [].freeze
+    end
+
+    def to_proc
+      @proc
     end
 
     DSL_METHODS.each do |name|
@@ -46,7 +56,12 @@ module Plugin::Settings
     end
 
     def settings(name, &block)
-      @detected << Record.new(name, block, @plugin_slug) # TODO: RecordはSettingGtk
+      @children << Phantom.new(
+        title: name,
+        plugin: @plugin,
+        &block
+      )
+      nil
     end
 
     def method_missing(name, *rest, &block)
@@ -54,7 +69,7 @@ module Plugin::Settings
       when *DSL_METHODS
         MOCK
       else
-        Plugin.instance(@plugin_slug).__send__(name, *rest, &block)
+        @plugin.__send__(name, *rest, &block)
       end
     end
 

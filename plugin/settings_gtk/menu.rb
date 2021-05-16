@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
+
 require_relative 'setting_dsl'
-require_relative '../settings/phantom'
 
 module Plugin::SettingsGtk
   # 設定DSLで設定された設定をリストアップし、選択するリストビュー。
@@ -25,8 +25,8 @@ module Plugin::SettingsGtk
     end
 
     def insert_defined_settings
-      Plugin.filtering(:defined_settings, []).first.each do |title, definition, plugin|
-        add_record(Record.new(title, definition, plugin))
+      Plugin.collect(:settings).to_a.each do |phantom|
+        add_record(Record.new(phantom))
       end
     end
 
@@ -48,27 +48,26 @@ module Plugin::SettingsGtk
   class Record
     extend Memoist
 
-    attr_reader :name
+    def initialize(phantom)
+      @phantom = phantom
+    end
 
-    def initialize(name, proc, plugin, ancestor_advice: nil)
-      @name = name
-      @proc = proc
-      @plugin = plugin
-      @ancestor_advice = ancestor_advice
+    def name
+      @phantom.title
     end
 
     def widget
-      box = Plugin::SettingsGtk::SettingDSL.new(Plugin.instance(@plugin))
-      box.instance_eval(&@proc)
+      box = Plugin::SettingsGtk::SettingDSL.new(@phantom.plugin)
+      box.instance_eval(&@phantom)
       box
     end
 
     def children
-      @ancestor_advice ||= ::Plugin::Settings::Phantom.new(@plugin, &@proc).detected
+      @phantom.children.map { |child| Record.new(child) }
     end
 
     def inspect
-      "#<#{self.class}: #{name.inspect} plugin: #{plugin.inspect} #{proc.inspect}>"
+      "#<#{self.class}: #{name.inspect}>"
     end
   end
 end

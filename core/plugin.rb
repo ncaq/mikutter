@@ -80,14 +80,6 @@ class Plugin < Pluggaloid::Plugin
       menu[slug] = command
       [menu] } end
 
-  # 設定画面を作る
-  # ==== Args
-  # - String name タイトル
-  # - Proc &place 設定画面を作る無名関数
-  def settings(name, &place)
-    add_event_filter(:defined_settings) do |tabs|
-      [tabs.melt << [name, place, @name]] end end
-
   # 画像ファイルのパスを得る
   # ==== Args
   # - String filename ファイル名
