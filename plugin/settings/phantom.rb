@@ -26,27 +26,23 @@ module Plugin::Settings
   ]
   # Setting DSLの、入れ子になったsettingsだけを抜き出すためのクラス。
   class Phantom
-    attr_reader :title, :plugin
+    attr_reader :title, :plugin, :dsl_procedure
 
     def initialize(title:, plugin:, &block)
       raise ArgumentError, 'Block requred.' unless block
       @title = -title
       @plugin = plugin
-      @proc = block
+      @dsl_procedure = block
       @children = nil
     end
 
     def children
       return @children if @children
       @children = []
-      instance_eval(&@proc)
+      instance_eval(&@dsl_procedure)
       @children.freeze
     rescue
       @children = [].freeze
-    end
-
-    def to_proc
-      @proc
     end
 
     DSL_METHODS.each do |name|

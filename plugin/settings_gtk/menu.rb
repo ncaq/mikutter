@@ -25,8 +25,8 @@ module Plugin::SettingsGtk
     end
 
     def insert_defined_settings
-      Plugin.collect(:settings).to_a.each do |phantom|
-        add_record(Record.new(phantom))
+      Plugin.collect(:settings).each do |setting|
+        add_record(Record.new(setting))
       end
     end
 
@@ -48,22 +48,23 @@ module Plugin::SettingsGtk
   class Record
     extend Memoist
 
-    def initialize(phantom)
-      @phantom = phantom
+    # @params setting [Plugin::Settings::Phantom] 設定グループ
+    def initialize(setting)
+      @setting = setting
     end
 
     def name
-      @phantom.title
+      @setting.title
     end
 
     def widget
-      box = Plugin::SettingsGtk::SettingDSL.new(@phantom.plugin)
-      box.instance_eval(&@phantom)
+      box = Plugin::SettingsGtk::SettingDSL.new(@setting.plugin)
+      box.instance_eval(&@setting.dsl_procedure)
       box
     end
 
     def children
-      @phantom.children.map { |child| Record.new(child) }
+      @setting.children.map { |child| Record.new(child) }
     end
 
     def inspect
