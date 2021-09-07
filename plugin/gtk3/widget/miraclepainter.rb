@@ -92,23 +92,22 @@ class Plugin::Gtk3::MiraclePainter < Gtk::ListBoxRow
   end
 
   # override virtual function Gtk::Widget.get_request_mode
-  def do_get_request_mode
+  def virtual_do_get_request_mode
     notice 'MiraclePainter#get_request_mode' if VERBOSE
 
     Gtk::SizeRequestMode::HEIGHT_FOR_WIDTH
   end
 
   # override virtual function Gtk::Widget.get_preferred_width
-  def do_get_preferred_width
+  def virtual_do_get_preferred_width
     notice 'MiraclePainter#get_preferred_width' if VERBOSE
 
     [WIDTH_MIN, WIDTH_NAT]
   end
 
   # override virtual function Gtk::Widget.get_preferred_height_for_width
-  def do_get_preferred_height_for_width(width)
-    notice 'MiraclePainter#get_preferred_height_for_width(' \
-      "width=#{width})" if VERBOSE
+  def virtual_do_get_preferred_height_for_width(width)
+    notice "MiraclePainter#get_preferred_height_for_width(width=#{width})" if VERBOSE
 
     @width = width
     height = mainpart_height + SPACING + subparts_height
