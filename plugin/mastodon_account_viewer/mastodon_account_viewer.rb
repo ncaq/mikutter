@@ -3,16 +3,25 @@
 
 Plugin.create(:mastodon_account_viewer) do
   defmodelviewer(Plugin::Mastodon::Account) do |user|
+    since_day = (Time.now - user.created_at).to_i / (60 * 60 * 24)
     [
       [_('名前'), user.display_name],
       [_('acct'), user.acct],
-      *user.fields&.map{|f|
-        f.emojis ||= user.emojis
-        [f.name, f]
-      },
       [_('フォロー'), user.following_count],
       [_('フォロワー'), user.followers_count],
-      [_('Toot'), user.statuses_count]
+      [_('Mastodon開始'), _('%{year}/%{month}/%{day} %{hour}:%{minute}:%{second} (%{since_day}日)') % {
+         year: user.created_at.strftime('%Y'),
+         month: user.created_at.strftime('%m'),
+         day: user.created_at.strftime('%d'),
+         hour: user.created_at.strftime('%H'),
+         minute: user.created_at.strftime('%M'),
+         second: user.created_at.strftime('%S'),
+         since_day: since_day,
+       }],
+      [_('Toot'), _('%{count} (%{toots_per_day}toots/day)') % {
+         count: user.statuses_count,
+         toots_per_day: since_day == 0 ? user.statuses_count : "%.2f" % (Rational(user.statuses_count, since_day).to_f)
+       }],
     ]
   end
 
@@ -26,9 +35,39 @@ Plugin.create(:mastodon_account_viewer) do
     grid.orientation = :vertical
     grid.row_spacing = 8
     grid.margin = 4
-    grid << bio << relation_bar(user)
+    grid <<
+      user_field_table(
+        user.fields&.map{|f|
+          f.emojis ||= user.emojis
+          [f.name, f]
+        }) <<
+      bio <<
+      relation_bar(user)
 
     nativewidget grid
+  end
+
+  def user_field_table(header_columns)
+    ::Gtk::Table.new(2, header_columns.size).tap{|table|
+      header_columns.each_with_index do |(key, value), index|
+        table.
+          attach(::Gtk::Label.new(key.to_s).right, 0, 1, index, index+1).
+          attach(cell_widget(value), 1, 2, index, index+1)
+      end
+    }.set_row_spacing(0, 4).
+      set_row_spacing(1, 4).
+      set_column_spacing(0, 16)
+  end
+
+  def cell_widget(model_or_str)
+    case model_or_str
+    when Diva::Model
+      ::Gtk::IntelligentTextview.new(
+        Plugin[:modelviewer].score_of(model_or_str)
+      )
+    else
+      ::Gtk::IntelligentTextview.new(model_or_str.to_s)
+    end
   end
 
   # フォロー関係の表示・操作用ウィジェット

@@ -539,7 +539,6 @@ module Gtk::FormDSL
 
   # リストビューを表示する。
   # ==== Args
-  # [label] ラベル
   # [config] 設定のキー
   # [columns:]
   #   配列の配列で、各要素は[カラムのタイトル(String), カラムの表示文字を返すProc]

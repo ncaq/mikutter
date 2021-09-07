@@ -47,6 +47,11 @@ Plugin.create(:mastodon) do
 
   defactivity :mastodon_followings_update, _('プロフィール・フォロー関係の取得通知(Mastodon)')
 
+  filter_extract_datasources do |dss|
+    datasources = { mastodon_appear_toots: _('受信したすべてのトゥート(Mastodon)') }
+    [datasources.merge(dss)]
+  end
+
   # データソース「mastodon_appear_toots」の定義
   generate(:extract_receive_message, :mastodon_appear_toots) do |appear|
     subscribe(:mastodon_appear_toots, &appear.method(:bulk_add))
@@ -86,20 +91,27 @@ Plugin.create(:mastodon) do
   # Mastodonサーバが初期化されたら、サーバの集合に加える
   collection(:mastodon_servers) do |servers|
     on_mastodon_server_created do |server|
-      servers << server
+      servers.rewind do |stored|
+        stored << server unless stored.include?(server)
+        stored
+      end
     end
   end
 
   # 存在するサーバやWorldに応じて、選択できる全ての抽出タブデータソースを提示する
   collection(:message_stream) do |message_stream|
-    message_stream << Class.new do
-      def title; Plugin[:mastodon]._('受信したすべてのトゥート(Mastodon)') end
-      def datasource_slug; :mastodon_appear_toots end
-    end.new
-
     subscribe(:mastodon_worlds__add) do |worlds|
       message_stream.rewind do |a|
-        a | worlds.flat_map{|world| [world.sse.user, world.sse.direct] }
+        a | worlds.flat_map do |world|
+          [
+            world.sse.user,
+            world.sse.direct,
+            world.sse.public,
+            world.sse.public(only_media: true),
+            world.sse.public_local,
+            world.sse.public_local(only_media: true)
+          ]
+        end
       end
       worlds.each do |world|
         world.get_lists.next do |lists|
@@ -168,38 +180,38 @@ Plugin.create(:mastodon) do
   end
 
   on_world_create do |world|
-    if world.class.slug == :mastodon
-      slug_param = {id: Digest::SHA1.hexdigest(world.uri.to_s), domain: world.domain}
-      name_param = {name: world.user_obj.acct, domain: world.domain}
-      htl_slug = ('mastodon_htl_%{id}' % slug_param).to_sym
-      mention_slug = ('mastodon_mentions_%{id}' % slug_param).to_sym
-      ltl_slug = ('mastodon_ltl_%{domain}' % slug_param).to_sym
-      exists_slugs = Set.new(Plugin.filtering(:extract_tabs_get, []).first.map(&:slug))
-      if !exists_slugs.include?(htl_slug)
-        Plugin.call(:extract_tab_create, {
-                      name: _('ホームタイムライン (%{name})') % name_param,
-                      slug: htl_slug,
-                      sources: [world.datasource_slug(:home)],
-                      icon: Skin[:timeline].uri,
-                    })
-      end
-      if !exists_slugs.include?(mention_slug)
-        Plugin.call(:extract_tab_create, {
-                      name: _('メンション (%{name})') % name_param,
-                      slug: mention_slug,
-                      sources: [:mastodon_appear_toots],
-                      sexp: [:or, [:include?, :receiver_idnames, world.user_obj.idname]],
-                      icon: Skin[:reply].uri,
-                    })
-      end
-      if !exists_slugs.include?(ltl_slug)
-        Plugin.call(:extract_tab_create, {
-                      name: _('ローカルタイムライン (%{domain})') % name_param,
-                      slug: ltl_slug,
-                      sources: [Plugin::Mastodon::Instance.datasource_slug(world.domain, :local)],
-                      icon: 'https://%{domain}/apple-touch-icon.png' % slug_param,
-                    })
-      end
+    next unless world.class.slug == :mastodon
+
+    slug_param = {id: Digest::SHA1.hexdigest(world.uri.to_s), domain: world.domain}
+    name_param = {name: world.user_obj.acct, domain: world.domain}
+    htl_slug = ('mastodon_htl_%{id}' % slug_param).to_sym
+    mention_slug = ('mastodon_mentions_%{id}' % slug_param).to_sym
+    ltl_slug = ('mastodon_ltl_%{domain}' % slug_param).to_sym
+    exists_slugs = Set.new(Plugin.filtering(:extract_tabs_get, []).first.map(&:slug))
+    unless exists_slugs.include?(htl_slug)
+      Plugin.call(:extract_tab_create, {
+                    name: _('ホームタイムライン (%{name})') % name_param,
+                    slug: htl_slug,
+                    sources: [world.sse.user.datasource_slug],
+                    icon: Skin[:timeline].uri,
+                  })
+    end
+    unless exists_slugs.include?(mention_slug)
+      Plugin.call(:extract_tab_create, {
+                    name: _('メンション (%{name})') % name_param,
+                    slug: mention_slug,
+                    sources: [:mastodon_appear_toots],
+                    sexp: [:or, [:include?, :receiver_idnames, world.user_obj.idname]],
+                    icon: Skin[:reply].uri,
+                  })
+    end
+    unless exists_slugs.include?(ltl_slug)
+      Plugin.call(:extract_tab_create, {
+                    name: _('ローカルタイムライン (%{domain})') % name_param,
+                    slug: ltl_slug,
+                    sources: [world.sse.public_local.datasource_slug],
+                    icon: 'https://%{domain}/apple-touch-icon.png' % slug_param,
+                  })
     end
   end
 
@@ -232,10 +244,7 @@ Plugin.create(:mastodon) do
       result = await_input
       domain = result[:domain_selection] == :other ? result[:domain] : result[:domain_selection]
 
-      instance = await Plugin::Mastodon::Instance.add_ifn(domain).trap{ |err|
-        error err
-        nil
-      }
+      instance = await Plugin::Mastodon::Instance.add_ifn(domain).trap{ nil }
       unless instance
         error_msg = _("%{domain} サーバーへの接続に失敗しました。やり直してください。") % {domain: domain}
         next

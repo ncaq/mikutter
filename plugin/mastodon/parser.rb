@@ -16,11 +16,10 @@ module Plugin::Mastodon::Parser
 
     score = []
 
-    # リンク処理
-    # TODO: user_detail_viewを作ったらacctをAccount Modelにする
     pos = 0
     anchor_re = %r|<a(?<attr1>[^>]*) href="(?<url>[^"]*)"(?<attr2>[^>]*)>(?<text>[^<]*)</a>|
-    urls = []
+    appeared_urls = Set.new
+
     while m = anchor_re.match(desc, pos)
       anchor_begin = m.begin(0)
       anchor_end = m.end(0)
@@ -61,7 +60,7 @@ module Plugin::Mastodon::Parser
           score << Plugin::Score::HyperLinkNote.new(link_hash)
         end
       end
-      urls << url
+      appeared_urls << url
       pos = anchor_end
     end
     if pos < desc.size
@@ -70,24 +69,29 @@ module Plugin::Mastodon::Parser
 
     # 添付ファイル用のwork around
     # TODO: mikutter本体側が添付ファイル用のNoteを用意したらそちらに移行する
-    if media_attachments.size > 0
-      media_attachments
-        .select {|attachment|
-          !urls.include?(attachment.url.to_s) && !urls.include?(attachment.text_url.to_s)
-        }
-        .each {|attachment|
-          score << Plugin::Score::TextNote.new(description: "\n")
-
-          description = attachment.text_url
-          if !description
-            description = attachment.url
-          end
-          score << Plugin::Score::HyperLinkNote.new(description: description, uri: attachment.url)
-        }
+    media_attachments.reject { |a|
+      appeared_urls.include?(a.url.to_s) || appeared_urls.include?(a.text_url.to_s)
+    }.each do |attachment|
+      url = attachment.url
+      score <<
+        Plugin::Score::TextNote.new(description: "\n") <<
+        Plugin::Score::HyperLinkNote.new(
+          description: attachment.text_url || url,
+          uri: url,
+          reference: Plugin.collect(:photo_filter, url).first
+        )
     end
 
     if poll
-      score << Plugin::Score::TextNote.new(description: "#{poll.options.map{|opt| "\n○ #{opt.title}"}.join('')}\n#{poll.votes_count}票#{poll.expires_at ? " #{poll.expires_at.strftime("%Y-%m-%d %H:%M:%S")}に終了" : ''}")
+      y = []
+      poll.options.each do |opt|
+        y << '○ %{title}' % {title: opt.title}
+      end
+      y << '%{count}票' % {count: poll.votes_count}
+      if poll.expires_at
+        y << '%{expire}に終了' % {expire: poll.expires_at.strftime("%Y-%m-%d %H:%M:%S")}
+      end
+      score << Plugin::Score::TextNote.new(description: "\n" + y.join("\n"))
     end
 
     score = score.flat_map do |note|

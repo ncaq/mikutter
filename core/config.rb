@@ -33,7 +33,9 @@ module CHIConfig
   CACHE = File.join(CONFROOT, 'cache')
 
   # プラグインディレクトリ
-  PLUGIN_PATH = File.expand_path(File.join(__dir__, '..', 'plugin'))
+  PLUGIN_PATH = [
+    File.expand_path(File.join(__dir__, '..', 'plugin')),
+  ]
 
   # AutoTag有効？
   AutoTag = false
@@ -42,6 +44,6 @@ module CHIConfig
   NeverRetrieveOverlappedMumble = false
 
   # このソフトのバージョン。
-  VERSION = [4,1,0,0]
+  VERSION = [4,1,0,9999]
 
 end

@@ -20,8 +20,6 @@ module Plugin::Mastodon
             website: Plugin::Mastodon::WEB_SITE
           )
         }.next{ |resp|
-          add_datasources(domain)
-
           self.new(
             domain: domain,
             client_key: resp[:client_id],
@@ -72,6 +70,10 @@ module Plugin::Mastodon
       Plugin::Mastodon::SSEPublicType.new(server: self)
     end
 
+    def rest
+      Plugin::Mastodon::RestPublicType.new(server: self)
+    end
+
     def store
       configs = UserConfig[:mastodon_instances].dup
       configs[domain] = { client_key: client_key, client_secret: client_secret, retrieve: retrieve }
@@ -89,9 +91,15 @@ module Plugin::Mastodon
       'https://' + domain + '/oauth/authorize?' + params
     end
 
-    def inspect
-      "mastodon-instance(#{domain})"
+    def ==(other)
+      case other
+      when Plugin::Mastodon::Instance
+        domain == other.domain
+      end
     end
 
+    def inspect
+      "#<#{self.class.name}: #{domain}>"
+    end
   end
 end
