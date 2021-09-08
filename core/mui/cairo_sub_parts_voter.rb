@@ -159,8 +159,7 @@ class ::Gdk::SubPartsVoter < Gdk::SubParts
   end
 
   def user_icon(user)
-    h = { width: icon_width, height: icon_height }
-    @user_icon[user[:id]] ||= user.icon.load_pixbuf(h) do |pb|
+    @user_icon[user[:id]] ||= user.icon.load_pixbuf(width: icon_width, height: icon_height) do |pb|
       @user_icon[user[:id]] = pb
       helper.queue_draw
     end
