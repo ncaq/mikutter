@@ -5,11 +5,11 @@ class Hash
   include MIKU::List
 
   def car
-    to_a.car
+    first
   end
 
   def cdr
-    to_a.car
+    to_a[1..]
   end
 
   def terminator

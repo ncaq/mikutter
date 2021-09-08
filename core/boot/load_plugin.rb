@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+
 # プラグインを全てロードする
 require 'miquire_plugin'
 
@@ -12,4 +13,3 @@ if Mopt.plugin.is_a? Array
 else
   Miquire::Plugin.load_all
 end
-

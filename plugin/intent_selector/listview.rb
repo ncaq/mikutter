@@ -97,11 +97,11 @@ module Plugin::IntentSelector
     end
 
     def intent_catalog
-      Hash[Plugin.filtering(:intent_all, []).first.map{|i|[i.slug, i.label]}]
+      Plugin.filtering(:intent_all, []).first.to_h { |i| [i.slug, i.label] }
     end
 
     def model_catalog
-      Hash[Plugin.filtering(:retrievers, []).first.map{|s|[s[:slug].to_s,s[:name]]}].merge('' => _('（未定義）'))
+      Plugin.filtering(:retrievers, []).first.to_h { |s|[s[:slug].to_s,s[:name]] }.merge('' => _('（未定義）'))
     end
 
   end

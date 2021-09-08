@@ -12,13 +12,13 @@ Plugin.create(:mastodon) do
     message.is_a?(cl) && compare.(message.visibility, arg)
   end
   defextractcondition(:mastodon_include_emoji, name: _('カスタム絵文字を含む(Mastodon)'), operator: false, args: 0) do |message: raise|
-    message.is_a?(cl) && message.emojis.to_a.any?
+    message.is_a?(cl) && message.emojis.any?
   end
   defextractcondition(:mastodon_emoji, name: _('カスタム絵文字(Mastodon)'), operator: true, args: 1) do |arg, message: raise, operator: raise, &compare|
-    message.is_a?(cl) && compare.(message.emojis.to_a.map{|emoji| emoji.shortcode }.join(' '), arg)
+    message.is_a?(cl) && compare.(message.emojis.map(&:shortcode).join(' '), arg)
   end
   defextractcondition(:mastodon_tag, name: _('ハッシュタグ(Mastodon)'), operator: true, args: 1) do |arg, message: raise, operator: raise, &compare|
-    message.is_a?(cl) && compare.(message.tags.to_a.map{|tag| tag.name }.join(' '), arg.downcase)
+    message.is_a?(cl) && compare.(message.tags.map(&:name).join(' '), arg.downcase)
   end
   defextractcondition(:mastodon_bio, name: _('プロフィール(Mastodon)'), operator: true, args: 1) do |arg, message: raise, operator: raise, &compare|
     message.is_a?(cl) && compare.(message.account.note, arg)

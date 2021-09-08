@@ -17,7 +17,7 @@ class Gtk::MessagePicker < Gtk::Frame
     if(@not)
       conditions = (conditions[1] or []).freeze end
     @changed_hook = block
-    @function, *exprs = *conditions.to_a
+    @function, *exprs = *conditions
     @function ||= :and
 
     self.border_width = 8
@@ -110,7 +110,7 @@ class Gtk::MessagePicker < Gtk::Frame
     def initialize(conditions = DEFAULT_CONDITION, &block)
       super()
       @changed_hook = block
-      @condition, @subject, @expr = *conditions.to_a
+      @condition, @subject, @expr = *conditions
       build
     end
 
@@ -124,7 +124,7 @@ class Gtk::MessagePicker < Gtk::Frame
         @changed_hook.call end end
 
     def build
-      extract_condition = Hash[Plugin.filtering(:extract_condition, []).first.map{|ec| [ec.slug, ec]}]
+      extract_condition = Plugin.filtering(:extract_condition, []).first.to_h { |ec| [ec.slug, ec] }
       w_argument = Mtk::input(lambda{ |new|
                                 unless new === nil
                                   @expr = new.freeze
@@ -137,7 +137,7 @@ class Gtk::MessagePicker < Gtk::Frame
                                       call end
                                     @condition.to_s },
                                   nil,
-                                  Hash[Plugin.filtering(:extract_operator, []).first.map{ |eo| [eo.slug.to_s, eo.name] }])
+                                  Plugin.filtering(:extract_operator, []).first.to_h { |eo| [eo.slug.to_s, eo.name] })
       w_condition = Mtk::chooseone(lambda{ |new|
                                      unless new === nil
                                        @subject = new.to_sym
@@ -147,7 +147,7 @@ class Gtk::MessagePicker < Gtk::Frame
                                      w_operator.set_sensitive(sensitivity)
                                      @subject.to_s },
                                    nil,
-                                   Hash[extract_condition.map{ |slug, ec| [slug.to_s, ec.name] }])
+                                   extract_condition.to_h { |slug, ec| [slug.to_s, ec.name] })
       add(w_condition)
       add(w_operator)
       add(w_argument)

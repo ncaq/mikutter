@@ -11,21 +11,21 @@ ruby '>= 2.5.0'
 
 group :default do
   gem 'addressable','>= 2.7.0', '< 2.8'
-  gem 'delayer','>= 1.0.2', '< 2.0'
-  gem 'delayer-deferred','>= 2.1.3', '< 3.0'
+  gem 'delayer','>= 1.1.2', '< 2.0'
+  gem 'delayer-deferred','>= 2.2.0', '< 3.0'
   gem 'diva','>= 1.0.2', '< 2.0'
   gem 'memoist','>= 0.16.2', '< 0.17'
   gem 'oauth','>= 0.5.4'
-  gem 'pluggaloid','>= 1.2.0', '< 2.0'
+  gem 'pluggaloid','>= 1.5.0', '< 2.0'
   gem 'typed-array','>= 0.1.2', '< 0.2'
 end
 
 group :test do
-  gem 'test-unit','>= 3.3.4', '< 4.0'
+  gem 'test-unit','>= 3.3.6', '< 4.0'
   gem 'rake','>= 13.0.1'
-  gem 'mocha','>= 1.11.1'
-  gem 'webmock','>= 3.7.6'
-  gem 'ruby-prof','>= 1.1.0'
+  gem 'mocha','>= 1.11.2'
+  gem 'webmock','>= 3.8.3'
+  gem 'ruby-prof','>= 1.4.1'
 end
 
 
@@ -34,6 +34,6 @@ group :plugin do
     eval File.open(path).read
   }
   Dir.glob(File.join(File.expand_path(ENV['MIKUTTER_CONFROOT'] || '~/.mikutter'), 'plugin/*/Gemfile')){ |path|
-    eval File.open(path).read
+    eval File.open(path).read, binding, path
   }
 end

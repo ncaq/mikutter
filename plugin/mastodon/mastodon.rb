@@ -17,7 +17,7 @@ require_relative 'extractcondition'
 require_relative 'score'
 
 Plugin.create(:mastodon) do
-  defimageopener(_('Mastodon添付画像'), %r<\Ahttps?://[^/]+/system/media_attachments/files/[0-9]{3}/[0-9]{3}/[0-9]{3}/\w+/\w+\.\w+(?:\?\d+)?\Z>) do |url|
+  defimageopener(_('Mastodon添付画像'), %r<\Ahttps?://.+/media_attachments/files/(?:[0-9]{3}/)+original/[0-9a-f]+\.>) do |url|
     URI.open(url)
   end
 
@@ -297,7 +297,7 @@ Plugin.create(:mastodon) do
       if !resp || resp.value.has_key?(:error)
         label _('認証に失敗しました。') + (resp && resp[:error] ? "：#{resp[:error]}" : '')
         await_input
-        raise (resp ? resp[:error] : 'error has occurred at /oauth/token')
+        raise resp ? resp[:error] : 'error has occurred at /oauth/token'
       end
       token = resp[:access_token]
     else
@@ -307,7 +307,7 @@ Plugin.create(:mastodon) do
     resp = Plugin::Mastodon::API.call!(:get, domain, '/api/v1/accounts/verify_credentials', token)
     if resp.nil? || resp.value.has_key?(:error)
       label _('アカウント情報の取得に失敗しました') + (resp && resp[:error] ? "：#{resp[:error]}" : '')
-      raise (resp ? resp[:error] : 'error has occurred at verify_credentials')
+      raise resp ? resp[:error] : 'error has occurred at verify_credentials'
     end
 
     screen_name = resp[:acct] + '@' + domain

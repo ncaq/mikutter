@@ -152,7 +152,7 @@ module MIKU
                 else
                   eval(symtable, sexp.car) end
         if macro.is_a?(Macro)
-          macro.macro_expand(*sexp.cdr.to_a)
+          macro.macro_expand(*sexp.cdr)
         else
           sexp end
       else

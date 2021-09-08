@@ -20,8 +20,8 @@ module Plugin::Mastodon
       @value[idx] = val
     end
 
-    def to_h
-      @value.to_h
+    def to_h(&block)
+      @value.to_h(&block)
     end
 
     def to_a

@@ -446,7 +446,7 @@ module Plugin::Mastodon
     # Enumerator :: リプライツリーを祖先方向に辿って列挙する (Plugin::Mastodon::Status)
     def ancestors(force_retrieve=false)
       if force_retrieve
-        @ancestors ||= ancestors_force.to_a.freeze
+        @ancestors ||= ancestors_force.freeze
       else
         [self, *replyto_source&.ancestors].freeze
       end
@@ -567,7 +567,7 @@ module Plugin::Mastodon
     deprecate :post, :none, 2018, 11
 
     def receive_user_idnames
-      mentions.map(&:acct).to_a
+      mentions.map(&:acct)
     end
   end
 end

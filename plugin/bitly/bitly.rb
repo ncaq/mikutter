@@ -33,8 +33,10 @@ module Plugin::Bitly
                rescue Exception
                  nil end
       if result and result['status_code'].to_i == 200
-        return Hash[ *result['data']['expand'].map{|token|
-                       [token['short_url'], token['long_url']] }.flatten ] end
+        return result['data']['expand'].to_h do |token|
+          token.values_at('short_url', 'long_url')
+        end
+      end
     end
   end
 end

@@ -113,9 +113,9 @@ module MIKU
       begin
         operator = get_function(symtable)
         if operator.is_a? Primitive
-          result = operator.call(symtable, *cdr.to_a)
+          result = operator.call(symtable, *cdr)
         elsif operator.respond_to?(:macro_expand)
-          result = miku(operator.macro_expand(*cdr.to_a), symtable)
+          result = miku(operator.macro_expand(*cdr), symtable)
         elsif operator.respond_to?(:call)
           result = operator.call(*evaluate_args(symtable))
         elsif operator.is_a? Symbol

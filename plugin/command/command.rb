@@ -14,7 +14,8 @@ Plugin.create :command do
           visible: true,
           icon: Skin[:copy],
           role: :timeline) do |opt|
-    ::Gtk::Clipboard.copy(opt.widget.selected_text(opt.messages.first)) end
+    Plugin.call(:clipboard_write, opt.widget.selected_text(opt.messages.first))
+  end
 
   command(:copy_description,
           name: _('本文をコピー'),
@@ -22,7 +23,8 @@ Plugin.create :command do
           visible: true,
           icon: Skin[:copy_all],
           role: :timeline) do |opt|
-    ::Gtk::Clipboard.copy(opt.messages.first.description) end
+    Plugin.call(:clipboard_write, opt.messages.first.description)
+  end
 
   command(:reply,
           name: _('返信'),
@@ -64,13 +66,18 @@ Plugin.create :command do
           icon: Skin[:retweet],
           role: :timeline) do |opt|
     target = opt.messages.select{|m| share?(m, opt.world) }.reject{|m| shared?(m, opt.world) }.map(&:introducer)
-    if target.any?{|message| message.from_me?([opt.world]) }
-      if ::Gtk::Dialog.confirm(_('過去の栄光にすがりますか？'))
-        target.each{|m| share(m, opt.world) }
+    target.deach { |m|
+      if m.from_me?([opt.world])
+        +dialog(_('リツイート')) {
+          label _('過去の栄光にすがりますか？')
+          link m
+        }.next {
+          share(m, opt.world)
+        }
+      else
+        share(m, opt.world)
       end
-    else
-      target.each{|m| share(m, opt.world) }
-    end
+    }
   end
 
   command(:delete_retweet,
@@ -169,7 +176,7 @@ Plugin.create :command do
           visible: true,
           icon: "https://www.google.co.jp/images/google_favicon_128.png",
           role: :timeline) do |opt|
-    ::Gtk::openurl("http://www.google.co.jp/search?q=" + URI.escape(opt.widget.selected_text(opt.messages.first)).to_s) end
+    Plugin.call(:open, "http://www.google.co.jp/search?q=" + URI.escape(opt.widget.selected_text(opt.messages.first)).to_s) end
 
   command(:open_in_browser,
           name: _('ブラウザで開く'),
@@ -182,11 +189,11 @@ Plugin.create :command do
           name: _('リンクを開く'),
           condition: ->opt{
             opt.messages.size == 1 &&
-              opt.messages[0].entity.to_a.any? {|u| [:urls, :media].include?(u[:slug]) }
+              opt.messages[0].entity.any? { |u| %i[urls media].include?(u[:slug]) }
           },
           visible: true,
           role: :timeline) do |opt|
-    opt.messages[0].entity.to_a.each {|u|
+    opt.messages[0].entity.each do |u|
       url =
         case u[:slug]
         when :urls
@@ -194,18 +201,22 @@ Plugin.create :command do
         when :media
           u[:media_url]
         end
-      ::Gtk::TimeLine.openurl(url) if url } end
+      Plugin.call(:open, url) if url
+    end
+  end
 
   command(:copy_link,
           name: _('リンクをコピー'),
           condition: ->opt{
             opt.messages.size == 1 &&
-              opt.messages[0].entity.to_a.any? {|u| u[:slug] == :urls }
+              opt.messages[0].entity.any? {|u| u[:slug] == :urls }
           },
           visible: true,
           role: :timeline) do |opt|
-    opt.messages[0].entity.to_a.each {|u|
-    ::Gtk::Clipboard.copy(u[:url]) if u[:slug] == :urls } end
+    opt.messages[0].entity.each do |u|
+      Plugin.call(:clipboard_write, u[:url]) if u[:slug] == :urls
+    end
+  end
 
   command(:new_pane,
           name: _('新規ペインに移動'),

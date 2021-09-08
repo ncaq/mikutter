@@ -103,18 +103,18 @@ Plugin.create(:intent) do
       Plugin.collect(:intent_select_by_model_slug, model_slug).to_a
     end
     if token
-      intents = intents.reject { |intent| token.intent_ancestors.include?(intent) }
+      intents = intents.reject(&token.intent_ancestors.method(:include?))
     end
     head = intents.first(2)
     case head.size
     when 0
       error "intent not found to open for #{model_slugs}"
-      return
     when 1
       Plugin::Intent::IntentToken.open(
         uri: uri,
         intent: head.first,
-        parent: token)
+        parent: token
+      )
     else
       Plugin.call(:intent_select, intents, uri)
     end

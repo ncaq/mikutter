@@ -72,9 +72,7 @@ Plugin.create(:mastodon) do
         # mikutter-uwm-hommageの設定を勝手に持ってくる
         dirs = 10.times.map { |i|
           UserConfig["galary_dir#{i + 1}".to_sym]
-        }.compact.select { |str|
-          !str.empty?
-        }.to_a
+        }.compact.reject(&:empty?)
 
         fileselect "", :media1, shortcuts: dirs, use_preview: true
         fileselect "", :media2, shortcuts: dirs, use_preview: true

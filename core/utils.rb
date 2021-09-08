@@ -391,10 +391,17 @@ end
 
 class String
   def match_regexp(str)
-    if(str.is_a? String)
-      match(Regexp.new(str))
+    if str.is_a?(String)
+      begin
+        match(Regexp.new(str))
+      rescue RegexpError => err
+        error err
+        nil
+      end
     else
-      match(str) end end
+      match(str)
+    end
+  end
 
   def matches(regexp)
     warn "String#matches is obsolete method. use String#scan"
@@ -420,12 +427,12 @@ class String
 
   # _byte_ バイト目が何文字目にあたるかを返す
   def get_index_from_byte(byte)
-    result = 0
-    split(//u).each{ |c|
-      byte -= c.to_enum(:each_byte).to_a.size
-      return result if(byte < 0)
-      result += 1 }
-    result end
+    each_char.with_index do |c, i|
+      byte -= c.to_enum(:each_byte).count
+      return i if byte < 0
+    end
+    size
+  end
 
   def inspect
     '"'+to_s+'"'
