@@ -3,7 +3,7 @@ slug: :settings_gtk
 depends:
   mikutter: 4.1.5
   plugin:
-  - gtk
+  - gtk3
   - settings
   - uitranslator
 version: '1.0'

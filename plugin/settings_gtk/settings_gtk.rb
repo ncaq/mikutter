@@ -21,7 +21,7 @@ Plugin.create :settings_gtk do
     end
     settings = builder.get_object 'settings'
     scrolled_menu = builder.get_object 'scrolled_menu'
-    menu = Plugin::Settings::Menu.new
+    menu = Plugin::SettingsGtk::Menu.new
     scrolled_menu.add_with_viewport menu
 
     menu.ssc(:cursor_changed) do
@@ -33,7 +33,7 @@ Plugin.create :settings_gtk do
             settings.remove(child)
             child.destroy
           end
-          settings.add(active_iter[Plugin::Settings::Menu::COL_RECORD].widget).show_all
+          settings.add(active_iter[Plugin::SettingsGtk::Menu::COL_RECORD].widget).show_all
         end
       end
       false

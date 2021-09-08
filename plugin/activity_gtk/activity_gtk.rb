@@ -90,7 +90,7 @@ Plugin.create(:activity_gtk) do
   activity_view_sw = Gtk::ScrolledWindow.new.add activity_view
   activity_description = ::Gtk::IntelligentTextview.new
   activity_status = ::Gtk::Label.new
-  activity_model_selector = Plugin::Activity::ModelSelector.new
+  activity_model_selector = Plugin::ActivityGtk::ModelSelector.new
 
   reset_activity(activity_view.model)
 

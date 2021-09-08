@@ -5,7 +5,7 @@ depends:
   plugin:
     - mastodon
     - settings
-    - gtk
+    - gtk3
 version: '1.0'
 author: cobodo
 name: Mastodon setting

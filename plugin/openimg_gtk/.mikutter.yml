@@ -6,7 +6,7 @@ depends:
   - openimg
   - intent
   - skin
-  - gtk
+  - gtk3
 version: '1.0'
 author: toshi_a
 name: 画像ビューア (GTK)
