@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-require_relative 'extract_settings'
 require_relative 'model/setting'
 
 module Plugin::Extract

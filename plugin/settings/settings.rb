@@ -2,60 +2,40 @@
 #
 require 'pathname'
 
-module Plugin::Settings; end
-
-require_relative 'basic_settings'
-require_relative 'menu'
+require_relative 'phantom'
+require_relative 'listener'
 
 Plugin.create(:settings) do
+  # 設定の一覧をPhantomの配列で得る。
+  defevent :settings, prototype: [Pluggaloid::COLLECT]
 
   command(:open_setting,
           name: _('設定'),
-          condition: lambda{ |opt| true },
+          condition: :itself.to_proc,
           visible: true,
           icon: Skin[:settings],
           role: :window) do |opt|
     Plugin.call(:open_setting)
   end
 
-  on_open_setting do
-    setting_window.show_all end
+  # 設定画面を作る
+  # ==== Args
+  # - String name タイトル
+  # - Proc &place 設定画面を作る無名関数
+  defdsl :settings do |name, &proc|
+    name = -name
 
-  def setting_window
-    return @window if defined?(@window) and @window
-    builder = Gtk::Builder.new
-    s = (Pathname(__FILE__).dirname / 'settings.glade').to_s
-    builder.add_from_file s
-    @window = builder.get_object 'window'
-    rect = { width: 256, height: 256 }
-    @window.icon = Skin['settings.png'].load_pixbuf(**rect) do |pb|
-      @window.destroyed? or @window.icon = pb
-    end
-    settings = builder.get_object 'settings'
-    scrolled_menu = builder.get_object 'scrolled_menu'
-    menu = Plugin::Settings::Menu.new
-    scrolled_menu.add_with_viewport menu
-
-    menu.ssc(:cursor_changed) do
-      if menu.selection.selected
-        active_iter = menu.selection.selected
-        if active_iter
-          settings.hide
-          settings.children.each do |child|
-            settings.remove(child)
-            child.destroy
-          end
-          settings.add(active_iter[Plugin::Settings::Menu::COL_RECORD].widget).show_all
-        end
-      end
-      false
+    collection(:settings) do |mutation|
+      mutation << Plugin::Settings::Phantom.new(
+        title: name,
+        plugin: self,
+        &proc
+      )
     end
 
-    @window.ssc(:destroy) {
-      @window = nil
-      false
-    }
-
-    @window
+    # 互換性のため
+    add_event_filter(:defined_settings) do |tabs|
+      [tabs.melt << [name, proc, self.name]]
+    end
   end
 end

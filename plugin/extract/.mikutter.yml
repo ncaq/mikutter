@@ -3,11 +3,8 @@ slug: :extract
 depends:
   mikutter: '0.2'
   plugin:
-  - gtk3
-  - settings
   - gui
   - uitranslator
-  - skin
 version: '1.0'
 author: toshi_a
 name: 抽出タブ

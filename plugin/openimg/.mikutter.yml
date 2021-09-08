@@ -3,11 +3,8 @@ slug: :openimg
 depends:
   mikutter: '3.5'
   plugin:
-  - gtk3
   - uitranslator
-  - intent
   - photo
-  - skin
 version: '2.1'
 author: toshi_a
 name: 画像ビューア

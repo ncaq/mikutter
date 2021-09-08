@@ -1,37 +1,71 @@
-# -*- coding: utf-8 -*-
+ # -*- coding: utf-8 -*-
 
 module Plugin::Settings
+  DSL_METHODS = [
+    :label,
+    :settings,
+    :create_inner_setting,
+    :multitext,
+    :fileselect,
+    :photoselect,
+    :font,
+    :select,
+    :dirselect,
+    :inputpass,
+    :multi,
+    :about,
+    :listview,
+    :fontcolor,
+    :multiselect,
+    :adjustment,
+    :keybind,
+    :color,
+    :link,
+    :input,
+    :boolean
+  ]
   # Setting DSLの、入れ子になったsettingsだけを抜き出すためのクラス。
   class Phantom
-    attr_reader :detected
+    attr_reader :title, :plugin, :dsl_procedure
 
-    def initialize(plugin_slug, &block)
-      @plugin_slug = plugin_slug
-      @detected = Array.new
-      begin
-        instance_eval(&block)
-      rescue
-        @detected = [].freeze
-      end
-      @detected.freeze
+    def initialize(title:, plugin:, &block)
+      raise ArgumentError, 'Block requred.' unless block
+      @title = -title
+      @plugin = plugin
+      @dsl_procedure = block
+      @children = nil
     end
 
-    Gtk::FormDSL.instance_methods.each do |name|
+    def children
+      return @children if @children
+      @children = []
+      instance_eval(&@dsl_procedure)
+      @children.freeze
+    rescue
+      @children = [].freeze
+    end
+
+    DSL_METHODS.each do |name|
       define_method(name) do |*|
         MOCK
       end
     end
 
     def settings(name, &block)
-      @detected << Record.new(name, block, @plugin_slug)
+      @children << Phantom.new(
+        title: name,
+        plugin: @plugin,
+        &block
+      )
+      nil
     end
 
     def method_missing(name, *rest, &block)
       case name.to_sym
-      when *Gtk::FormDSL.instance_methods
+      when *DSL_METHODS
         MOCK
       else
-        Plugin.instance(@plugin_slug).__send__(name, *rest, &block)
+        @plugin.__send__(name, *rest, &block)
       end
     end
 
