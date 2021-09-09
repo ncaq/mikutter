@@ -220,10 +220,7 @@ class Plugin::Gtk3::MiraclePainter < Gtk::ListBoxRow
   end
 
   # 互換性
-  def signal_do_click(ev)
-    signal_do_clicked ev
-  end
-  deprecate :signal_do_click, :signal_do_clicked, 2020, 7
+  def signal_do_click(ev); end
 
   def signal_do_button_press_event(ev)
     notice "#{self}*button_press_event(ev=#{ev.inspect})" if VERBOSE
