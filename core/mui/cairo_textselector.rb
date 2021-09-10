@@ -57,8 +57,8 @@ module Gdk
 
     def textselector_attr_list(attr_list=Pango::AttrList.new)
       if textselector_range
-        bg = ::Pango::AttrBackground.new(*Gdk::MiraclePainter::BLACK)
-        fg = ::Pango::AttrForeground.new(*Gdk::MiraclePainter::WHITE)
+        bg = ::Pango::AttrBackground.new(*Plugin::Gtk3::MiraclePainter::BLACK)
+        fg = ::Pango::AttrForeground.new(*Plugin::Gtk3::MiraclePainter::WHITE)
         bg.start_index = fg.start_index = plain_description[0...textselector_range.first].bytesize
         bg.end_index = fg.end_index = plain_description[0...textselector_range.last].bytesize
         attr_list.insert(bg)
