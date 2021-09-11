@@ -176,7 +176,8 @@ Plugin.create :command do
           visible: true,
           icon: "https://www.google.co.jp/images/google_favicon_128.png",
           role: :timeline) do |opt|
-    Plugin.call(:open, "http://www.google.co.jp/search?q=" + URI.escape(opt.widget.selected_text(opt.messages.first)).to_s) end
+    Plugin.call(:open, "http://www.google.co.jp/search?" + URI.encode_www_form({'q'=>opt.widget.selected_text(opt.messages.first).to_s}))
+  end
 
   command(:open_in_browser,
           name: _('ブラウザで開く'),
