@@ -60,7 +60,7 @@ Plugin.create(:mastodon_account_viewer) do
       end
     }.set_row_spacing(0, 4).
       set_row_spacing(1, 4).
-      set_column_spacing(0, 16)
+      set_col_spacing(0, 16)
   end
 
   def cell_widget(model_or_str)

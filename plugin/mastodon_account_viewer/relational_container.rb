@@ -3,14 +3,14 @@
 require_relative 'relational_menu'
 
 module Plugin::MastodonAccountViewer
-  class RelationalContainer < Gtk::HBox
+  class RelationalContainer < Gtk::Box
     ICON_SIZE = Gdk::Rectangle.new(0, 0, 32, 32).freeze
     ARROW_SIZE = Gdk::Rectangle.new(0, 0, 16, 16).freeze
 
     attr_reader :my_account, :counterpart
 
     def initialize(my_account, counterpart, updater)
-      super(false, ICON_SIZE.width / 2)
+      super(:horizontal, ICON_SIZE.width / 2)
       @my_account = my_account
       @counterpart = counterpart
       @updater = updater
