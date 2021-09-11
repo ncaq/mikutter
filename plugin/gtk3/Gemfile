@@ -1,4 +1,6 @@
 source 'https://rubygems.org'
 
-gem 'gtk3', '3.4.9'
+git 'https://github.com/ruby-gnome/ruby-gnome', ref: '554fe3ebba5da5f4b1f61ac7b5e6121be1b32b51' do
+  gem 'gtk3'
+end
 gem 'pqueue', '~> 2.1'
