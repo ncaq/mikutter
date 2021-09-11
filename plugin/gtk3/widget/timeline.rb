@@ -126,15 +126,16 @@ module Plugin::Gtk3
 
     def popup_menu(event)
       menu = Gtk::Menu.new
-      menu.ssc(:deactivate, &:destroy)
       menu.attach_to_widget self
 
       ev, menus = Plugin::GUI::Command.get_menu_items @imaginary
-      notice menus
       Gtk::ContextMenu.new(*menus).build!(self, ev, menu = menu)
 
       menu.show_all
       menu.popup_at_pointer event
+
+      # TODO: gtk3 参照を保持しておかないとGCされてしまう
+      @menu = menu
     end
 
   private
