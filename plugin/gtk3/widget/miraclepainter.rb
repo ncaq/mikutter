@@ -422,9 +422,8 @@ private
     context.set_source_rgb(*rgb) if context
     layout.text = plain_description
 
-    return layout until layout.context
-    layout.context.set_shape_renderer do |c, shape, _|
-      return layout until photo = shape.data
+    layout.context&.set_shape_renderer do |c, shape, _|
+      next layout unless photo = shape.data
       width, height = shape.ink_rect.width/Pango::SCALE, shape.ink_rect.height/Pango::SCALE
       pixbuf = photo.load_pixbuf(width: width, height: height) do
         queue_draw
