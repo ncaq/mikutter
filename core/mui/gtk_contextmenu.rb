@@ -37,7 +37,7 @@ module Gtk
     def build!(widget, optional, menu = temporary_menu)
       @contextmenu.each do |param|
         label, cond, proc, icon = param
-        if cond.call(*[optional, widget][0, (cond.arity == -1 ? 1 : cond.arity)])
+        if cond.call(*[optional, widget][0, (cond.arity < 0 ? 1 : cond.arity)])
           if label
             item = gen_menu_item(label_text(label, optional, widget), icon, optional, widget)
             if proc
