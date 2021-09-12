@@ -68,13 +68,18 @@ class Gtk::IntelligentTextview < Gtk::TextView
   end
 
   def bg_modifier(color = style_generator)
-    # FIXME: gtk3, find alternative method
-    # if color.is_a? Gtk::Style
-    #   self.style = color
+    if color.is_a? Gtk::Style
+      warn 'Gtk::IntelligentTextview#bg_modifier(Gtk::Style) is deprecated.'
+      color = color.to_style_provider
+    end
+    if color.is_a? Gtk::StyleProvider
+      style_context.add_provider(color, Gtk::StyleProvider::PRIORITY_APPLICATION)
+    # FIXME: gtk3, find alternative
     # elsif get_window(Gtk::TextView::WINDOW_TEXT).respond_to?(:background=)
-    #   get_window(Gtk::TextView::WINDOW_TEXT).background = color end
-    # queue_draw
-    false end
+    #   get_window(Gtk::TextView::WINDOW_TEXT).background = color
+    end
+    queue_draw
+  end
 
   # 新しいテキスト _msg_ に内容を差し替える。
   # ==== Args

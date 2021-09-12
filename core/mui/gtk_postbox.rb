@@ -10,6 +10,7 @@ require 'mui/gtk_intelligent_textview'
 
 module Gtk
   class PostBox < Gtk::EventBox
+    extend Gem::Deprecate
     attr_accessor :return_to_top
 
     @@ringlock = Mutex.new
@@ -216,10 +217,10 @@ module Gtk
         w_reply = Gtk::Grid.new
         w_reply.orientation = :horizontal
         itv = Gtk::IntelligentTextview.new(message.description, { 'font' => :mumble_basic_font })
-        itv.style_generator = lambda{ get_backgroundstyle(message) }
+        itv.style_generator = lambda{ get_style_provider(message) }
         itv.bg_modifier
         ev = Gtk::EventBox.new
-        ev.style = get_backgroundstyle(message)
+        ev.style_context.add_provider(get_style_provider(message), Gtk::StyleProvider::PRIORITY_APPLICATION)
         w_reply.add(Gtk::WebIcon.new(message.icon, 32, 32).top) if message.respond_to?(:icon)
         w_replies.add(ev.add(w_reply.add(itv)))
         @reply_widgets << itv }
@@ -381,10 +382,22 @@ module Gtk
       style = Gtk::Style.new()
       color = get_backgroundcolor(message)
       [Gtk::StateType::ACTIVE, Gtk::StateType::NORMAL, Gtk::StateType::SELECTED, Gtk::StateType::PRELIGHT, Gtk::StateType::INSENSITIVE].each{ |state|
-        # FIXME: gtk3, find alternative method
-        #style.set_bg(state, *color)
+        # FIXME: gtk3, it's not working (v3.4.9)
+        # style.bg[state] = color
       }
       style end
+    deprecate :get_backgroundstyle, :get_style_provider, 2021, 9
+
+    def get_style_provider(message)
+      color = get_backgroundcolor(message)
+      Gtk::CssProvider.new.tap do |provider|
+        provider.load_from_data(<<~CSS)
+          *, *:active, *:disabled, *:hover, *:focus {
+            background-color: rgb(#{color[0] / 256}, #{color[1] / 256}, #{color[2] / 256});
+          }
+        CSS
+      end
+    end
 
     def post_set_default_text(post)
       if @options[:delegated_by]

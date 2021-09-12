@@ -344,6 +344,37 @@ module Gdk
   end
 end
 
+class Gtk::Style
+  CSS_PSEUDO_CLASS_BY_STATE_TYPE = {
+    Gtk::StateType::NORMAL => '',
+    Gtk::StateType::ACTIVE => ':active',
+    Gtk::StateType::SELECTED => ':focus',
+    Gtk::StateType::PRELIGHT => ':hover',
+    Gtk::StateType::INSENSITIVE => ':disabled'
+  }
+
+  # NOTE: gtk2向けコードとの後方互換のために用意したが使われないことを祈る
+  def to_style_provider
+    Gtk::CssProvider.new.tap do |provider|
+      styles = {}
+      CSS_PSEUDO_CLASS_BY_STATE_TYPE.each do |type, pseudo_class|
+        color = bg[type]
+        if color
+          selector = "*#{pseudo_class}"
+          styles[selector] ||= ''
+          styles[selector] += "background-color: rgb(#{color[0] / 256}, #{color[1] / 256}, #{color[2] / 256});"
+        end
+      end
+      css = styles.map { |selector, style| "#{selector} { #{style} }" }.join(' ')
+      provider.load_from_data(css)
+    end
+  rescue NotImplementedError => e
+    # NotImplementedErrorが発生し、内容に正しくアクセスできない可能性がある
+    error e
+    Gtk::CssProvider.new
+  end
+end
+
 unless Kernel.const_defined?(:GdkPixbuf)
   module GdkPixbuf
     Pixbuf = Gdk::Pixbuf
