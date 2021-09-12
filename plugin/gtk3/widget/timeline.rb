@@ -138,6 +138,18 @@ module Plugin::Gtk3
       @menu = menu
     end
 
+    def add_postbox(i_postbox)
+      # ずっと表示される（投稿しても消えない）PostBoxの処理
+      # 既にprocっぽいものが入っているときはそのままにしておく
+      options = i_postbox.options.dup
+      if options[:delegate_other] && !options[:delegate_other].respond_to?(:to_proc)
+        i_timeline = i_postbox.ancestor_of(Plugin::GUI::Timeline)
+        options[:delegate_other] = postbox_delegation_generator(i_timeline)
+        options[:postboxstorage] = postbox
+      end
+      create_postbox(options)
+    end
+
   private
 
     def check_and_add(model)
@@ -164,6 +176,18 @@ module Plugin::Gtk3
       row = @hash[model.uri.to_s] or return
       @listbox.remove row
       @hash.delete row
+    end
+
+    def create_postbox(options, &block)
+      options = options.dup
+      options[:before_post_hook] = ->(this) {
+        get_ancestor(Gtk::Window).set_focus(self) unless self.destroyed?
+      }
+      pb = Gtk::PostBox.new(**options).show_all
+      postbox << pb
+      pb.on_delete(&block) if block
+      get_ancestor(Gtk::Window).set_focus(pb.post)
+      pb
     end
   end
 end
