@@ -78,7 +78,7 @@ module Plugin::Gtk3
     end
 
     def active
-      @imaginary.active!
+      @imaginary.active!(true, true)
     end
 
     def keypress(keyname)
