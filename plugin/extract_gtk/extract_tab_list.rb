@@ -94,7 +94,7 @@ class Plugin::ExtractGtk::ExtractTabList < ::Gtk::TreeView
   def register_signal_handlers
     # 項目をダブルクリックして設定を開く
     ssc(:button_press_event) do |_, ev|
-      next if ev.event_type != Gdk::Event::BUTTON2_PRESS
+      next if ev.event_type != Gdk::EventType::BUTTON2_PRESS
       slug = selected_slug
       if slug
         Plugin.call(:extract_open_edit_dialog, slug)

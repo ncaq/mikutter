@@ -141,18 +141,18 @@ module Gtk
     type, button, state = key
     return NO_ACTION if key.empty? or type == 0 or not key.all?
     r = ""
-    r << PRESS_WITH_CONTROL if (state & Gdk::Window::CONTROL_MASK) != 0
-    r << PRESS_WITH_SHIFT if (state & Gdk::Window::SHIFT_MASK) != 0
-    r << PRESS_WITH_ALT if (state & Gdk::Window::MOD1_MASK) != 0
-    r << PRESS_WITH_SUPER if (state & Gdk::Window::SUPER_MASK) != 0
-    r << PRESS_WITH_HYPER if (state & Gdk::Window::HYPER_MASK) != 0
+    r << PRESS_WITH_CONTROL if (state & Gdk::ModifierType::CONTROL_MASK) != 0
+    r << PRESS_WITH_SHIFT if (state & Gdk::ModifierType::SHIFT_MASK) != 0
+    r << PRESS_WITH_ALT if (state & Gdk::ModifierType::MOD1_MASK) != 0
+    r << PRESS_WITH_SUPER if (state & Gdk::ModifierType::SUPER_MASK) != 0
+    r << PRESS_WITH_HYPER if (state & Gdk::ModifierType::HYPER_MASK) != 0
     r << "Button #{button} "
     case type
-    when Gdk::Event::BUTTON_PRESS
+    when Gdk::EventType::BUTTON_PRESS
       r << 'Click'.freeze
-    when Gdk::Event::BUTTON2_PRESS
+    when Gdk::EventType::BUTTON2_PRESS
       r << 'Double Click'.freeze
-    when Gdk::Event::BUTTON3_PRESS
+    when Gdk::EventType::BUTTON3_PRESS
       r << 'Triple Click'.freeze
     else
       return NO_ACTION end

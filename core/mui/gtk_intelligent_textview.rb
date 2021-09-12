@@ -150,7 +150,7 @@ class Gtk::IntelligentTextview < Gtk::TextView
         tag_shell.foreground_gdk = Gdk::Color.new(*UserConfig[fonts['foreground']]) end
       false }
     self.signal_connect('event'){
-      set_cursor(self, Gdk::Cursor::XTERM)
+      set_cursor(self, Gdk::CursorType::XTERM)
       false }
   end
 

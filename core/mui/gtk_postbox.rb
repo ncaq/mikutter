@@ -380,7 +380,7 @@ module Gtk
     def get_backgroundstyle(message)
       style = Gtk::Style.new()
       color = get_backgroundcolor(message)
-      [Gtk::STATE_ACTIVE, Gtk::STATE_NORMAL, Gtk::STATE_SELECTED, Gtk::STATE_PRELIGHT, Gtk::STATE_INSENSITIVE].each{ |state|
+      [Gtk::StateType::ACTIVE, Gtk::StateType::NORMAL, Gtk::StateType::SELECTED, Gtk::StateType::PRELIGHT, Gtk::StateType::INSENSITIVE].each{ |state|
         # FIXME: gtk3, find alternative method
         #style.set_bg(state, *color)
       }

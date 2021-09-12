@@ -58,9 +58,9 @@ Plugin.create :skin do
 
     skin_infos.each { |slug, info|
       button = if current_radio
-        Gtk::RadioButton.new(current_radio, info[:face])
+        Gtk::RadioButton.new(member: current_radio, label: info[:face])
       else
-        Gtk::RadioButton.new(info[:face])
+        Gtk::RadioButton.new(label: info[:face])
       end
 
       if slug == UserConfig[:skin_dir]

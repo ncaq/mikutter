@@ -12,7 +12,7 @@ module Plugin::SettingsGtk
     def initialize
       super(Gtk::TreeStore.new(String, Record, Integer))
       set_headers_visible(false)
-      model.set_sort_column_id(COL_ORDER, Gtk::SORT_ASCENDING)
+      model.set_sort_column_id(COL_ORDER, Gtk::SortType::ASCENDING)
       column = Gtk::TreeViewColumn.new("", ::Gtk::CellRendererText.new, text: 0)
       self.append_column(column)
       self.set_width_request(HYDE)
