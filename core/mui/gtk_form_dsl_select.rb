@@ -26,7 +26,7 @@ module Gtk::FormDSL
                     label = grid.children.find { |w| w.is_a? Gtk::Label }
                     widget = grid.children.find { |w| !w.is_a? Gtk::Label }
                     grid.children.each { |w| grid.remove w }
-                    [value, label.label, widget].freeze
+                    [value, label&.label || text, widget].freeze
                   else
                     [value, text].freeze
                   end
