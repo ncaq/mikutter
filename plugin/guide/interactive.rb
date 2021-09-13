@@ -54,7 +54,8 @@ module Plugin::Guide
     def initialize(*args)
       super
       if message[:confirm]
-        sid = helper.ssc(:click){ |this, e, x, y|
+        sid = helper.ssc(:clicked){ |this, e|
+          x, y = e.x, e.y
           ofsty = helper.mainpart_height
           helper.subparts.each{ |part|
             break if part == self
