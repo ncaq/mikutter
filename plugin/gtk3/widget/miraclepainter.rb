@@ -52,7 +52,7 @@ class Plugin::Gtk3::MiraclePainter < Gtk::ListBoxRow
 
   signal_new :clicked, GLib::Signal::RUN_FIRST | GLib::Signal::ACTION, nil, nil, Gdk::EventButton
   
-  signal_new :click, GLib::Signal::RUN_FIRST | GLib::Signal::ACTION, nil, nil, Gdk::EventButton # 互換性
+  signal_new :click, GLib::Signal::RUN_FIRST | GLib::Signal::ACTION, nil, nil, Gdk::EventButton, Integer, Integer # 互換性
   signal_new :expose_event, GLib::Signal::RUN_FIRST, nil, nil # 互換性
 
   include Gdk::IconOverButton
@@ -220,7 +220,7 @@ class Plugin::Gtk3::MiraclePainter < Gtk::ListBoxRow
   end
 
   # 互換性
-  def signal_do_click(ev); end
+  def signal_do_click(ev, cell_x, cell_y); end
 
   def signal_do_button_press_event(ev)
     notice "#{self}*button_press_event(ev=#{ev.inspect})" if VERBOSE
@@ -244,7 +244,7 @@ class Plugin::Gtk3::MiraclePainter < Gtk::ListBoxRow
       and textselector_release(*main_pos_to_index_forclick(x, y)[1..2])
     if @mouse_in_row || ev.event_type == Gdk::EventType::TOUCH_END
       signal_emit :clicked, ev
-      signal_emit :click, ev # 互換性
+      signal_emit :click, ev, x, y # 互換性
     end
     false # propagate event
   end
