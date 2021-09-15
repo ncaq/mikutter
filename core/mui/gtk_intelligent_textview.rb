@@ -107,7 +107,7 @@ class Gtk::IntelligentTextview < Gtk::TextView
     when String
       type_strict fonts => Hash
       tags = fonts2tags(fonts)
-      buffer.insert(buffer.start_iter, msg, {shell: ''})
+      buffer.insert(buffer.start_iter, msg, { tags: %w[shell] })
       apply_links
       apply_inner_widget
     when Enumerable # score
@@ -136,7 +136,7 @@ class Gtk::IntelligentTextview < Gtk::TextView
           buffer.insert(pos, note.description)
           buffer.apply_tag(tagname, buffer.get_iter_at_offset(start), pos)
         else
-          buffer.insert(pos, note.description, {shell: ''})
+          buffer.insert(pos, note.description, { tags: %w[shell] })
         end
       end
     end

@@ -31,15 +31,15 @@ Plugin.create :console do
         iter = widget_result.buffer.end_iter
         begin
           result = Kernel.instance_eval(widget.buffer.text)
-          widget_result.buffer.insert(iter, ">>> ", {prompt: "prompt"})
-          widget_result.buffer.insert(iter, "#{widget.buffer.text}\n", {echo: "echo"})
-          widget_result.buffer.insert(iter, "#{result.inspect}\n", {result: "result"})
+          widget_result.buffer.insert(iter, ">>> ", { tags: %w[prompt] })
+          widget_result.buffer.insert(iter, "#{widget.buffer.text}\n", { tags: %w[echo] })
+          widget_result.buffer.insert(iter, "#{result.inspect}\n", { tags: %w[result] })
         rescue Exception => e
-          widget_result.buffer.insert(iter, ">>> ", {prompt: "prompt"})
-          widget_result.buffer.insert(iter, "#{widget.buffer.text}\n", {echo: "echo"})
-          widget_result.buffer.insert(iter, "#{e.class}: ", {errorclass: "errorclass"})
-          widget_result.buffer.insert(iter, "#{e}\n", {error: "error"})
-          widget_result.buffer.insert(iter, e.backtrace.join("\n") + "\n", {backtrace: "backtrace"})
+          widget_result.buffer.insert(iter, ">>> ", { tags: %w[prompt] })
+          widget_result.buffer.insert(iter, "#{widget.buffer.text}\n", { tags: %w[echo] })
+          widget_result.buffer.insert(iter, "#{e.class}: ", { tags: %w[errorclass] })
+          widget_result.buffer.insert(iter, "#{e}\n", { tags: %w[error] })
+          widget_result.buffer.insert(iter, e.backtrace.join("\n") + "\n", { tags: %w[backtrace] })
         end
         Delayer.new {
           if not widget_result.destroyed?
