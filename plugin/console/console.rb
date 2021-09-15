@@ -73,12 +73,10 @@ Plugin.create :console do
   # ==== Return
   # 縦スクロールバーと横スクロールバー
   def gen_scrollbars(widget)
-    #scroll_v = ::Gtk::VScrollbar.new
-    #scroll_h = ::Gtk::HScrollbar.new
     scroll_v = Gtk::Scrollbar.new(:vertical)
     scroll_h = Gtk::Scrollbar.new(:horizontal)
-    # FIXME: gtk3
-    widget.set_scroll_adjustment(scroll_h.adjustment, scroll_v.adjustment)
+    widget.vadjustment = scroll_v.adjustment
+    widget.hadjustment = scroll_h.adjustment
     return scroll_v, scroll_h
   end
 
