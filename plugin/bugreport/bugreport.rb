@@ -15,15 +15,15 @@ Plugin.create :bugreport do
 
   def popup
     alert_thread = if(Thread.main != Thread.current) then Thread.current end
-    dialog = Gtk::Dialog.new("bug report")
+    dialog = Gtk::Dialog.new(title: "bug report")
     dialog.set_size_request(600, 400)
-    dialog.window_position = Gtk::Window::POS_CENTER
-    dialog.vbox.pack_start(main, true, true, 30)
+    dialog.window_position = Gtk::WindowPosition::CENTER
+    dialog.child.pack_start(main, expand: true, fill: true, padding: 30)
     dialog.add_button(Gtk::Stock::OK, Gtk::ResponseType::OK)
     dialog.add_button(Gtk::Stock::CANCEL, Gtk::ResponseType::CANCEL)
     dialog.default_response = Gtk::ResponseType::OK
     quit = lambda{
-      dialog.hide_all.destroy
+      dialog.hide.destroy
       Gtk.main_iteration_do(false)
       if alert_thread
         alert_thread.run

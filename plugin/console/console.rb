@@ -31,15 +31,15 @@ Plugin.create :console do
         iter = widget_result.buffer.end_iter
         begin
           result = Kernel.instance_eval(widget.buffer.text)
-          widget_result.buffer.insert(iter, ">>> ", "prompt")
-          widget_result.buffer.insert(iter, "#{widget.buffer.text}\n", "echo")
-          widget_result.buffer.insert(iter, "#{result.inspect}\n", "result")
+          widget_result.buffer.insert(iter, ">>> ", {prompt: "prompt"})
+          widget_result.buffer.insert(iter, "#{widget.buffer.text}\n", {echo: "echo"})
+          widget_result.buffer.insert(iter, "#{result.inspect}\n", {result: "result"})
         rescue Exception => e
-          widget_result.buffer.insert(iter, ">>> ", "prompt")
-          widget_result.buffer.insert(iter, "#{widget.buffer.text}\n", "echo")
-          widget_result.buffer.insert(iter, "#{e.class}: ", "errorclass")
-          widget_result.buffer.insert(iter, "#{e}\n", "error")
-          widget_result.buffer.insert(iter, e.backtrace.join("\n") + "\n", "backtrace")
+          widget_result.buffer.insert(iter, ">>> ", {prompt: "prompt"})
+          widget_result.buffer.insert(iter, "#{widget.buffer.text}\n", {echo: "echo"})
+          widget_result.buffer.insert(iter, "#{e.class}: ", {errorclass: "errorclass"})
+          widget_result.buffer.insert(iter, "#{e}\n", {error: "error"})
+          widget_result.buffer.insert(iter, e.backtrace.join("\n") + "\n", {backtrace: "backtrace"})
         end
         Delayer.new {
           if not widget_result.destroyed?
@@ -52,17 +52,17 @@ Plugin.create :console do
       set_icon Skin[:console]
       set_deletable true
       temporary_tab
-      nativewidget Plugin::Console::ConsoleControl.new().
+      nativewidget Plugin::Console::ConsoleControl.new(:vertical).
         pack1(::Gtk::Table.new(2, 3).
-              attach(widget_result, 0, 1, 0, 1, ::Gtk::FILL|::Gtk::SHRINK|::Gtk::EXPAND, ::Gtk::FILL|::Gtk::SHRINK|::Gtk::EXPAND).
-              attach(scroll_result_h, 0, 1, 1, 2, ::Gtk::SHRINK|::Gtk::FILL, ::Gtk::FILL).
-              attach(scroll_result_v, 1, 2, 0, 1, ::Gtk::FILL, ::Gtk::SHRINK|::Gtk::FILL),
-              true, false).
+              attach(widget_result, 0, 1, 0, 1, ::Gtk::AttachOptions::FILL|::Gtk::AttachOptions::SHRINK|::Gtk::AttachOptions::EXPAND, ::Gtk::AttachOptions::FILL|::Gtk::AttachOptions::SHRINK|::Gtk::AttachOptions::EXPAND).
+              attach(scroll_result_h, 0, 1, 1, 2, ::Gtk::AttachOptions::SHRINK|::Gtk::AttachOptions::FILL, ::Gtk::AttachOptions::FILL).
+              attach(scroll_result_v, 1, 2, 0, 1, ::Gtk::AttachOptions::FILL, ::Gtk::AttachOptions::SHRINK|::Gtk::AttachOptions::FILL),
+              resize: false, shrink: false).
         pack2(::Gtk::Table.new(2, 3).
-              attach(widget_input, 0, 1, 0, 1, ::Gtk::FILL|::Gtk::SHRINK|::Gtk::EXPAND, ::Gtk::FILL|::Gtk::SHRINK|::Gtk::EXPAND).
-              attach(scroll_input_h, 0, 1, 1, 2, ::Gtk::SHRINK|::Gtk::FILL, ::Gtk::FILL).
-              attach(scroll_input_v, 1, 2, 0, 1, ::Gtk::FILL, ::Gtk::SHRINK|::Gtk::FILL),
-              false, false)
+              attach(widget_input, 0, 1, 0, 1, ::Gtk::AttachOptions::FILL|::Gtk::AttachOptions::SHRINK|::Gtk::AttachOptions::EXPAND, ::Gtk::AttachOptions::FILL|::Gtk::AttachOptions::SHRINK|::Gtk::AttachOptions::EXPAND).
+              attach(scroll_input_h, 0, 1, 1, 2, ::Gtk::AttachOptions::SHRINK|::Gtk::AttachOptions::FILL, ::Gtk::AttachOptions::FILL).
+              attach(scroll_input_v, 1, 2, 0, 1, ::Gtk::AttachOptions::FILL, ::Gtk::AttachOptions::SHRINK|::Gtk::AttachOptions::FILL),
+              resize: false, shrink: false)
       active!
     end
   end
@@ -73,8 +73,11 @@ Plugin.create :console do
   # ==== Return
   # 縦スクロールバーと横スクロールバー
   def gen_scrollbars(widget)
-    scroll_v = ::Gtk::VScrollbar.new
-    scroll_h = ::Gtk::HScrollbar.new
+    #scroll_v = ::Gtk::VScrollbar.new
+    #scroll_h = ::Gtk::HScrollbar.new
+    scroll_v = Gtk::Scrollbar.new(:vertical)
+    scroll_h = Gtk::Scrollbar.new(:horizontal)
+    # FIXME: gtk3
     widget.set_scroll_adjustment(scroll_h.adjustment, scroll_v.adjustment)
     return scroll_v, scroll_h
   end

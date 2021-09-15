@@ -22,10 +22,10 @@ module Gtk::TreeViewPrettyScroll
 
     ssc(:scroll_event){ |this, e|
       case e.direction
-      when Gdk::EventScroll::UP
+      when Gdk::ScrollDirection::UP
         this.vadjustment.value = [this.vadjustment.value - this.vadjustment.step_increment, this.vadjustment.lower].max
         scroll_to_top_animation_id.call
-      when Gdk::EventScroll::DOWN
+      when Gdk::ScrollDirection::DOWN
         @scroll_to_zero_lator = false if this.vadjustment.value == 0
         this.vadjustment.value = [this.vadjustment.value + this.vadjustment.step_increment, this.vadjustment.upper - visible_rect.height].min
         scroll_to_top_animation_id.call end

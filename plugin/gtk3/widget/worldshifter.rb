@@ -24,16 +24,16 @@ class Plugin::Gtk3::WorldShifter < Gtk::EventBox
   def open_menu(event)
     @menu ||= Gtk::Menu.new.tap do |menu|
       Plugin.collect(:worlds).each do |world|
-        item = Gtk::ImageMenuItem.new(world.title, false)
+        item = Gtk::ImageMenuItem.new(label: world.title, accel_group: false)
         item.set_image Gtk::WebIcon.new(world.icon, UserConfig[:gtk_accountbox_geometry], UserConfig[:gtk_accountbox_geometry])
         item.ssc(:activate) { |w|
           Plugin.call(:world_change_current, world)
-          @face.tooltip(world.title)
+          @face.tooltip_text = world.title
           false }
         menu.append item
       end
       menu.append Gtk::SeparatorMenuItem.new
-      item = Gtk::ImageMenuItem.new(Plugin[:gtk3]._('Worldを追加'), false)
+      item = Gtk::ImageMenuItem.new(label: Plugin[:gtk3]._('Worldを追加'), accel_group: false)
       item.set_image Gtk::WebIcon.new(Skin[:add], UserConfig[:gtk_accountbox_geometry], UserConfig[:gtk_accountbox_geometry])
       item.ssc(:activate) { |w|
         Plugin.call(:request_world_add)
