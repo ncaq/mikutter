@@ -136,14 +136,16 @@ module Gtk::FormDSL
   # [text] ラベルテキスト
   # [key] キー
   # [dir:] 初期のディレクトリ
+  # [title:] ファイル選択ダイアログのタイトル(String)
   # [shortcuts:] ファイル選択ダイアログのサイドバーに表示しておくディレクトリの絶対パスの配列(Array)
   # [filters:] ファイル選択ダイアログの拡張子フィルタ(Hash)。キーはコンボボックスに表示するラベル(String)、値は拡張子の配列(Array)。拡張子はStringで指定する。
-  def fileselect(text, key, dir: nil, shortcuts: nil, filters: nil)
+  # [use_preview:] ファイル選択ダイアログで、ファイルのプレビューを表示するか。 _true_ なら表示する。 (_true_ or _false_)
+  def fileselect(text, key, _current=nil, dir: _current, title: text.to_s, shortcuts: nil, filters: nil, use_preview: false)
     label = Gtk::Label.new text
     label.hexpand = true
     label.halign = :start
 
-    file_chooser = Gtk::FileChooserButton.new text, :open
+    file_chooser = Gtk::FileChooserButton.new title, :open
     (self[key] && ! self[key].empty?) and file_chooser.filename = self[key]
     file_chooser.ssc :file_set do
       self[key] = file_chooser.filename
@@ -158,6 +160,18 @@ module Gtk::FormDSL
       filter.name = k
       v.each { |ext| filter.add_pattern "*.#{ext}" }
       file_chooser.add_filter filter
+    end
+
+    if use_preview
+      file_chooser.preview_widget = Gtk::Image.new
+      file_chooser.ssc :update_preview do
+        filename = file_chooser.preview_filename
+        pixbuf = GdkPixbuf::Pixbuf.new file: filename, width: 128, height: 128
+        pixbuf and file_chooser.preview_widget.pixbuf = pixbuf
+        file_chooser.preview_widget_active = !!pixbuf
+      rescue
+        file_chooser.preview_widget_active = false
+      end
     end
 
     button = Gtk::Button.new icon_name: 'edit-clear-symbolic'
@@ -181,9 +195,11 @@ module Gtk::FormDSL
   # ==== Args
   # [text] ラベルテキスト
   # [key] キー
+  # [title:] ファイル選択ダイアログのタイトル(String)
   # [shortcuts:] ファイル選択ダイアログのサイドバーに表示しておくディレクトリの絶対パスの配列(Array)
   # [filters:] ファイル選択ダイアログの拡張子フィルタ(Hash)。キーはコンボボックスに表示するラベル(String)、値は拡張子の配列(Array)。拡張子はStringで指定する。
-  def photoselect(text, key, dir: nil, shortcuts: nil, filters: PHOTO_FILTER)
+  # [use_preview:] ファイル選択ダイアログで、ファイルのプレビューを表示するか。 _true_ なら表示する。 (_true_ or _false_)
+  def photoselect(text, key, _current=nil, dir: _current, title: text.to_s, shortcuts: nil, filters: PHOTO_FILTER, use_preview: true)
     label = Gtk::Label.new text
     label.hexpand = true
     label.halign = :start
@@ -209,20 +225,22 @@ module Gtk::FormDSL
     end
     entry.ssc :icon_press do
       file_chooser = Gtk::FileChooserDialog.new(
-        title: text, parent: get_ancestor(Gtk::Window), action: :open,
+        title: title, parent: get_ancestor(Gtk::Window), action: :open,
         buttons: [[Gtk::Stock::CANCEL, Gtk::ResponseType::CANCEL],
                   [Gtk::Stock::OPEN, Gtk::Dialog::RESPONSE_ACCEPT]]
       )
       dir and file_chooser.current_folder = dir
 
-      file_chooser.preview_widget = Gtk::Image.new
-      file_chooser.ssc :update_preview do
-        filename = file_chooser.preview_filename
-        pixbuf = GdkPixbuf::Pixbuf.new file: filename, width: 128, height: 128
-        pixbuf and file_chooser.preview_widget.pixbuf = pixbuf
-        file_chooser.preview_widget_active = !!pixbuf
-      rescue
-        file_chooser.preview_widget_active = false
+      if use_preview
+        file_chooser.preview_widget = Gtk::Image.new
+        file_chooser.ssc :update_preview do
+          filename = file_chooser.preview_filename
+          pixbuf = GdkPixbuf::Pixbuf.new file: filename, width: 128, height: 128
+          pixbuf and file_chooser.preview_widget.pixbuf = pixbuf
+          file_chooser.preview_widget_active = !!pixbuf
+        rescue
+          file_chooser.preview_widget_active = false
+        end
       end
       file_chooser.ssc :response do |_, response_id|
         case response_id
@@ -266,15 +284,16 @@ module Gtk::FormDSL
   # [text] ラベル
   # [key] 設定のキー
   # [dir:] 初期のディレクトリ
+  # [title:] ファイル選択ダイアログのタイトル(String)
   # [shortcuts:] ファイル選択ダイアログのサイドバーに表示しておくディレクトリの絶対パスの配列(Array)
-  def dirselect(text, key, dir: nil, shortcuts: nil)
+  def dirselect(text, key, _current=nil, dir: _current, title: text.to_s, shortcuts: nil)
     # fsselect(label, config, dir: dir, action: Gtk::FileChooser::ACTION_SELECT_FOLDER, title: title, shortcuts: shortcuts)
 
     label = Gtk::Label.new text
     label.hexpand = true
     label.halign = :start
 
-    file_chooser = Gtk::FileChooserButton.new text, :select_folder
+    file_chooser = Gtk::FileChooserButton.new title, :select_folder
     file_chooser.halign = :end
     (self[key] && ! self[key].empty?) and file_chooser.filename = self[key]
     file_chooser.ssc :file_set do
@@ -614,7 +633,7 @@ module Gtk::FormDSL
   #   連想配列で、 _値_ => _ラベル_ の形式で、デフォルト値を与える。
   #   _block_ と同時に与えれられたら、 _default_ の値が先に入って、 _block_ は後に入る。
   # [&block] 内容
-  def multiselect(text, key, default = {}, &block)
+  def multiselect(text, key, default = {}, mode: :auto, &block)
     builder = MultiSelectBuilder.new self, text, key, default
     block and builder.instance_eval(&block)
     list, = builder.build
