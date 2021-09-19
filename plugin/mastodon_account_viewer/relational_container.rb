@@ -115,7 +115,7 @@ module Plugin::MastodonAccountViewer
     end
 
     def gen_follow_relation
-      Gtk::VBox.new
+      Gtk::Box.new(:vertical, 0)
         .closeup(gen_following_relation)
         .closeup(gen_followed_relation)
     end
@@ -150,7 +150,7 @@ module Plugin::MastodonAccountViewer
     end
 
     def menubutton
-      @menubutton ||= Gtk::Button.new(' … ').tap do |b|
+      @menubutton ||= Gtk::Button.new(label: ' … ').tap do |b|
         b.sensitive = false
         b.ssc(:clicked) do
           Plugin::MastodonAccountViewer::RelationalMenu.new(self).show_all.popup(nil, nil, 0, 0)

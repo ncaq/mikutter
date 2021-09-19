@@ -76,7 +76,7 @@ Plugin.create(:mastodon_account_viewer) do
 
   # フォロー関係の表示・操作用ウィジェット
   def relation_bar(user)
-    container = ::Gtk::VBox.new(false, 4)
+    container = ::Gtk::Box.new(:vertical, 4)
     Plugin.collect(:mastodon_worlds).each do |me|
       container.closeup(Plugin::MastodonAccountViewer::RelationalContainer.new(me, user, self))
     end

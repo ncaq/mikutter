@@ -27,7 +27,7 @@ class Gtk::CompatListView < Gtk::TreeView
         scheme.each{ |cell|
           if cell[:kind]
             cell_renderer = get_render_by(cell, index)
-            col.pack_start(cell_renderer, cell[:expand])
+            col.pack_start(cell_renderer, expand: cell[:expand])
             col.add_attribute(cell_renderer, cell[:kind], index) end
           index += 1 }
         append_column(col)

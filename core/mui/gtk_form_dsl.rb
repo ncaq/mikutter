@@ -645,9 +645,9 @@ module Gtk::FormDSL
 
   def keybind(title, config)
     keyconfig = Gtk::KeyConfig.new(title, self[config] || "")
-    container = Gtk::HBox.new(false, 0)
-    container.pack_start(Gtk::Label.new(title), false, true, 0)
-    container.pack_start(Gtk::Alignment.new(1.0, 0.5, 0, 0).add(keyconfig), true, true, 0)
+    container = Gtk::Box.new(:horizontal, 0)
+    container.pack_start(Gtk::Label.new(title), expand: false, fill: true, padding: 0)
+    container.pack_start(Gtk::Alignment.new(1.0, 0.5, 0, 0).add(keyconfig), expand: true, fill: true, padding: 0)
     keyconfig.change_hook = ->(modify) { self[config] = modify }
     closeup(container)
     container
@@ -696,7 +696,7 @@ module Gtk::FormDSL
       add button
     when Diva::Model
       button = Gtk::Button.new
-      box = Gtk::HBox.new
+      box = Gtk::Box.new(:horizontal, 0)
       if target.respond_to?(:icon)
         icon = Gtk::WebIcon.new(target.icon, 48, 48)
         box.closeup(icon)

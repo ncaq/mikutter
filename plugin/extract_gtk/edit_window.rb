@@ -100,7 +100,7 @@ class  Plugin::ExtractGtk::EditWindow < Gtk::Window
   end
 
   def ok_button
-    Gtk::Button.new(_('閉じる')).tap{ |button|
+    Gtk::Button.new(label: _('閉じる')).tap{ |button|
       button.ssc(:clicked){
         self.destroy } } end
 

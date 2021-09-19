@@ -98,10 +98,10 @@ class Gtk::MessagePicker < Gtk::Frame
 
   def gen_add_button
     container = Gtk::Grid.new
-    btn = Gtk::Button.new('条件を追加')
+    btn = Gtk::Button.new(label: '条件を追加')
     btn.signal_connect(:clicked){
       add_condition.show_all }
-    btn2 = Gtk::Button.new('サブフィルタを追加')
+    btn2 = Gtk::Button.new(label: 'サブフィルタを追加')
     btn2.signal_connect(:clicked){
       add_condition([:and, DEFAULT_CONDITION]).show_all }
     container.add(btn).add(btn2) end

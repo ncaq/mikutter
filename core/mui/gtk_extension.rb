@@ -233,7 +233,7 @@ class Gtk::Box
   extend Gem::Deprecate
 
   # _widget_ を詰めて配置する。closeupで配置されたウィジェットは無理に親の幅に合わせられることがない。
-  # pack_start(_widget_, false)と等価。
+  # pack_start(_widget_, expand: false)と等価。
   def closeup(widget)
     pack_start(widget, expand: false)
   end
@@ -277,14 +277,14 @@ class Gtk::Dialog
   # YESボタンが押されたらtrue、それ以外が押されたらfalseを返す
   def self.confirm(message)
     Gtk::Lock.synchronize{
-      dialog = Gtk::MessageDialog.new(nil,
-                                      Gtk::Dialog::DESTROY_WITH_PARENT,
-                                      Gtk::MessageDialog::QUESTION,
-                                      Gtk::MessageDialog::BUTTONS_YES_NO,
-                                      message)
+      dialog = Gtk::MessageDialog.new(parent: nil,
+                                      flags: Gtk::DialogFlags::DESTROY_WITH_PARENT,
+                                      type: Gtk::MessageType::QUESTION,
+                                      buttons: Gtk::ButtonsType::YES_NO,
+                                      message: message)
       res = dialog.run
       dialog.destroy
-      res == Gtk::Dialog::RESPONSE_YES
+      res == Gtk::ResponseType::YES
     }
   end
 end

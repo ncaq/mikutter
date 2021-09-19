@@ -117,7 +117,7 @@ class Gtk::CRUD < Gtk::CompatListView
 
   def record_delete(optional, widget)
     if @deletable
-      self.selection.selected_each {|model, path, iter|
+      self.selection.each {|model, path, iter|
         if Gtk::Dialog.confirm("本当に削除しますか？\n" +
                                "一度削除するともうもどってこないよ。")
           force_record_delete(iter) end } end end
@@ -136,7 +136,7 @@ class Gtk::CRUD < Gtk::CompatListView
     Mtk.scrolled_dialog(dialog_title || "", input[:widget], self.toplevel || self, &input[:result]) end
 
   def gen_popup_window_widget(results = [])
-    widget = Gtk::VBox.new
+    widget = Gtk::Box.new(:vertical, 0)
     column_schemer.flatten.each_with_index{ |scheme, index|
       case scheme[:widget]
       when :message_picker

@@ -130,8 +130,8 @@ module Plugin::Shortcutkey
       window.transient_for = toplevel
       window.modal = true
       window.destroy_with_parent = true
-      btn_ok = ::Gtk::Button.new(@plugin._("OK"))
-      btn_cancel = ::Gtk::Button.new(@plugin._("キャンセル"))
+      btn_ok = ::Gtk::Button.new(label: @plugin._("OK"))
+      btn_cancel = ::Gtk::Button.new(label: @plugin._("キャンセル"))
       box = ::Gtk::ButtonBox.new :horizontal
       box.layout_style = :end
       box.spacing = 6
@@ -162,11 +162,11 @@ module Plugin::Shortcutkey
           nil
         }
         if error
-          dialog = ::Gtk::MessageDialog.new(window,
-                                            ::Gtk::Dialog::DESTROY_WITH_PARENT,
-                                            ::Gtk::MessageDialog::WARNING,
-                                            ::Gtk::MessageDialog::BUTTONS_OK,
-                                            error)
+          dialog = ::Gtk::MessageDialog.new(parent: window,
+                                            flags: ::Gtk::DialogFlags::DESTROY_WITH_PARENT,
+                                            type: ::Gtk::MessageType::WARNING,
+                                            buttons: ::Gtk::ButtonsType::OK,
+                                            message: error)
           dialog.run
           dialog.destroy end }
       ::Gtk::main
@@ -214,12 +214,12 @@ module Plugin::Shortcutkey
     end
 
     def key_box(results)
-      container = ::Gtk::HBox.new(false, 0)
+      container = ::Gtk::Box.new(:horizontal, 0)
       button = ::Gtk::KeyConfig.new(@plugin._('キーバインド'), results[COLUMN_KEYBIND])
       button.width_request = HYDE
       button.change_hook = lambda { |new| results[COLUMN_KEYBIND] = new }
-      container.pack_start(::Gtk::Label.new(@plugin._('キーバインド')), false, true, 0)
-      container.pack_start(Gtk::Alignment.new(1.0, 0.5, 0, 0).add(button), true, true, 0) end
+      container.pack_start(::Gtk::Label.new(@plugin._('キーバインド')), expand: false, fill: true, padding: 0)
+      container.pack_start(Gtk::Alignment.new(1.0, 0.5, 0, 0).add(button), expand: true, fill: true, padding: 0) end
 
     def world_box(results)
       faces = world_selections(value: :title)
@@ -274,7 +274,7 @@ module Plugin::Shortcutkey
       def initialize(*args)
         super
         set_size_request(640, 480)
-        self.window_position = ::Gtk::Window::POS_CENTER
+        self.window_position = ::Gtk::WindowPosition::CENTER
       end
     end
 

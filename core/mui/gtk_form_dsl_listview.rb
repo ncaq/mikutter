@@ -89,7 +89,7 @@ class Gtk::FormDSL::ListView < Gtk::TreeView
     @columns.each do |label, *fields|
       col = Gtk::TreeViewColumn.new(label)
       fields.each do |field|
-        col.pack_start(field.renderer, false)
+        col.pack_start(field.renderer, expand: false)
         col.add_attribute(field.renderer, field.type, index)
         #col.resizable = scheme[:resizable]
         append_column(col)

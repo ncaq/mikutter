@@ -26,7 +26,7 @@ class Gtk::UserList < Gtk::EventBox
     super
     @listview = Gtk::InnerUserList.new(self)
     scrollbar = ::Gtk::VScrollbar.new(@listview.vadjustment)
-    add Gtk::HBox.new(false, 0).add(@listview).closeup(scrollbar)
+    add Gtk::Box.new(:horizontal, 0).add(@listview).closeup(scrollbar)
     @listview.ssc(:row_activated, &self.class.row_activated)
     @listview.ssc(:expose_event){
       emit_expose_user
