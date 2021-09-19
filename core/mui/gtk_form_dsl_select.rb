@@ -23,10 +23,7 @@ module Gtk::FormDSL
       @options << if block
                     grid = @formdsl.create_inner_setting
                     grid.instance_eval(&block)
-                    label = grid.children.find { |w| w.is_a? Gtk::Label }
-                    widget = grid.children.find { |w| !w.is_a? Gtk::Label }
-                    grid.children.each { |w| grid.remove w }
-                    [value, label&.label || text, widget].freeze
+                    [value, text, grid].freeze
                   else
                     [value, text].freeze
                   end
@@ -91,29 +88,28 @@ module Gtk::FormDSL
 
       @group = Gtk::RadioButton.new
       @options.each do |value, text, widget|
-        # box = Gtk::Box.new :horizontal
-        # box.margin = box.spacing = 12
-        # 
-        # label = Gtk::Label.new text
-        # widget ||= build_button value
-        # widget.hexpand = false
-        # 
-        # box.pack_start(label).pack_end(widget)
-
-        check = build_check value, text
-        check.halign = :start
-        check.hexpand = true
-
-        grid = Gtk::Grid.new
-        grid.margin = grid.column_spacing = 12
-        grid << check
+        box = Gtk::Box.new(:vertical)
+        box.margin = box.spacing = 12
 
         if widget
-          widget.halign = :end
-          grid << widget
+          # textの指定がなく、子widgetの中にLabelが1つだけ存在する場合は内容をRadioButtonに移動させる
+          if text.nil?
+            labels = widget.children.filter { |w| w.is_a?(Gtk::Label) }
+            if labels.size == 1
+              text = labels.first.label
+              widget.remove(labels.first)
+            end
+          end
+          box << build_check(value, text)
+
+          widget.margin = 0
+          widget.margin_start = 24
+          box << widget
+        else
+          box << build_check(value, text)
         end
 
-        list << grid
+        list << box
       end
 
       [Gtk::Frame.new << list]
