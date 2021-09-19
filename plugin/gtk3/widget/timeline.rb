@@ -14,7 +14,7 @@ module Plugin::Gtk3
 
       def update_rows(model)
         @@instances.each do |instance|
-          instance.bulk_add [model]
+          instance.bulk_add([model]) if instance.include?(model)
         end
       end
 
