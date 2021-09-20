@@ -13,9 +13,7 @@ Plugin.create :console do
       Plugin::GUI::Tab.instance(:console).active!
       next end
     widget_result = ::Gtk::TextView.new
-    scroll_result_v, scroll_result_h = gen_scrollbars(widget_result)
     widget_input = ::Gtk::TextView.new
-    scroll_input_v, scroll_input_h = gen_scrollbars(widget_input)
 
     widget_result.set_editable(false)
 
@@ -53,31 +51,10 @@ Plugin.create :console do
       set_deletable true
       temporary_tab
       nativewidget Plugin::Console::ConsoleControl.new(:vertical).
-        pack1(::Gtk::Table.new(2, 3).
-              attach(widget_result, 0, 1, 0, 1, ::Gtk::AttachOptions::FILL|::Gtk::AttachOptions::SHRINK|::Gtk::AttachOptions::EXPAND, ::Gtk::AttachOptions::FILL|::Gtk::AttachOptions::SHRINK|::Gtk::AttachOptions::EXPAND).
-              attach(scroll_result_h, 0, 1, 1, 2, ::Gtk::AttachOptions::SHRINK|::Gtk::AttachOptions::FILL, ::Gtk::AttachOptions::FILL).
-              attach(scroll_result_v, 1, 2, 0, 1, ::Gtk::AttachOptions::FILL, ::Gtk::AttachOptions::SHRINK|::Gtk::AttachOptions::FILL),
-              resize: false, shrink: false).
-        pack2(::Gtk::Table.new(2, 3).
-              attach(widget_input, 0, 1, 0, 1, ::Gtk::AttachOptions::FILL|::Gtk::AttachOptions::SHRINK|::Gtk::AttachOptions::EXPAND, ::Gtk::AttachOptions::FILL|::Gtk::AttachOptions::SHRINK|::Gtk::AttachOptions::EXPAND).
-              attach(scroll_input_h, 0, 1, 1, 2, ::Gtk::AttachOptions::SHRINK|::Gtk::AttachOptions::FILL, ::Gtk::AttachOptions::FILL).
-              attach(scroll_input_v, 1, 2, 0, 1, ::Gtk::AttachOptions::FILL, ::Gtk::AttachOptions::SHRINK|::Gtk::AttachOptions::FILL),
-              resize: false, shrink: false)
+                     pack1(::Gtk::ScrolledWindow.new.tap { |w| w.add(widget_result) }, resize: true, shrink: false).
+                     pack2(::Gtk::ScrolledWindow.new.tap { |w| w.add(widget_input) }, resize: false, shrink: false)
       active!
     end
-  end
-
-  # _widget_ のためのスクロールバーを作って返す
-  # ==== Args
-  # [widget] Gtk::TextView
-  # ==== Return
-  # 縦スクロールバーと横スクロールバー
-  def gen_scrollbars(widget)
-    scroll_v = Gtk::Scrollbar.new(:vertical)
-    scroll_h = Gtk::Scrollbar.new(:horizontal)
-    widget.vadjustment = scroll_v.adjustment
-    widget.hadjustment = scroll_h.adjustment
-    return scroll_v, scroll_h
   end
 
   # タグを作る
