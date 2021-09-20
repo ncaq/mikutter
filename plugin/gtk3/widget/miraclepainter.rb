@@ -130,7 +130,9 @@ class Plugin::Gtk3::MiraclePainter < Gtk::ListBoxRow
 
     self.allocation = rect
     x, y, w, h = rect.x, rect.y, rect.width, rect.height
-    realized? and window.move_resize x, y, w, h
+    if realized?
+      window.move_resize(x, y, w, h)
+    end
     @width = w
   end
 
@@ -194,7 +196,10 @@ class Plugin::Gtk3::MiraclePainter < Gtk::ListBoxRow
     Gtk.render_frame style_context, context, x, y, w, h
     Gtk.render_background style_context, context, x, y, w, h
 
-    render_to_context context
+    render_to_context(context)
+    true # stop propagation
+  rescue Exception => err
+    Gtk.exception = err
     true # stop propagation
   end
 
@@ -391,8 +396,8 @@ private
   def main_text_rect
     Rect.new(
       ICON_SIZE[0] + 2 * MARGIN,
-      header_text_rect.bottom,
-      @width - ICON_SIZE[0] - 4 * MARGIN,
+      header_text_rect.height,
+      text_width,
       0
     )
   end
@@ -401,9 +406,13 @@ private
     Rect.new(
       ICON_SIZE[0] + 2 * MARGIN,
       MARGIN,
-      @width - ICON_SIZE[0] - 4 * MARGIN,
+      text_width,
       header_left.pixel_size[1]
     )
+  end
+
+  def text_width
+    @width - ICON_SIZE[0] - 4 * MARGIN
   end
 
   # 本文のための Pango::Layout のインスタンスを返す
@@ -411,16 +420,13 @@ private
     layout = (context || self).create_pango_layout
     font = Plugin.filtering(:message_font, message, nil).last
     layout.font_description = font_description(font) if font
-    layout.text = '.' # dummy text
+    layout.text = plain_description
     layout.width = main_text_rect.width * Pango::SCALE
     layout.attributes = textselector_attr_list(
       description_attr_list(emoji_height: layout.pixel_size[1])
     )
     layout.wrap = Pango::WrapMode::CHAR
-    rgb = Plugin.filtering(:message_font_color, message, nil).last
-    rgb = rgb(rgb || BLACK)
-    context.set_source_rgb(*rgb) if context
-    layout.text = plain_description
+    context&.set_source_rgb(*htmlcolor2gdk(Plugin.filtering(:message_font_color, message, nil).last || BLACK))
 
     layout.context&.set_shape_renderer do |c, shape, _|
       next layout unless photo = shape.data
@@ -441,10 +447,8 @@ private
   # ヘッダ（左）のための Pango::Layout のインスタンスを返す
   def header_left(context = nil)
     attr_list, text = header_left_markup
-    rgb = Plugin.filtering(:message_header_left_font_color, message, nil).last
-    rgb = rgb(rgb || BLACK)
     font = Plugin.filtering(:message_header_left_font, message, nil).last
-    context&.set_source_rgb(*rgb)
+    context&.set_source_rgb(*htmlcolor2gdk(Plugin.filtering(:message_header_left_font_color, message, nil).last || BLACK))
     (context || self).create_pango_layout.tap do |layout|
       layout.attributes = attr_list
       layout.font_description = font_description(font) if font
@@ -507,22 +511,22 @@ private
       selected? ? :message_selected_bg_color : :message_bg_color,
       model, nil
     ).last
-    rgb(color || WHITE)
+    htmlcolor2gdk(color || WHITE)
   end
 
   # GTK2のGtk::ColorとGTK3のGdk::RGBAをRGBの_Float_値に変換する
-  def rgb(color)
+  def htmlcolor2gdk(color)
     r, g, b = color
-    return [r, g, b] if r.is_a? Float
     [r.fdiv(65536), g.fdiv(65536), b.fdiv(65536)].freeze
   end
 
   # Graphic Context にパーツを描画
   def render_to_context(context)
-    render_background context
-    render_main_icon context
-    render_main_text context
-    render_parts context end
+    render_background(context)
+    render_main_icon(context)
+    render_main_text(context)
+    render_parts(context)
+  end
 
   def render_background(context)
     context.save do
@@ -577,21 +581,15 @@ private
   end
 
   def render_main_text(context)
-    context.save{
+    context.save do    # ヘッダ
       context.translate(header_text_rect.x, header_text_rect.y)
       context.set_source_rgb(0,0,0)
       hl_layout = header_left(context)
       context.show_pango_layout(hl_layout)
       hr_layout = header_right(context)
-      hr_color = Plugin.filtering(:message_header_right_font_color, message, nil).last
-      hr_color = rgb(hr_color || BLACK)
+      hr_color = htmlcolor2gdk(Plugin.filtering(:message_header_right_font_color, message, nil).last || BLACK)
 
-      @hl_region = Cairo::Region.new([header_text_rect.x, header_text_rect.y,
-                                      hl_layout.size[0] / Pango::SCALE, hl_layout.size[1] / Pango::SCALE])
-      @hr_region = Cairo::Region.new([header_text_rect.x + header_text_rect.width - (hr_layout.size[0] / Pango::SCALE), header_text_rect.y,
-                                      hr_layout.size[0] / Pango::SCALE, hr_layout.size[1] / Pango::SCALE])
-
-      context.save{
+      context.save do
         context.translate(header_text_rect.width - (hr_layout.size[0] / Pango::SCALE), 0)
         if (hl_layout.size[0] / Pango::SCALE) > (header_text_rect.width - (hr_layout.size[0] / Pango::SCALE) - 20)
           r, g, b = get_backgroundcolor
@@ -601,12 +599,17 @@ private
           grad.add_color_stop_rgba(1.0, r, g, b, 1.0)
           context.rectangle(-20, 0, hr_layout.size[0] / Pango::SCALE + 20, hr_layout.size[1] / Pango::SCALE)
           context.set_source(grad)
-          context.fill() end
+          context.fill()
+        end
         context.set_source_rgb(*hr_color)
-        context.show_pango_layout(hr_layout) } }
-    context.save{
+        context.show_pango_layout(hr_layout)
+      end
+    end
+    context.save do
       context.translate(main_text_rect.x, main_text_rect.y)
-      context.show_pango_layout(main_message(context)) } end
+      context.show_pango_layout(main_message(context))
+    end
+  end
 
   # このMiraclePainterの(x , y)にマウスポインタがある時に表示すべきカーソルの名前を返す。
   # ==== Args
