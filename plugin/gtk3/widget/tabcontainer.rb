@@ -1,13 +1,12 @@
 # -*- coding: utf-8 -*-
 
-class Plugin::Gtk3::TabContainer < Gtk::Grid
+class Plugin::Gtk3::TabContainer < Gtk::Box
   attr_reader :i_tab
 
   def initialize(tab)
     type_strict tab => Plugin::GUI::TabLike
     @i_tab = tab
-    super()
-    self.orientation = :vertical
+    super(:vertical, 0)
   end
 
   def to_sym
