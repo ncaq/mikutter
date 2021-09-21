@@ -217,6 +217,7 @@ module Gtk
         w_reply = Gtk::Grid.new
         w_reply.orientation = :horizontal
         itv = Gtk::IntelligentTextview.new(message.description, { 'font' => :mumble_basic_font })
+        itv.hexpand = true
         itv.style_generator = lambda{ get_style_provider(message) }
         itv.bg_modifier
         ev = Gtk::EventBox.new
