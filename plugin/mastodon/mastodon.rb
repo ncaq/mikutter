@@ -80,10 +80,11 @@ Plugin.create(:mastodon) do
     Delayer.new(delay: 10 * HYDE, &followings_updater) # 26分ごとにプロフィールとフォロー一覧を更新する
   end
 
-  # 起動時
-  Delayer.new {
-    followings_updater.call
-  }
+  # worldのロード完了時の処理
+  world_load_listener = on_mastodon_worlds__add do
+    world_load_listener.detach
+    Delayer.new { followings_updater.call }
+  end
 
   # Mastodonサーバが初期化されたら、サーバの集合に加える
   collection(:mastodon_servers) do |servers|
