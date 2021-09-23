@@ -164,7 +164,7 @@ class Gtk::IntelligentTextview < Gtk::TextView
       result = false
       if(event.is_a?(Gdk::EventButton)) and
           (event.event_type == Gdk::Event::BUTTON_RELEASE) and
-          not(textview.buffer.selection_bounds[2])
+          not(textview.buffer.selection_bounds)
         if (event.button == 1 and leftclick)
           leftclick.call(tagname, textview)
         elsif(event.button == 3 and rightclick)
