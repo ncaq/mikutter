@@ -402,13 +402,13 @@ private
   end
 
   def main_icon_rect
-    @main_icon_rect ||= Rect.new(MARGIN, MARGIN, *ICON_SIZE)
+    @main_icon_rect ||= Rect.new(MARGIN, MARGIN, *ICON_SIZE.map(&Gdk.method(:scale)))
   end
 
   # 本文(model#description)
   def main_text_rect
     Rect.new(
-      ICON_SIZE[0] + 2 * MARGIN,
+      Gdk.scale(ICON_SIZE[0]) + 2 * MARGIN,
       header_text_rect.height,
       text_width,
       0
@@ -425,7 +425,7 @@ private
   end
 
   def text_width
-    @width - ICON_SIZE[0] - 4 * MARGIN
+    @width - Gdk.scale(ICON_SIZE[0]) - 4 * MARGIN
   end
 
   # 本文のための Pango::Layout のインスタンスを返す
@@ -526,7 +526,7 @@ private
   # アイコンのpixbufを返す
   def main_icon
     w, h = ICON_SIZE
-    @main_icon ||= model.user.icon.load_pixbuf(width: w, height: h) do |pb|
+    @main_icon ||= model.user.icon.load_pixbuf(width: Gdk.scale(w), height: Gdk.scale(h)) do |pb|
       @main_icon = pb
       queue_draw
     end
@@ -589,17 +589,17 @@ private
     context.save do
       context.save do
         context.translate(main_icon_rect.x, main_icon_rect.y + icon_height*13/14)
-        w, = ICON_SIZE
+        w = Gdk.scale(ICON_SIZE[0])
         context.set_source_pixbuf(
           gb_foot.load_pixbuf(width: w, height: 9 / 20 * w) { queue_draw }
         )
         context.paint
       end
       context.translate(main_icon_rect.x, main_icon_rect.y)
-      context.append_path(Cairo::SpecialEdge.path(*ICON_SIZE))
+      context.append_path(Cairo::SpecialEdge.path(*ICON_SIZE.map(&Gdk.method(:scale))))
       context.set_source_rgb(0,0,0)
       context.stroke
-      context.append_path(Cairo::SpecialEdge.path(*ICON_SIZE))
+      context.append_path(Cairo::SpecialEdge.path(*ICON_SIZE.map(&Gdk.method(:scale))))
       context.set_source_pixbuf(main_icon)
       context.fill
     end
