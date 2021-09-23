@@ -63,8 +63,7 @@ class Gtk::IntelligentTextview < Gtk::TextView
 
   # TODO プライベートにする
   def set_cursor(textview, cursor)
-    # FIXME: gtk3, find alternative method
-    # textview.get_window(Gtk::TextView::WINDOW_TEXT).set_cursor(Gdk::Cursor.new(cursor))
+    textview.get_window(:text).set_cursor(Gdk::Cursor.new(cursor))
   end
 
   def bg_modifier(color = style_generator)
@@ -155,7 +154,7 @@ class Gtk::IntelligentTextview < Gtk::TextView
         tag_shell.foreground_gdk = Gdk::Color.new(*UserConfig[fonts['foreground']]) end
       false }
     self.signal_connect('event'){
-      set_cursor(self, Gdk::CursorType::XTERM)
+      set_cursor(self, :xterm)
       false }
   end
 
@@ -172,7 +171,7 @@ class Gtk::IntelligentTextview < Gtk::TextView
           rightclick.call(tagname, textview)
           result = true end
       elsif(event.is_a?(Gdk::EventMotion))
-        set_cursor(textview, Gdk::Cursor::HAND2)
+        set_cursor(textview, :hand2)
       end
       result }
     tag end
