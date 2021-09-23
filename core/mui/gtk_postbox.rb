@@ -379,16 +379,6 @@ module Gtk
       else
         UserConfig[:mumble_basic_bg] end end
 
-    def get_backgroundstyle(message)
-      style = Gtk::Style.new()
-      color = get_backgroundcolor(message)
-      [Gtk::StateType::ACTIVE, Gtk::StateType::NORMAL, Gtk::StateType::SELECTED, Gtk::StateType::PRELIGHT, Gtk::StateType::INSENSITIVE].each{ |state|
-        # FIXME: gtk3, it's not working (v3.4.9)
-        # style.bg[state] = color
-      }
-      style end
-    deprecate :get_backgroundstyle, :get_style_provider, 2021, 9
-
     def get_style_provider(message)
       color = get_backgroundcolor(message)
       Gtk::CssProvider.new.tap do |provider|
