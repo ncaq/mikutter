@@ -363,9 +363,19 @@ class Plugin::Gtk3::MiraclePainter < Gtk::ListBoxRow
 
   def mainpart_height
     [
-      main_message.pixel_size[1] + header_left.pixel_size[1],
-      ICON_SIZE[1],
+      forecast_main_message_height + forecast_header_left_height,
+      Gdk.scale(ICON_SIZE[1]),
     ].max + MARGIN
+  end
+
+  def forecast_main_message_height
+    # TODO: Pango::Layoutに描画して正しい高さを予想する
+    @main_message_height || 0#main_message.pixel_size[1]
+  end
+
+  def forecast_header_left_height
+    # TODO: Pango::Layoutに描画して正しい高さを予想する
+    @header_left_height || 0#header_left.pixel_size[1]
   end
 
   # 互換性
@@ -407,10 +417,10 @@ private
 
   def header_text_rect
     Rect.new(
-      ICON_SIZE[0] + 2 * MARGIN,
+      Gdk.scale(ICON_SIZE[0]) + 2 * MARGIN,
       MARGIN,
       text_width,
-      header_left.pixel_size[1]
+      forecast_header_left_height
     )
   end
 
@@ -429,20 +439,28 @@ private
       description_attr_list(emoji_height: layout.pixel_size[1])
     )
     layout.wrap = Pango::WrapMode::CHAR
-    context&.set_source_rgb(*htmlcolor2gdk(Plugin.filtering(:message_font_color, message, nil).last || BLACK))
+    if context
+      context.set_source_rgb(*htmlcolor2gdk(Plugin.filtering(:message_font_color, message, nil).last || BLACK))
 
-    layout.context&.set_shape_renderer do |c, shape, _|
-      next layout unless photo = shape.data
-      width, height = shape.ink_rect.width/Pango::SCALE, shape.ink_rect.height/Pango::SCALE
-      pixbuf = photo.load_pixbuf(width: width, height: height) do
-        queue_draw
+      layout.context&.set_shape_renderer do |c, shape, _|
+        next layout unless photo = shape.data
+        width, height = shape.ink_rect.width/Pango::SCALE, shape.ink_rect.height/Pango::SCALE
+        pixbuf = photo.load_pixbuf(width: width, height: height) do
+          queue_draw
+        end
+        x = layout.index_to_pos(shape.start_index).x / Pango::SCALE
+        y = layout.index_to_pos(shape.start_index).y / Pango::SCALE
+        c.translate(x, y)
+        c.set_source_pixbuf(pixbuf)
+        c.rectangle(0, 0, width, height)
+        c.fill
       end
-      x = layout.index_to_pos(shape.start_index).x / Pango::SCALE
-      y = layout.index_to_pos(shape.start_index).y / Pango::SCALE
-      c.translate(x, y)
-      c.set_source_pixbuf(pixbuf)
-      c.rectangle(0, 0, width, height)
-      c.fill
+      # 実際に描画してみた結果、高さが最後の予測と異なっている場合
+      actual_height = layout.pixel_size[1]
+      unless @main_message_height == actual_height
+        @main_message_height = actual_height
+        queue_resize
+      end
     end
     layout
   end
@@ -456,6 +474,12 @@ private
       layout.attributes = attr_list
       layout.font_description = font_description(font) if font
       layout.text = text
+      # 実際に描画してみた結果、高さが最後の予測と異なっている場合
+      actual_height = layout.pixel_size[1]
+      if context && @header_left_height != actual_height
+        @header_left_height = actual_height
+        queue_resize
+      end
     end
   end
 
