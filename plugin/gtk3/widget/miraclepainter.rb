@@ -112,6 +112,9 @@ class Plugin::Gtk3::MiraclePainter < Gtk::ListBoxRow
     @width = width
     height = mainpart_height + SPACING + subparts_height
     [height, height] # minimum, natural
+  rescue Exception => exc
+    Gtk.exception = exc
+    [0, 0]
   end
 
   # connect signal Gtk::Widget*parent_set
