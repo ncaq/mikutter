@@ -31,8 +31,7 @@ class Gtk::IntelligentTextview < Gtk::TextView
 
   # URLを開く
   def self.openurl(url)
-    # gen_openurl_proc(url).call
-    Gtk::TimeLine.openurl(url) # FIXME
+    Plugin.call(:open, url)
     false end
 
   def initialize(msg = nil, default_fonts = {}, *rest, style: nil)
