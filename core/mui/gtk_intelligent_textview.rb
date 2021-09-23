@@ -42,6 +42,15 @@ class Gtk::IntelligentTextview < Gtk::TextView
     self.cursor_visible = false
     self.wrap_mode = :char
     gen_body(msg) if msg
+    style_context.add_class('intelligentTextView')
+    Gtk::CssProvider.new.tap do |provider|
+      provider.load_from_data(<<~CSS)
+        .intelligentTextView, .intelligentTextView > text {
+          background-color: transparent;
+        }
+      CSS
+      style_context.add_provider(provider, Gtk::StyleProvider::PRIORITY_APPLICATION)
+    end
   end
 
   # このウィジェットの背景色を返す
@@ -52,9 +61,6 @@ class Gtk::IntelligentTextview < Gtk::TextView
       @style_generator.to_proc.call
     elsif @style_generator
       @style_generator
-    else
-      # FIXME: gtk3, find alternative method
-      # parent.style.bg(Gtk::STATE_NORMAL)
     end
   end
   alias :get_background :style_generator
@@ -71,10 +77,11 @@ class Gtk::IntelligentTextview < Gtk::TextView
       color = color.to_style_provider
     end
     if color.is_a? Gtk::StyleProvider
+      style_context.remove_provider(@style_provider) if @style_provider
       style_context.add_provider(color, Gtk::StyleProvider::PRIORITY_APPLICATION)
-    # FIXME: gtk3, find alternative
-    # elsif get_window(Gtk::TextView::WINDOW_TEXT).respond_to?(:background=)
-    #   get_window(Gtk::TextView::WINDOW_TEXT).background = color
+      @style_provider = color
+    elsif color && get_window(:text).respond_to?(:background=)
+      get_window(:text).background = color
     end
     queue_draw
   end
@@ -143,8 +150,6 @@ class Gtk::IntelligentTextview < Gtk::TextView
   end
 
   def set_events(tag_shell)
-    self.signal_connect('realize'){
-      self.parent.signal_connect('style-set'){ bg_modifier } }
     self.signal_connect('realize'){ bg_modifier }
     self.signal_connect('visibility-notify-event'){
       if fonts['font'] and tag_shell.font != UserConfig[fonts['font']]
