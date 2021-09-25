@@ -335,7 +335,12 @@ class Pango::FontDescription
 
   @forecast_font_description = Hash.new
   def self.forecast_font_size(fd)
-    @forecast_font_description[fd.hash] ||= Cairo::Context.dummy.create_pango_layout.yield_self do |layout|
+    @forecast_font_description[fd.hash] ||=
+      PangoCairo::FontMap
+        .default
+        .create_context
+        .then(&Pango::Layout.method(:new))
+        .then do |layout|
       layout.font_description = fd
       layout.text = '.'
       layout.pixel_size[1]
