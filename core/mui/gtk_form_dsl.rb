@@ -693,7 +693,7 @@ module Gtk::FormDSL
         tooltip(target.to_s).
         set_alignment(0.0, 0.5).
         ssc(:clicked, &model_opener(target))
-      add button
+      attach_next_to(button, nil, :bottom, 2, 1)
     when Diva::Model
       button = Gtk::Button.new
       box = Gtk::Box.new(:horizontal, 0)
@@ -705,7 +705,7 @@ module Gtk::FormDSL
         tooltip(target.title).
         add(box.add(Gtk::Label.new(target.title))).
         ssc(:clicked, &model_opener(target))
-      add button
+      attach_next_to(button, nil, :bottom, 2, 1)
     end
   end
 
