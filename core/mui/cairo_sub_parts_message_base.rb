@@ -257,7 +257,7 @@ class Gdk::SubPartsMessageBase < Gdk::SubParts
       context.save do
         context.translate(icon_width + margin*2, header_height || 0)
         context.set_source_rgb(*main_text_color(message))
-        pango_layout = main_message(message, context)
+        pango_layout = main_message(message)
         if pango_layout.line_count <= text_max_line_count(message)
           context.show_pango_layout(pango_layout)
         else
@@ -283,26 +283,40 @@ class Gdk::SubPartsMessageBase < Gdk::SubParts
     else
       (result / pango_layout.line_count) * text_max_line_count(message) + pango_layout.spacing/Pango::SCALE * 2 end end
 
+  def header_left_context(message)
+    PangoCairo::FontMap.default.create_context.tap do |context|
+      context.set_font_description(header_left_font(message))
+    end
+  end
+
   # ヘッダ（左）のための Pango::Layout のインスタンスを返す
   def header_left(message, context=nil)
-    text, font, attr_list = header_left_content(message)
+    text, _font, attr_list = header_left_content(message)
     if text
-      layout = (context || helper).create_pango_layout
+      layout = Pango::Layout.new(header_left_context(message))
       layout.attributes = attr_list if attr_list
-      layout.font_description = font if font
       layout.text = text
-      layout end end
+      layout
+    end
+  end
+
+  def header_right_context(message)
+    PangoCairo::FontMap.default.create_context.tap do |context|
+      context.set_font_description(header_right_font(message))
+    end
+  end
 
   # ヘッダ（右）のための Pango::Layout のインスタンスを返す
   def header_right(message, context=nil)
-    text, font, attr_list = header_right_content(message)
+    text, _font, attr_list = header_right_content(message)
     if text
-      layout = (context || helper).create_pango_layout
+      layout = Pango::Layout.new(header_right_context(message))
       layout.attributes = attr_list if attr_list
-      layout.font_description = font if font
       layout.text = text
       layout.alignment = Pango::Alignment::RIGHT
-      layout end end
+      layout
+    end
+  end
 
   def render_header(message, context, base_y)
     context.save do
@@ -337,27 +351,36 @@ class Gdk::SubPartsMessageBase < Gdk::SubParts
         context.show_pango_layout(hr_layout)
         hr_layout end end end
 
-  def main_message(message, context=nil)
-    layout = (context || helper).create_pango_layout
-    layout.width = (width - icon_width - margin*3 - edge*2) * Pango::SCALE
-    layout.attributes = description_attr_list(message)
-    layout.wrap = Pango::WrapMode::CHAR
-    layout.font_description = default_font
-    layout.text = plain_description(message)
-    layout.context.set_shape_renderer do |c, shape, _|
-      photo = shape.data
-      if photo
-        width, height = shape.ink_rect.width/Pango::SCALE, shape.ink_rect.height/Pango::SCALE
-        pixbuf = photo.load_pixbuf(width: width, height: height){ helper.queue_resize }
-        x = layout.index_to_pos(shape.start_index).x / Pango::SCALE
-        y = layout.index_to_pos(shape.start_index).y / Pango::SCALE
-        c.translate(x, y)
-        c.set_source_pixbuf(pixbuf)
-        c.rectangle(0, 0, width, height)
-        c.fill
+  def main_message_context
+    PangoCairo::FontMap.default.create_context.tap do |context|
+      context.set_font_description(default_font)
+    end
+  end
+
+  # _message_ に対する _Pango::Layout_ を得る。
+  # @params message [Diva::Model] 対象Message Model
+  # @params _context [nil] 互換性のため
+  def main_message(message, _context=nil)
+    Pango::Layout.new(main_message_context).tap do |layout|
+      layout.width = (width - icon_width - margin*3 - edge*2) * Pango::SCALE
+      layout.attributes = description_attr_list(message)
+      layout.wrap = Pango::WrapMode::CHAR
+      layout.text = plain_description(message)
+      layout.context.set_shape_renderer do |c, shape, _|
+        photo = shape.data
+        if photo
+          width, height = shape.ink_rect.width/Pango::SCALE, shape.ink_rect.height/Pango::SCALE
+          pixbuf = photo.load_pixbuf(width: width, height: height){ helper.queue_resize }
+          x = layout.index_to_pos(shape.start_index).x / Pango::SCALE
+          y = layout.index_to_pos(shape.start_index).y / Pango::SCALE
+          c.translate(x, y)
+          c.set_source_pixbuf(pixbuf)
+          c.rectangle(0, 0, width, height)
+          c.fill
+        end
       end
     end
-    layout end
+  end
 
   def render_outline(message, context, base_y)
     render_outline_floating(message, context, base_y) end
