@@ -464,7 +464,12 @@ private
         c.rectangle(0, 0, width, height)
         c.fill
       end
-      @main_message_height = layout.pixel_size[1]
+      # 実際に描画してみた結果、高さが最後の予測と異なっている場合
+      actual_height = layout.pixel_size[1]
+      unless @main_message_height == actual_height
+        @main_message_height = actual_height
+        queue_resize
+      end
     end
     layout
   end
@@ -486,7 +491,14 @@ private
     Pango::Layout.new(header_left_context).tap do |layout|
       layout.attributes = attr_list
       layout.text = text
-      @header_left_height = layout.pixel_size[1]
+      # 実際に描画してみた結果、高さが最後の予測と異なっている場合
+      if context
+        actual_height = layout.pixel_size[1]
+        if @header_left_height != actual_height
+          @header_left_height = actual_height
+          queue_resize
+        end
+      end
     end
   end
 
