@@ -6,6 +6,8 @@ UIを定義するためのDSLメソッドをクラスに追加するmix-in。
 includeするクラスはGtk::Gridでなければならない．
 =end
 module Gtk::FormDSL
+  using MUI::ColorConverter
+
   class Chainable
     def initialize(widget)
       @widget = widget
@@ -760,13 +762,8 @@ private
   end
 
   def build_color(key)
-    a = self[key]
-
-    # migration from Gdk::Color to Gdk::RGBA
-    a&.first&.is_a? Integer and a = self[key] = a.map { |i| i.to_f / 65_536 }
-
-    color = Gtk::ColorButton.new(*(a ? [Gdk::RGBA.new(*a)] : []))
-    color.ssc(:color_set) { self[key] = color.rgba.to_a[0, 3] }
+    color = Gtk::ColorButton.new(self[key].rgba)
+    color.ssc(:color_set) { self[key] = color.rgba.to_color_array }
     color
   end
 
