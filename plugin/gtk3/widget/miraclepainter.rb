@@ -322,7 +322,8 @@ class Plugin::Gtk3::MiraclePainter < Gtk::ListBoxRow
   end
 
   def iob_reply_clicked
-    @tree.imaginary.create_reply_postbox(message) end
+    get_ancestor(Plugin::Gtk3::Timeline).imaginary.create_reply_postbox(message)
+  end
 
   def iob_retweet_clicked
     world, = Plugin.filtering(:world_current, nil)

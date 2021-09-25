@@ -34,6 +34,7 @@ module Plugin::Gtk3
 
     attr_reader :postbox
     attr_reader :order
+    attr_reader :imaginary
 
     def initialize(imaginary=nil)
       super()
