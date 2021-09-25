@@ -371,12 +371,12 @@ class Plugin::Gtk3::MiraclePainter < Gtk::ListBoxRow
 
   def forecast_main_message_height
     # TODO: Pango::Layoutに描画して正しい高さを予想する
-    @main_message_height || 0#main_message.pixel_size[1]
+    @main_message_height || main_message.pixel_size[1]
   end
 
   def forecast_header_left_height
     # TODO: Pango::Layoutに描画して正しい高さを予想する
-    @header_left_height || 0#header_left.pixel_size[1]
+    @header_left_height || header_left.pixel_size[1]
   end
 
   # 互換性
@@ -429,11 +429,19 @@ private
     @width - Gdk.scale(ICON_SIZE[0]) - 4 * MARGIN
   end
 
+  def main_message_context
+    context = @main_messsage_context ||= PangoCairo::FontMap.default.create_context
+
+    Plugin.filtering(:message_font, message, nil)&.last&.then do |font|
+      context.set_font_description(font_description(font))
+    end
+
+    context
+  end
+
   # 本文のための Pango::Layout のインスタンスを返す
   def main_message(context = nil)
-    layout = (context || self).create_pango_layout
-    font = Plugin.filtering(:message_font, message, nil).last
-    layout.font_description = font_description(font) if font
+    layout = Pango::Layout.new(main_message_context)
     layout.text = plain_description
     layout.width = main_text_rect.width * Pango::SCALE
     layout.attributes = textselector_attr_list(
@@ -456,31 +464,29 @@ private
         c.rectangle(0, 0, width, height)
         c.fill
       end
-      # 実際に描画してみた結果、高さが最後の予測と異なっている場合
-      actual_height = layout.pixel_size[1]
-      unless @main_message_height == actual_height
-        @main_message_height = actual_height
-        queue_resize
-      end
+      @main_message_height = layout.pixel_size[1]
     end
     layout
+  end
+
+  def header_left_context
+    context = @main_messsage_context ||= PangoCairo::FontMap.default.create_context
+
+    Plugin.filtering(:message_header_left_font, message, nil)&.last&.then do |font|
+      context.set_font_description(font_description(font))
+    end
+
+    context
   end
 
   # ヘッダ（左）のための Pango::Layout のインスタンスを返す
   def header_left(context = nil)
     attr_list, text = header_left_markup
-    font = Plugin.filtering(:message_header_left_font, message, nil).last
     context&.set_source_rgb(*htmlcolor2gdk(Plugin.filtering(:message_header_left_font_color, message, nil).last || BLACK))
-    (context || self).create_pango_layout.tap do |layout|
+    Pango::Layout.new(header_left_context).tap do |layout|
       layout.attributes = attr_list
-      layout.font_description = font_description(font) if font
       layout.text = text
-      # 実際に描画してみた結果、高さが最後の予測と異なっている場合
-      actual_height = layout.pixel_size[1]
-      if context && @header_left_height != actual_height
-        @header_left_height = actual_height
-        queue_resize
-      end
+      @header_left_height = layout.pixel_size[1]
     end
   end
 
