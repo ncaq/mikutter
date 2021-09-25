@@ -413,4 +413,33 @@ end
 
 module MUI
   Skin = ::Skin
+
+  module ColorConverter
+    refine NilClass do
+      def rgba
+        Gdk::RGBA.new
+      end
+    end
+
+    refine Array do
+      def rgba
+        case first
+        when Integer
+          # Gdk::Color style
+          Gdk::RGBA.new(*map { |i| i.to_f / 65535 })
+        when Float
+          # Gdk::RGBA style
+          Gdk::RGBA.new(*self)
+        else
+          raise TypeError, 'receiver values are not compatible'
+        end
+      end
+    end
+
+    refine Gdk::RGBA do
+      def to_color_array
+        to_a[0..2].map { |f| f * 65535 }.map(&:to_i)
+      end
+    end
+  end
 end
