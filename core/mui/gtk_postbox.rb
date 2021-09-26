@@ -135,6 +135,7 @@ module Gtk
       return @tool if defined?(@tool)
       @tool = Gtk::Button.new
       @tool.add(Gtk::WebIcon.new(Skin.get_path('close.png'), 16, 16))
+      @tool.sensitive = destructible? || posting?
       @tool.signal_connect_after('focus_out_event', &method(:focus_out_event))
       @tool.ssc(:event) do
         @tool.sensitive = destructible? || posting?
