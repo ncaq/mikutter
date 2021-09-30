@@ -28,7 +28,7 @@ module Gdk::SubPartsHelper
     self end
 
   def subparts_height
-    subparts.inject(0) { |sum, part| sum + part.height }
+    subparts.sum(&:height)
   end
 end
 

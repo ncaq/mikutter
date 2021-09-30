@@ -227,10 +227,12 @@ class Gdk::SubPartsMessageBase < Gdk::SubParts
 
   # :nodoc:
   def height
-    if not helper.destroyed? and messages and not messages.empty?
-      messages.inject(0) { |s, m| s + message_height(m) }
+    if helper.destroyed?
+      0
     else
-      0 end end
+      messages&.sum(&method(:message_height)) || 0
+    end
+  end
 
   private
 
