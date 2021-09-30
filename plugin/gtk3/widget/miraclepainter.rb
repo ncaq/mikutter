@@ -110,7 +110,7 @@ class Plugin::Gtk3::MiraclePainter < Gtk::ListBoxRow
     notice "MiraclePainter#get_preferred_height_for_width(width=#{width})" if VERBOSE
 
     @width = width
-    height = mainpart_height + SPACING + subparts_height
+    height = forecast_height
     [height, height] # minimum, natural
   rescue Exception => exc
     Gtk.exception = exc
@@ -193,13 +193,16 @@ class Plugin::Gtk3::MiraclePainter < Gtk::ListBoxRow
   def signal_do_draw(context)
     # context => Cairo::Context
     notice "#{self}*draw(context)" if VERBOSE
-
     x, y, w, h = allocation.x, allocation.y, allocation.width, allocation.height
 
     Gtk.render_frame style_context, context, x, y, w, h
     Gtk.render_background style_context, context, x, y, w, h
 
     render_to_context(context)
+    # 描画してみたら確保されていた描画域の高さに過不足があった
+    if forecast_height != allocation.height
+      queue_resize
+    end
     true # stop propagation
   rescue Exception => err
     Gtk.exception = err
@@ -362,6 +365,10 @@ class Plugin::Gtk3::MiraclePainter < Gtk::ListBoxRow
       Pango::FontDescription.new(font).tap{|fd| fd.size = Gdk.scale(fd.size) }
   end
 
+  def forecast_height
+    mainpart_height + SPACING + subparts_height
+  end
+
   def mainpart_height
     [
       forecast_main_message_height + forecast_header_left_height,
@@ -370,12 +377,10 @@ class Plugin::Gtk3::MiraclePainter < Gtk::ListBoxRow
   end
 
   def forecast_main_message_height
-    # TODO: Pango::Layoutに描画して正しい高さを予想する
     @main_message_height || main_message.pixel_size[1]
   end
 
   def forecast_header_left_height
-    # TODO: Pango::Layoutに描画して正しい高さを予想する
     @header_left_height || header_left.pixel_size[1]
   end
 
@@ -464,12 +469,7 @@ private
         c.rectangle(0, 0, width, height)
         c.fill
       end
-      # 実際に描画してみた結果、高さが最後の予測と異なっている場合
-      actual_height = layout.pixel_size[1]
-      unless @main_message_height == actual_height
-        @main_message_height = actual_height
-        queue_resize
-      end
+      @main_message_height = layout.pixel_size[1]
     end
     layout
   end
@@ -491,13 +491,8 @@ private
     Pango::Layout.new(header_left_context).tap do |layout|
       layout.attributes = attr_list
       layout.text = text
-      # 実際に描画してみた結果、高さが最後の予測と異なっている場合
       if context
-        actual_height = layout.pixel_size[1]
-        if @header_left_height != actual_height
-          @header_left_height = actual_height
-          queue_resize
-        end
+        @header_left_height = layout.pixel_size[1]
       end
     end
   end
