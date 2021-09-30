@@ -237,6 +237,7 @@ class Plugin::Gtk3::MiraclePainter < Gtk::ListBoxRow
     notice "#{self}*button_press_event(ev=#{ev.inspect})" if VERBOSE
 
     if ev.triggers_context_menu
+      get_ancestor(Plugin::Gtk3::Timeline).select_row(self)
       popup_menu ev
       return true
     end

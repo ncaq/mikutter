@@ -103,6 +103,10 @@ module Plugin::Gtk3
       @listbox.children.size
     end
 
+    def select_row(row)
+      @listbox.select_row(row) unless selected_rows.include?(row)
+    end
+
     def select_row_at_index(index)
       selected_rows.each do |row|
         @listbox.unselect_row row
