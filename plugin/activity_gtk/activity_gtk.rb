@@ -112,7 +112,10 @@ Plugin.create(:activity_gtk) do
           w.vscrollbar_policy = :automatic
         end
         .add(activity_description))
-      .add(activity_model_selector)
+      .add(Gtk::ScrolledWindow.new.tap do |w|
+             w.set_policy(:automatic, :never)
+             w.add(activity_model_selector)
+           end)
       .add(activity_status)
 
     nativewidget(
