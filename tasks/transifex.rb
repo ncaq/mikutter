@@ -83,12 +83,14 @@ module Transifex
 
   def get_request(path)
     clnt = HTTPClient.new
+    clnt.ssl_config.set_default_paths
     clnt.set_auth(API_URL_PREFIX, ENV['TRANSIFEX_USER'], ENV['TRANSIFEX_PASSWORD'])
     JSON.parse(clnt.get_content(API_URL_PREFIX + path), symbolize_names: true)
   end
 
   def post_request(path, content_type: CONTENT_TYPE_MULTIPART_FORMDATA, params:)
     clnt = HTTPClient.new
+    clnt.ssl_config.set_default_paths
     clnt.set_auth(API_URL_PREFIX, ENV['TRANSIFEX_USER'], ENV['TRANSIFEX_PASSWORD'])
     case content_type
     when CONTENT_TYPE_MULTIPART_FORMDATA
@@ -103,6 +105,7 @@ module Transifex
 
   def put_request(path, content_type: CONTENT_TYPE_MULTIPART_FORMDATA, params:)
     clnt = HTTPClient.new
+    clnt.ssl_config.set_default_paths
     clnt.set_auth(API_URL_PREFIX, ENV['TRANSIFEX_USER'], ENV['TRANSIFEX_PASSWORD'])
     case content_type
     when CONTENT_TYPE_MULTIPART_FORMDATA

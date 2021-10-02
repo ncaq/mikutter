@@ -18,6 +18,7 @@ module Plugin::PhotoSupport
 
     def via_xpath(display_url, xpath)
       connection = HTTPClient.new
+      connection.ssl_config.set_default_paths
       page = connection.get_content(display_url)
       unless page.empty?
         doc = Nokogiri::HTML(page)
@@ -54,6 +55,7 @@ Plugin.create :photo_support do
   # twitpic
   defimageopener('twitpic', %r<^https?://twitpic\.com/[a-zA-Z0-9]+>) do |display_url|
     connection = HTTPClient.new
+    connection.ssl_config.set_default_paths
     connection.transparent_gzip_decompression = true
     page = connection.get_content(display_url)
     next nil if page.empty?
@@ -67,6 +69,7 @@ Plugin.create :photo_support do
   # moby picture
   defimageopener('moby picture', %r<^http://moby.to/[a-zA-Z0-9]+>) do |display_url|
     connection = HTTPClient.new
+    connection.ssl_config.set_default_paths
     page = connection.get_content(display_url)
     next nil if page.empty?
     doc = Nokogiri::HTML(page)
@@ -78,6 +81,7 @@ Plugin.create :photo_support do
   defimageopener('gyazo', %r<\Ahttps?://gyazo.com/[a-zA-Z0-9]+>) do |display_url|
     begin
       connection = HTTPClient.new
+      connection.ssl_config.set_default_paths
       json = connection.get_content("https://api.gyazo.com/api/oembed", url: display_url)
       hash = JSON.parse(json, symbolize_names: true)
       URI.open(hash[:url]) if hash[:url]
@@ -90,6 +94,7 @@ Plugin.create :photo_support do
   # 携帯百景
   defimageopener('携帯百景', %r<^http://movapic.com/(?:[a-zA-Z0-9]+/pic/\d+|pic/[a-zA-Z0-9]+)>) do |display_url|
     connection = HTTPClient.new
+    connection.ssl_config.set_default_paths
     page = connection.get_content(display_url)
     next nil if page.empty?
     doc = Nokogiri::HTML(page)
@@ -102,6 +107,7 @@ Plugin.create :photo_support do
   # piapro
   defimageopener('piapro', %r<^http://piapro.jp/t/[a-zA-Z0-9]+>) do |display_url|
     connection = HTTPClient.new
+    connection.ssl_config.set_default_paths
     page = connection.get_content(display_url)
     next nil if page.empty?
     doc = Nokogiri::HTML(page)
@@ -114,6 +120,7 @@ Plugin.create :photo_support do
   # img.ly
   defimageopener('img.ly', %r<^http://img\.ly/[a-zA-Z0-9_]+>) do |display_url|
     connection = HTTPClient.new
+    connection.ssl_config.set_default_paths
     page = connection.get_content(display_url)
     next nil if page.empty?
     doc = Nokogiri::HTML(page)
@@ -124,6 +131,7 @@ Plugin.create :photo_support do
   # jigokuno.com
   defimageopener('jigokuno.com', %r<^http://jigokuno\.com/\?eid=\d+>) do |display_url|
     connection = HTTPClient.new
+    connection.ssl_config.set_default_paths
     page = connection.get_content(display_url)
     next nil if page.empty?
     doc = Nokogiri::HTML(page)
@@ -133,6 +141,7 @@ Plugin.create :photo_support do
   # はてなフォトライフ
   defimageopener('はてなフォトライフ', %r<^http://f\.hatena\.ne\.jp/[-\w]+/\d{9,}>) do |display_url|
     connection = HTTPClient.new
+    connection.ssl_config.set_default_paths
     page = connection.get_content(display_url)
     next nil if page.empty?
     doc = Nokogiri::HTML(page)
@@ -143,6 +152,7 @@ Plugin.create :photo_support do
   # imgur
   defimageopener('imgur', %r<\Ahttps?://imgur\.com(?:/gallery)?/[a-zA-Z0-9]+>) do |display_url|
     connection = HTTPClient.new
+    connection.ssl_config.set_default_paths
     page = connection.get_content(display_url)
     next nil if page.empty?
     doc = Nokogiri::HTML(page)
@@ -159,6 +169,7 @@ Plugin.create :photo_support do
   # フォト蔵
   defimageopener('フォト蔵', %r<^http://photozou\.jp/photo/show/\d+/\d+>) do |display_url|
     connection = HTTPClient.new
+    connection.ssl_config.set_default_paths
     page = connection.get_content(display_url)
     next nil if page.empty?
     doc = Nokogiri::HTML(page)
@@ -202,6 +213,7 @@ Plugin.create :photo_support do
   # vine
   defimageopener('vine', %r<\Ahttps?://vine\.co/v/[a-zA-Z0-9]+>) do |display_url|
     connection = HTTPClient.new
+    connection.ssl_config.set_default_paths
     page = connection.get_content(display_url)
     next nil if page.empty?
     doc = Nokogiri::HTML(page)
@@ -212,6 +224,7 @@ Plugin.create :photo_support do
   # xkcd.com
   defimageopener('xkcd', %r<\Ahttps?://xkcd\.com/[0-9]+>) do |display_url|
     connection = HTTPClient.new
+    connection.ssl_config.set_default_paths
     page = connection.get_content(display_url)
     next nil if page.empty?
     doc = Nokogiri::HTML(page)
@@ -244,6 +257,7 @@ Plugin.create :photo_support do
   # ニコニコ静画 (nico.ms経由)
   defimageopener('NicoSeiga via nico.ms', %r<\Ahttps?://nico\.ms/im\d+>) do |display_url|
     connection = HTTPClient.new
+    connection.ssl_config.set_default_paths
     location = connection.get(display_url).header['Location'].first
     next nil unless location
     img = Plugin::PhotoSupport.インスタ映え(location)
@@ -262,7 +276,9 @@ Plugin.create :photo_support do
   amazon_json_regex1 = %r!'colorImages': { 'initial': (\[.*MAIN.*\])!
   amazon_json_regex2 = %r! data-a-dynamic-image="([^"]*)"!
   defimageopener('Amazon', %r<\Ahttps?://(?:www\.amazon\.(?:co\.jp|com)/(?:.*/)?(?:dp/|gp/product/)|amzn.asia/d/)[0-9A-Za-z_]+>) do |url|
-    html = HTTPClient.new.get_content(url, [], [['User-Agent', 'mikutter']])
+    connection = HTTPClient.new
+    connection.ssl_config.set_default_paths
+    html = connection.get_content(url, [], [['User-Agent', 'mikutter']])
     m = amazon_json_regex1.match(html)
     via_data_attr = false
     unless m
@@ -319,7 +335,9 @@ Plugin.create :photo_support do
   # ニコニコ動画
   defimageopener('NicoVideo', Plugin::PhotoSupport::NICOVIDEO_PATTERN) do |display_url|
     url = Plugin::PhotoSupport::NICOVIDEO_PATTERN.match(display_url) do |m|
-      json = HTTPClient.new.get_content("https://api.ce.nicovideo.jp/nicoapi/v1/video.info", query: { __format: 'json', v: m[1] })
+      connection = HTTPClient.new
+      connection.ssl_config.set_default_paths
+      json = connection.get_content("https://api.ce.nicovideo.jp/nicoapi/v1/video.info", query: { __format: 'json', v: m[1] })
       res = JSON.parse(json)
       if res.dig('nicovideo_video_response', '@status') == 'ok'
         res.dig('nicovideo_video_response', 'video', 'thumbnail_url')
