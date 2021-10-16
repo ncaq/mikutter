@@ -451,7 +451,7 @@ private
     layout.text = plain_description
     layout.width = main_text_rect.width * Pango::SCALE
     layout.attributes = textselector_attr_list(
-      description_attr_list(emoji_height: layout.pixel_size[1])
+      description_attr_list(emoji_height: layout.context.font_description.forecast_font_size)
     )
     layout.wrap = Pango::WrapMode::CHAR
     if context
@@ -459,12 +459,15 @@ private
 
       layout.context&.set_shape_renderer do |c, shape, _|
         next layout unless photo = shape.data
-        width, height = shape.ink_rect.width/Pango::SCALE, shape.ink_rect.height/Pango::SCALE
+        draw_area = layout.index_to_pos(shape.start_index)
+        width = draw_area.width / Pango::SCALE
+        height = draw_area.height / Pango::SCALE
         pixbuf = photo.load_pixbuf(width: width, height: height) do
           queue_draw
         end
-        x = layout.index_to_pos(shape.start_index).x / Pango::SCALE
-        y = layout.index_to_pos(shape.start_index).y / Pango::SCALE
+        x = draw_area.x / Pango::SCALE
+        y = draw_area.y / Pango::SCALE
+        notice "rect: #{x} #{y} #{width}, #{height}"
         c.translate(x, y)
         c.set_source_pixbuf(pixbuf)
         c.rectangle(0, 0, width, height)
