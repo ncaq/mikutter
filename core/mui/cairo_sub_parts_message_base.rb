@@ -365,16 +365,23 @@ class Gdk::SubPartsMessageBase < Gdk::SubParts
   def main_message(message, _context=nil)
     Pango::Layout.new(main_message_context).tap do |layout|
       layout.width = (width - icon_width - margin*3 - edge*2) * Pango::SCALE
-      layout.attributes = description_attr_list(message)
+      layout.attributes = description_attr_list(
+        message,
+        emoji_height: layout.context.font_description.forecast_font_size
+      )
       layout.wrap = Pango::WrapMode::CHAR
       layout.text = plain_description(message)
       layout.context.set_shape_renderer do |c, shape, _|
         photo = shape.data
         if photo
-          width, height = shape.ink_rect.width/Pango::SCALE, shape.ink_rect.height/Pango::SCALE
-          pixbuf = photo.load_pixbuf(width: width, height: height){ helper.queue_resize }
-          x = layout.index_to_pos(shape.start_index).x / Pango::SCALE
-          y = layout.index_to_pos(shape.start_index).y / Pango::SCALE
+          draw_area = layout.index_to_pos(shape.start_index)
+          width = draw_area.width / Pango::SCALE
+          height = draw_area.height / Pango::SCALE
+          pixbuf = photo.load_pixbuf(width: width, height: height) do
+            helper.queue_resize
+          end
+          x = draw_area.x / Pango::SCALE
+          y = draw_area.y / Pango::SCALE
           c.translate(x, y)
           c.set_source_pixbuf(pixbuf)
           c.rectangle(0, 0, width, height)
@@ -482,16 +489,12 @@ class Gdk::SubPartsMessageBase < Gdk::SubParts
   # 表示する際に本文に適用すべき装飾オブジェクトを作成する
   # ==== Return
   # Pango::AttrList 本文に適用する装飾
-  def description_attr_list(message, attr_list=Pango::AttrList.new)
+  def description_attr_list(message, attr_list: Pango::AttrList.new, emoji_height: 24)
     score(message).inject(0){|start_index, note|
       end_index = start_index + note.description.bytesize
       if UserConfig[:miraclepainter_expand_custom_emoji] && note.respond_to?(:inline_photo)
         end_index += -note.description.bytesize + 1
-        size = helper.create_pango_layout.tap do |layout|
-          layout.font_description = default_font
-          layout.text = '.'
-        end.size[1]
-        rect = Pango::Rectangle.new(0, 0, size, size)
+        rect = Pango::Rectangle.new(0, 0, emoji_height * Pango::SCALE, emoji_height * Pango::SCALE)
         shape = Pango::AttrShape.new(rect, rect, note.inline_photo)
         shape.start_index = start_index
         shape.end_index = end_index

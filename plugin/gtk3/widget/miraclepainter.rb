@@ -471,7 +471,6 @@ private
         end
         x = draw_area.x / Pango::SCALE
         y = draw_area.y / Pango::SCALE
-        notice "rect: #{x} #{y} #{width}, #{height}"
         c.translate(x, y)
         c.set_source_pixbuf(pixbuf)
         c.rectangle(0, 0, width, height)
