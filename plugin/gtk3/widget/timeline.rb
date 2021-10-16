@@ -129,6 +129,7 @@ module Plugin::Gtk3
       case to
       when :top
         @listbox.adjustment.value = @listbox.adjustment.lower
+        select_row_at_index(0)
       when :up
         @listbox.adjustment.value -= @listbox.adjustment.page_increment
       when :down
