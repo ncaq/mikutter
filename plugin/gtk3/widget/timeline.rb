@@ -40,6 +40,7 @@ module Plugin::Gtk3
       super()
 
       @@instances.push self
+      @@current ||= self
 
       self.name = 'timeline'
       self.orientation = :vertical
@@ -80,6 +81,11 @@ module Plugin::Gtk3
 
     def active
       @imaginary.active!(true, true)
+
+      if @@current && @@current != self && !@@current.destroyed?
+        @@current.unselect_all
+      end
+      @@current = self
     end
 
     def keypress(keyname)
@@ -108,10 +114,14 @@ module Plugin::Gtk3
     end
 
     def select_row_at_index(index)
+      unselect_all
+      @listbox.select_row @listbox.get_row_at_index index
+    end
+
+    def unselect_all
       selected_rows.each do |row|
         @listbox.unselect_row row
       end
-      @listbox.select_row @listbox.get_row_at_index index
     end
 
     def jump_to(to)
