@@ -5,42 +5,37 @@ require 'pqueue'
 require 'mui/gtk_postbox'
 
 module Plugin::Gtk3
-=begin rdoc
-  投稿ボックスとスクロール可能のリストビューを備えたウィジェット
-=end
+  # 投稿ボックスとスクロール可能のリストビューを備えたウィジェット
   class Timeline < Gtk::Grid
     class << self
-      @@instances = []
+      attr_accessor :current
 
       def update_rows(model)
-        @@instances.each do |instance|
+        @instances.each do |instance|
           instance.bulk_add([model]) if instance.include?(model)
         end
       end
 
       def remove_rows(model)
-        @@instances.each do |instance|
+        @instances.each do |instance|
           instance.bulk_remove [model]
         end
+      end
+
+      def new(*)
+        instance = super
+        (@instances ||= []).push(instance)
+        @current ||= instance
+        instance
       end
     end
 
     type_register
 
-    # used for deprecation year and month
-    YM = [2019, 10].freeze
-
-    extend Gem::Deprecate
-
-    attr_reader :postbox
-    attr_reader :order
-    attr_reader :imaginary
+    attr_reader :postbox, :order, :imaginary
 
     def initialize(imaginary=nil)
       super()
-
-      @@instances.push self
-      @@current ||= self
 
       self.name = 'timeline'
       self.orientation = :vertical
@@ -55,8 +50,8 @@ module Plugin::Gtk3
       @listbox = Gtk::ListBox.new.tap do |listbox|
         listbox.selection_mode = :multiple
         listbox.activate_on_single_click = false
-        listbox.set_sort_func do |row1, row2|
-          (@order.call row2.model) <=> (@order.call row1.model)
+        listbox.set_sort_func do |a, b|
+          @order.(b.model) <=> @order.(a.model)
         end
       end
       @listbox.ssc :destroy do
@@ -65,10 +60,10 @@ module Plugin::Gtk3
 
       add @postbox
       add(Gtk::ScrolledWindow.new.tap do |sw|
-        sw.set_policy :never, :automatic
-        sw.expand = true
-        sw.add @listbox
-      end)
+            sw.set_policy :never, :automatic
+            sw.expand = true
+            sw.add @listbox
+          end)
     end
 
     def order=(order)
@@ -77,16 +72,16 @@ module Plugin::Gtk3
     end
 
     def include?(model)
-      ! @hash[model.uri.hash].nil?
+      @hash[model.uri.hash] != nil
     end
 
     def active
       @imaginary.active!(true, true)
 
-      if @@current && @@current != self && !@@current.destroyed?
-        @@current.unselect_all
+      if self.class.current && self.class.current != self && !self.class.current.destroyed?
+        self.class.current.unselect_all
       end
-      @@current = self
+      self.class.current = self
     end
 
     def keypress(keyname)
@@ -98,7 +93,6 @@ module Plugin::Gtk3
     end
 
     def bulk_remove(models)
-
       models.each(&method(:check_and_remove))
     end
 
@@ -167,7 +161,7 @@ module Plugin::Gtk3
       create_postbox(options)
     end
 
-  private
+    private
 
     def check_and_add(model)
       row = @hash[model.uri.to_s]
@@ -197,8 +191,8 @@ module Plugin::Gtk3
 
     def create_postbox(options, &block)
       options = options.dup
-      options[:before_post_hook] = ->(this) {
-        get_ancestor(Gtk::Window).set_focus(self) unless self.destroyed?
+      options[:before_post_hook] = ->(_this) {
+        get_ancestor(Gtk::Window).set_focus(self) unless destroyed?
       }
       pb = Gtk::PostBox.new(**options).show_all
       postbox << pb
