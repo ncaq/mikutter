@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'pqueue'
-
 require 'mui/gtk_postbox'
 
 module Plugin::Gtk3
@@ -40,9 +38,8 @@ module Plugin::Gtk3
       self.name = 'timeline'
       self.orientation = :vertical
 
+      @uri_mp_dict = {} # { String (model uri) => MiraclePainter }
       @imaginary = imaginary
-      @hash = {} # Diva::URI => Row
-      @pq = PQueue.new { |a, b| a.modified < b.modified }
       @order = ->(m) { m.modified.to_i }
       @postbox = Gtk::Grid.new.tap do |grid|
         grid.orientation = :vertical
@@ -71,8 +68,8 @@ module Plugin::Gtk3
       @listbox.invalidate_sort
     end
 
-    def include?(model)
-      @hash[model.uri.hash] != nil
+    def include?(message)
+      @uri_mp_dict.key?(message.uri.to_s)
     end
 
     def active
@@ -89,11 +86,28 @@ module Plugin::Gtk3
     end
 
     def bulk_add(models)
-      models.each(&method(:check_and_add))
+      update_ordinal = false
+      models.each do |message|
+        mp = find_miracle_painter_by_message(message)
+        if mp
+          update_ordinal |= @order.(mp.model) != @order.(message)
+          mp.message = message
+        else
+          row = MiraclePainter.new(message)
+          row.show_all
+          @listbox.add(row)
+          @uri_mp_dict[message.uri.to_s] = row
+        end
+      end
+      @listbox.invalidate_sort if update_ordinal
+      overflow = @listbox.children[1000..]
+      bulk_remove(overflow.map(&:message)) if overflow
     end
 
-    def bulk_remove(models)
-      models.each(&method(:check_and_remove))
+    def bulk_remove(messages)
+      messages.map { |message|
+        @uri_mp_dict.delete(message.uri.to_s)
+      }.to_a.compact.each(&@listbox.method(:remove))
     end
 
     def clear
@@ -101,7 +115,7 @@ module Plugin::Gtk3
     end
 
     def size
-      @listbox.children.size
+      @uri_mp_dict.size
     end
 
     def select_row(row)
@@ -163,30 +177,8 @@ module Plugin::Gtk3
 
     private
 
-    def check_and_add(model)
-      row = @hash[model.uri.to_s]
-      row and @listbox.remove row
-
-      row = MiraclePainter.new model
-      row.show_all
-      @listbox.add row
-      @hash[model.uri.to_s] = row
-      @pq.push model
-
-      resize if size > 1000
-    end
-
-    def check_and_remove(model)
-      row = @hash[model.uri.to_s] or return
-      @hash.delete model.uri.to_s
-      @listbox.remove row
-    end
-
-    def resize
-      model = @pq.pop or return
-      row = @hash[model.uri.to_s] or return
-      @listbox.remove row
-      @hash.delete row
+    def find_miracle_painter_by_message(message)
+      @uri_mp_dict[message.uri.to_s]
     end
 
     def create_postbox(options, &block)

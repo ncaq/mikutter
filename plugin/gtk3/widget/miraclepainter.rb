@@ -91,6 +91,18 @@ class Plugin::Gtk3::MiraclePainter < Gtk::ListBoxRow
     style_context.add_class 'miraclepainter'
   end
 
+  def message=(newer)
+    if newer.uri != message.uri
+      raise 'Old message %{old} and new message %{new} are different.' % {
+        new: newer.uri,
+        old: message.uri
+      }
+    end
+    @model = newer
+    queue_draw
+    @model
+  end
+
   # override virtual function Gtk::Widget.get_request_mode
   def virtual_do_get_request_mode
     notice 'MiraclePainter#get_request_mode' if VERBOSE
