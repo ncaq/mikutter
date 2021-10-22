@@ -243,7 +243,7 @@ end
 class Gtk::TextBuffer < GLib::Object
   # _idx_ 文字目を表すイテレータと、そこから _size_ 文字後ろを表すイテレータの2要素からなる配列を返す。
   def get_range(idx, size)
-    [self.get_iter_at_offset(idx), self.get_iter_at_offset(idx + size)]
+    [self.get_iter_at(offset: idx), self.get_iter_at(offset: idx + size)]
   end
 end
 

@@ -17,7 +17,7 @@ class Gtk::InnerUserList < Gtk::TreeView
     append_column ::Gtk::TreeViewColumn.new("", ::Gtk::CellRendererPixbuf.new, pixbuf: COL_ICON)
     append_column ::Gtk::TreeViewColumn.new("SN", ::Gtk::CellRendererText.new, text: COL_SCREEN_NAME)
     append_column ::Gtk::TreeViewColumn.new("名前", ::Gtk::CellRendererText.new, text: COL_NAME)
-    model.set_sort_column_id(COL_ORDER,  Gtk::SORT_DESCENDING)
+    model.set_sort_column_id(COL_ORDER, Gtk::SortType::DESCENDING)
   end
 
   # Userの配列 _users_ を追加する
