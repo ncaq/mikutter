@@ -80,6 +80,7 @@ module Gtk
       if icon
         Gtk::ImageMenuItem.new(label: label_text).tap do |item|
           item.set_image(Gtk::WebIcon.new(icon, 16, 16))
+          item.always_show_image = true
         end
       else
         Gtk::MenuItem.new(label: label_text)
