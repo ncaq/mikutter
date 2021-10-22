@@ -26,6 +26,7 @@ class Plugin::Gtk3::WorldShifter < Gtk::EventBox
       Plugin.collect(:worlds).each do |world|
         item = Gtk::ImageMenuItem.new(label: world.title, accel_group: false)
         item.set_image Gtk::WebIcon.new(world.icon, UserConfig[:gtk_accountbox_geometry], UserConfig[:gtk_accountbox_geometry])
+        item.always_show_image = true
         item.ssc(:activate) { |w|
           Plugin.call(:world_change_current, world)
           @face.tooltip_text = world.title
@@ -35,6 +36,7 @@ class Plugin::Gtk3::WorldShifter < Gtk::EventBox
       menu.append Gtk::SeparatorMenuItem.new
       item = Gtk::ImageMenuItem.new(label: Plugin[:gtk3]._('Worldを追加'), accel_group: false)
       item.set_image Gtk::WebIcon.new(Skin[:add], UserConfig[:gtk_accountbox_geometry], UserConfig[:gtk_accountbox_geometry])
+      item.always_show_image = true
       item.ssc(:activate) { |w|
         Plugin.call(:request_world_add)
         false }
