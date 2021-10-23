@@ -81,7 +81,7 @@ Plugin.create :bugreport do
         'exception_class' => exception.class,
         'description' => exception.to_s,
         'ruby_version' => RUBY_VERSION,
-        'rubygtk_version' => Gtk::BINDING_VERSION.join('.'),
+        'rubygtk_version' => Glib::BINDING_VERSION.join('.'),
         'platform' => RUBY_PLATFORM,
         'url' => 'exception',
         'version' => Environment::VERSION
