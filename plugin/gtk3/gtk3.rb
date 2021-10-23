@@ -32,9 +32,7 @@ require_relative 'slug_dictionary'
 require_relative 'toolbar_generator'
 
 Plugin.create :gtk3 do
-  pg = Plugin::Gtk3
-
-  @slug_dictionary = pg::SlugDictionary.new # widget_type => {slug => Gtk}
+  @slug_dictionary = Plugin::Gtk3::SlugDictionary.new # widget_type => {slug => Gtk}
   @tabs_promise = {}                     # slug => Deferred
 
   TABPOS = [:top, :bottom, :left, :right].freeze
@@ -42,7 +40,7 @@ Plugin.create :gtk3 do
   # ウィンドウ作成。
   # PostBoxとか複数のペインを持つための処理が入るので、Gtk::MikutterWindowクラスを新設してそれを使う
   on_window_created do |i_window|
-    window = pg::MikutterWindow.open i_window, self
+    window = Plugin::Gtk3::MikutterWindow.open i_window, self
     @parent = window
     @slug_dictionary.add(i_window, window)
     window.title = i_window.name
@@ -115,7 +113,7 @@ Plugin.create :gtk3 do
       end
     end
     pane.ssc(:page_reordered){ |this, tabcontainer, index|
-        Plugin.call(:rewind_window_order, i_pane.parent) if i_pane.parent
+      Plugin.call(:rewind_window_order, i_pane.parent) if i_pane.parent
       i_tab = tabcontainer.i_tab
       if i_tab
         i_pane.reorder_child(i_tab, index) end
@@ -125,7 +123,7 @@ Plugin.create :gtk3 do
       i_pane.set_active_child(tab.i_tab, true)
     end
     pane.signal_connect(:page_added){ |this, tabcontainer, index|
-      type_strict tabcontainer => pg::TabContainer
+      type_strict tabcontainer => Plugin::Gtk3::TabContainer
       Plugin.call(:rewind_window_order, i_pane.parent) if i_pane.parent
       i_tab = tabcontainer.i_tab
       next false if i_tab.parent == i_pane
@@ -194,7 +192,7 @@ Plugin.create :gtk3 do
     tab.show_all end
 
   on_tab_toolbar_created do |i_tab_toolbar|
-    tab_toolbar = pg::TabToolbar.new(i_tab_toolbar).show_all
+    tab_toolbar = Plugin::Gtk3::TabToolbar.new(i_tab_toolbar).show_all
     @slug_dictionary.add(i_tab_toolbar, tab_toolbar)
   end
 
@@ -205,7 +203,7 @@ Plugin.create :gtk3 do
 
   # タイムライン作成。
   on_timeline_created do |i_timeline|
-    timeline = pg::Timeline.new(i_timeline)
+    timeline = Plugin::Gtk3::Timeline.new(i_timeline)
     @slug_dictionary.add(i_timeline, timeline)
     timeline.show_all
   end
@@ -423,16 +421,16 @@ Plugin.create :gtk3 do
   on_posted do |service, messages|
     messages.each{ |message|
       if(replyto_source = message.replyto_source)
-        pg::Timeline.update_rows replyto_source
+        Plugin::Gtk3::Timeline.update_rows replyto_source
       end
     }
   end
 
-  on_message_modified(&pg::Timeline.method(:update_rows))
-  on_destroyed(&pg::Timeline.method(:remove_rows))
+  on_message_modified(&Plugin::Gtk3::Timeline.method(:update_rows))
+  on_destroyed(&Plugin::Gtk3::Timeline.method(:remove_rows))
 
   share = proc do |_, model|
-    pg::Timeline.update_rows model
+    Plugin::Gtk3::Timeline.update_rows model
   end
 
   on_share(&share)
@@ -441,7 +439,7 @@ Plugin.create :gtk3 do
   on_destroy_share(&share)
 
   favorite = proc do |_, _, model|
-    pg::Timeline.update_rows model
+    Plugin::Gtk3::Timeline.update_rows model
   end
 
   on_favorite(&favorite)
@@ -506,12 +504,14 @@ Plugin.create :gtk3 do
     [widgetof(i_widget)] end
 
   on_gui_dialog do |plugin, title, default, proc, promise|
-    pg::Dialog.open(plugin: plugin,
-                             title: title,
-                             default: default,
-                             promise: promise,
-                             parent: @parent,
-                             &proc)
+    Plugin::Gtk3::Dialog.open(
+      plugin: plugin,
+      title: title,
+      default: default,
+      promise: promise,
+      parent: @parent,
+      &proc
+    )
   end
 
   filter_before_mainloop_exit do
