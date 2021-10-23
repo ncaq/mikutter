@@ -25,9 +25,16 @@ Plugin.create(:mastodon_custom_post) do
       boolean _('閲覧注意'), :sensitive
 
       visibility_default = opt.world.account.source.privacy
-      if reply_to.is_a?(Plugin::Mastodon::Status) && reply_to.visibility == "direct"
-        # 返信先がDMの場合はデフォルトでDMにする。但し編集はできるようにするため、この時点でデフォルト値を代入するのみ。
-        visibility_default = "direct"
+      if reply_to.is_a?(Plugin::Mastodon::Status)
+        # 返信先の公開範囲が狭い場合は返信先の公開範囲に合わせる。
+        # 但し編集はできるようにするため、この時点でデフォルト値を代入するのみ。
+        if reply_to.visibility == "direct"
+          visibility_default = "direct"
+        elsif visibility_default != "direct" && reply_to.visibility == "private"
+          visibility_default = "private"
+        elsif visibility_default != "direct" && visibility_default != "private" && reply_to.visibility == "unlisted"
+          visibility_default = "unlisted"
+        end
       end
       self[:visibility] = Plugin::Mastodon::Util.visibility2select(visibility_default)
       select _('公開範囲'), :visibility do
