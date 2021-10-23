@@ -115,23 +115,23 @@ module Plugin::MastodonAccountViewer
     end
 
     def gen_follow_relation
-      Gtk::Box.new(:vertical, 0)
-        .closeup(gen_following_relation)
-        .closeup(gen_followed_relation)
-    end
-
-    def gen_following_relation
       if me?
         Gtk::Label.new(_('それはあなたです！'))
       else
-        Gtk::HBox.new
-          .closeup(following_arrow_widget)
-          .closeup(following_label)
+        Gtk::Box.new(:vertical, 0)
+          .closeup(gen_following_relation)
+          .closeup(gen_followed_relation)
       end
     end
 
+    def gen_following_relation
+      Gtk::Box.new(:horizontal)
+        .closeup(following_arrow_widget)
+        .closeup(following_label)
+    end
+
     def gen_followed_relation
-      Gtk::HBox.new
+      Gtk::Box.new(:horizontal)
         .closeup(followed_arrow_widget)
         .closeup(followed_label)
     end
