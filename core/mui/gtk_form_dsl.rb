@@ -58,6 +58,7 @@ module Gtk::FormDSL
     text_view.border_width = 6
     text_view.accepts_tab = false
     text_view.editable = true
+    text_view.buffer.text = self[key] || ''
     self[key] and text_view.buffer.text
     text_view.buffer.ssc :changed do
       self[key] = text_view.buffer.text
