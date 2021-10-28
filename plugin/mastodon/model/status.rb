@@ -292,7 +292,7 @@ module Plugin::Mastodon
     end
 
     def favorite_count
-      actual_status.favourites_count
+      [@favorite_accts.size, actual_status.favourites_count].compact.max
     end
 
     def retweet?
@@ -316,7 +316,7 @@ module Plugin::Mastodon
     alias :retweeted? :shared?
 
     def favorited_by
-      @favorite_accts.map{|acct| Account.findbyacct(acct) }.compact.uniq
+      @favorite_accts.lazy.filter_map(&Account.method(:findbyacct)).uniq
     end
 
     def favorite?(counterpart = nil)
