@@ -88,20 +88,19 @@ class ::Gdk::SubPartsVoter < Gdk::SubParts
       icon_height end end
 
   def add(new)
-    if not @votes.include?(new)
+    if !@votes.include?(new)
       @votes << new
       helper.queue_draw
-      self
     end
+    self
   end
   alias << add
 
   def delete(user)
-    if not @votes.include?(user)
-      @votes.delete(user)
+    if @votes.delete(user)
       helper.queue_draw
-      self
     end
+    self
   end
 
   def name
