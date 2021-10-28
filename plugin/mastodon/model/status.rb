@@ -288,7 +288,7 @@ module Plugin::Mastodon
     end
 
     def retweet_count
-      actual_status.reblogs_count
+      [actual_status.reblog_status_uris.size, actual_status.reblogs_count].compact.max
     end
 
     def favorite_count
@@ -300,7 +300,12 @@ module Plugin::Mastodon
     end
 
     def retweeted_by
-      actual_status.reblog_status_uris.map{|pair| pair[:acct] }.compact.uniq.map{|acct| Account.findbyacct(acct) }.compact
+      actual_status
+        .reblog_status_uris
+        .lazy
+        .filter_map { |v| v[:acct] }
+        .filter_map(&Account.method(:findbyacct))
+        .uniq
     end
 
     def shared?(counterpart=nil)
