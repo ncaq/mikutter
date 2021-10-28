@@ -1,0 +1,11 @@
+---
+slug: sub_parts_voter_updater
+depends:
+  mikutter: '4.1.7'
+  plugin:
+  - gtk3
+version: '1.0'
+author: toshi_a
+name: SubPartsVoter updater
+description: >-
+  favorite、shareをリアルタイムに更新します

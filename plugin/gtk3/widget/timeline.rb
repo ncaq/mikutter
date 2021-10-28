@@ -20,6 +20,15 @@ module Plugin::Gtk3
         end
       end
 
+      def miracle_painters_of(message)
+        Enumerator.new do |yielder|
+          @instances.each do |instance|
+            detect = instance.find_miracle_painter_by_message(message)
+            yielder << detect if detect
+          end
+        end
+      end
+
       def new(*)
         instance = super
         (@instances ||= []).push(instance)
@@ -175,11 +184,11 @@ module Plugin::Gtk3
       create_postbox(options)
     end
 
-    private
-
     def find_miracle_painter_by_message(message)
       @uri_mp_dict[message.uri.to_s]
     end
+
+    private
 
     def create_postbox(options, &block)
       options = options.dup
