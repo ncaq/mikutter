@@ -67,19 +67,23 @@ class ::Gdk::SubPartsVoter < Gdk::SubParts
   end
 
   def get_user_by_point(x)
-    if(x >= @icon_ofst)
-      node = @avatar_rect.each_with_index.to_a.bsearch{|_| _[0].last > x }
-      if node
-        @votes[node.last] end end end
+    if x >= @icon_ofst
+      _, index = @avatar_rect.each_with_index.to_a.bsearch{ |range, i| range.last > x }
+      @votes[index] if index
+    end
+  end
 
   def render(context)
     if get_vote_count != 0
-      context.save{
+      context.save do
         context.translate(@margin, 0)
         put_title_icon(context)
         put_counter(context)
-        put_voter(context) } end
-    @last_height = height end
+        put_voter(context)
+      end
+    end
+    @last_height = height
+  end
 
   def height
     if get_vote_count == 0
@@ -173,7 +177,7 @@ class ::Gdk::SubPartsVoter < Gdk::SubParts
   end
 
   def get_vote_count
-    votes.size
+    votes.size || votes.count
   end
 
 end
