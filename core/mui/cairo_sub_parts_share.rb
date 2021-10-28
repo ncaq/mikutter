@@ -19,7 +19,7 @@ class Gdk::SubPartsShare < Gdk::SubPartsVoter
   end
 
   memoize def title_icon_model
-    Skin[:retweet]
+    Skin.photo(:retweet)
   end
 
   def name

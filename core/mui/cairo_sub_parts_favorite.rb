@@ -19,7 +19,7 @@ class Gdk::SubPartsFavorite < Gdk::SubPartsVoter
   end
 
   memoize def title_icon_model
-    Skin.photo('unfav.png')
+    Skin.photo(:unfav)
   end
 
   def name
