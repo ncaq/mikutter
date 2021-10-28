@@ -429,8 +429,8 @@ Plugin.create :gtk3 do
   on_message_modified(&Plugin::Gtk3::Timeline.method(:update_rows))
   on_destroyed(&Plugin::Gtk3::Timeline.method(:remove_rows))
 
-  share = proc do |_, model|
-    Plugin::Gtk3::Timeline.update_rows model
+  share = ->(_, model) do
+    Plugin::Gtk3::Timeline.update_rows(model)
   end
 
   on_share(&share)
@@ -438,8 +438,8 @@ Plugin.create :gtk3 do
   on_fail_share(&share)
   on_destroy_share(&share)
 
-  favorite = proc do |_, _, model|
-    Plugin::Gtk3::Timeline.update_rows model
+  favorite = ->(_, _, model) do
+    Plugin::Gtk3::Timeline.update_rows(model)
   end
 
   on_favorite(&favorite)
