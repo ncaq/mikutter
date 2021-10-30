@@ -306,6 +306,7 @@ module Plugin::Mastodon
         .filter_map { |v| v[:acct] }
         .filter_map(&Account.method(:findbyacct))
         .uniq
+        .to_a
     end
 
     def shared?(counterpart=nil)
@@ -321,7 +322,7 @@ module Plugin::Mastodon
     alias :retweeted? :shared?
 
     def favorited_by
-      @favorite_accts.lazy.filter_map(&Account.method(:findbyacct)).uniq
+      @favorite_accts.lazy.filter_map(&Account.method(:findbyacct)).uniq.to_a
     end
 
     def favorite?(counterpart = nil)
