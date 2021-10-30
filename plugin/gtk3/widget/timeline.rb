@@ -96,7 +96,8 @@ module Plugin::Gtk3
 
     def bulk_add(models)
       update_ordinal = false
-      models.each do |message|
+      models.each do |message_or_share|
+        message = message_or_share.retweet_source || message_or_share
         mp = find_miracle_painter_by_message(message)
         if mp
           update_ordinal |= @order.(mp.model) != @order.(message)
