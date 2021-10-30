@@ -52,8 +52,7 @@ class Gtk::TimeLine < Gtk::Box
     @tl.set_size_request(100, 100)
     @tl.get_column(0).sizing = Gtk::TreeViewColumn::FIXED
     @tl.ssc(:draw){
-      # FIXME: gtk3, visible_rangeが実装されていないのでemit_expose_miraclepainterを呼べない
-      # emit_expose_miraclepainter
+      emit_expose_miraclepainter
       false }
 
     init_remover
@@ -186,8 +185,8 @@ class Gtk::TimeLine < Gtk::Box
   # スクロールなどの理由で新しくTLに現れたMiraclePainterにシグナルを送る
   def emit_expose_miraclepainter
     @exposing_miraclepainter ||= []
-    if @tl.visible_range
-      current, last = @tl.visible_range.map{ |path| @tl.model.get_iter(path) }
+    val, current, last = @tl.visible_range.map{ |path| @tl.model.get_iter(path) }
+    if val
       messages = Set.new
       while current[0].to_i >= last[0].to_i
         messages << current[1]

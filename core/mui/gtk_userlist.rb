@@ -73,8 +73,8 @@ class Gtk::UserList < Gtk::EventBox
   private
 
   def emit_expose_user
-    if @listview.visible_range
-      current, last = @listview.visible_range
+    val, current, last = @listview.visible_range
+    if val
       Enumerator.new{|y|
         while (current <=> last) < 1
           y << @listview.model.get_iter(current)
