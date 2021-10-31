@@ -17,7 +17,7 @@ Plugin.create(:mastodon_account_viewer) do
     }
     param_toot_count = {
       count: user.statuses_count,
-      toots_per_day: since_day == 0 ? user.statuses_count : '%{avg}.2f' % { avg: Rational(user.statuses_count, since_day).to_f }
+      toots_per_day: since_day == 0 ? user.statuses_count : Rational(user.statuses_count, since_day).to_f.round(2)
     }
     [
       [_('名前'), user.display_name],
