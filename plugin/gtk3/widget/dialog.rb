@@ -77,11 +77,7 @@ module Plugin::Gtk3
         if Gtk::ResponseType::OK == response
           case @container.state
           when Container::STATE_WAIT
-            @container.run(Response::Ok.new(@container)).next do
-              # 確認画面ではボタンのテキストを「追加」に変更
-              @container.state == Container::STATE_EXIT \
-                and (@btn_ok.label = 'gtk-add')
-            end
+            @container.run(Response::Ok.new(@container))
           when Container::STATE_EXIT
             @promise.call(Response::Ok.new(@container)) if @promise
             @promise = nil
