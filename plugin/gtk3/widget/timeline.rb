@@ -14,9 +14,9 @@ module Plugin::Gtk3
         end
       end
 
-      def remove_rows(model)
+      def remove_rows(models)
         @instances.each do |instance|
-          instance.bulk_remove [model]
+          instance.bulk_remove(models)
         end
       end
 
