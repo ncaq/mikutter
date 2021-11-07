@@ -111,7 +111,7 @@ module Gtk::FormDSL
       switch = Gtk::Switch.new
       switch.active = self[key]
       switch.halign = :end
-      switch.ssc :activate do
+      switch.ssc 'notify::active' do
         self[key] = switch.active?
       end
 
