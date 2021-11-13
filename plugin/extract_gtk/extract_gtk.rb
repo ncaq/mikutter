@@ -11,10 +11,11 @@ Plugin.create :extract_gtk do
 
     tablist = Plugin::ExtractGtk::ExtractTabList.new(Plugin[:extract])
     tablist.hexpand = true
+    tablist.vexpand = true
 
     grid = builder.get_object 'grid'
     add grid
-    grid.attach tablist, 0, 0, 1, 1
+    grid.attach ::Gtk::ScrolledWindow.new.add(tablist), 0, 0, 1, 1
 
     builder.get_object('btn_add').ssc(:clicked) do
       Plugin.call :extract_tab_open_create_dialog, toplevel
