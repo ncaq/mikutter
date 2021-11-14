@@ -3,6 +3,7 @@ Plugin.create(:mastodon_rest) do
 
   subscribe(:mastodon_worlds__add).each do |new_world|
     [ new_world.rest.user,
+      new_world.rest.mention,
       new_world.rest.direct,
       new_world.rest.public,
       new_world.rest.public_local,
@@ -53,7 +54,12 @@ Plugin.create(:mastodon_rest) do
 
   def query(connection)
     Plugin::Mastodon::API.call(:get, connection.uri.host, connection.uri.path, connection.token, limit: 200, **connection.params).next { |api_response|
-      Plugin::Mastodon::Status.bulk_build(connection.server, api_response.value)
+      case connection.response_entities
+      when :status
+        Plugin::Mastodon::Status.bulk_build(connection.server, api_response.value)
+      when :notification
+        Plugin::Mastodon::Status.bulk_build(connection.server, api_response.value.map{ |h| h[:status] })
+      end
     }.terminate(_('Mastodon: %{title}取得時にエラーが発生しました') % {title: connection.title})
       .trap{ nil }
   end

@@ -86,24 +86,9 @@ Plugin.create(:mastodon) do
     Delayer.new { followings_updater.call }
   end
 
-  fetch_mentions = -> do
-    activity :mastodon, _('返信を取得しています…')
-    Plugin.collect(:mastodon_worlds).deach do |world|
-      generate :mastodon_appear_toots do |stream|
-        +world.mentions
-      end
-    end.next do
-      activity :mastodon, _('返信の取得が完了しました')
-    end.trap do |err|
-      error err
-      activity :mastodon, _('返信を取得できませんでした')
-    end
-  end
-
   # 起動時
   Delayer.new do
     followings_updater.call
-    fetch_mentions.call
   end
 
   # Mastodonサーバが初期化されたら、サーバの集合に加える
@@ -123,6 +108,7 @@ Plugin.create(:mastodon) do
         a | worlds.flat_map do |world|
           [
             world.sse.user,
+            world.rest.mention,
             world.sse.direct,
             world.sse.public,
             world.sse.public(only_media: true),

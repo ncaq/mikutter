@@ -47,31 +47,6 @@ module Plugin::Mastodon
       Plugin::Mastodon::RestAuthorizedType.new(world: self)
     end
 
-    def datasource_slug(type, n = nil)
-      case type
-      when :home
-        # ホームTL
-        "mastodon-#{account.acct}-home".to_sym
-      when :direct
-        # DM TL
-        "mastodon-#{account.acct}-direct".to_sym
-      when :list
-        # リストTL
-        "mastodon-#{account.acct}-list-#{n}".to_sym
-      else
-        "mastodon-#{account.acct}-#{type.to_s}".to_sym
-      end
-    end
-
-    def mentions
-      API.call(
-        :get, domain, '/api/v1/notifications', access_token,
-        exclude_types: %w[follow follow_request favourite reblog poll]
-      ).next do |resp|
-        Status.bulk_build server, resp.value.map { |h| h[:status] }
-      end
-    end
-
     def get_lists
       Delayer::Deferred.new do
         if @@lists[uri.to_s]
