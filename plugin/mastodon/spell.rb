@@ -473,4 +473,17 @@ Plugin.create(:mastodon) do
   defspell(:mastodon, :mastodon) do |mastodon|
     true
   end
+
+  defspell(:remain_charcount, :mastodon) do |mastodon, body:|
+    config = mastodon.server.configuration&.statuses
+    if config                   # Plugin::Mastodon::ServerConfigurationStatus
+      body.dup.then do |new_text|
+        new_text.gsub!(URI.regexp, "\1#{'x' * config.characters_reserved_per_url}")
+        new_text.gsub!(Plugin::Mastodon::Status::MENTION_RE, '@\2')
+        config.max_characters - new_text.size
+      end
+    else
+      nil
+    end
+  end
 end

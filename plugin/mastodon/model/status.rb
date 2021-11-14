@@ -56,8 +56,26 @@ module Plugin::Mastodon
 
     @@mute_mutex = Thread::Mutex.new
 
+    VALID_URL_PRECEDING_CHARS = /(?:[^A-Z0-9@＠$#＃]|^)/io
+    VALID_URL_QUERY_CHARS = /[a-z0-9!?\*'\(\);:&=\+\$\/%#\[\]\-_\.,~|@]/i
+    VALID_URL_QUERY_ENDING_CHARS = /[a-z0-9_&=#\/\-]/i
+    URL_PATTERN = %r{
+      (#{VALID_URL_PRECEDING_CHARS})
+      (
+        (https?:\/\/)
+        ((?:(?!-)[a-z0-9-]{1,63}(?<!-)\.)*(?:xn--)?[a-z]{2,})
+        (?::(\d{1,5}))?
+        (\/
+          [^\s#?!$&'\*,;=]*
+          (?:\#[^\s#?!$&'\*,;=]*)?
+        )?
+        (\?#{VALID_URL_QUERY_CHARS}*#{VALID_URL_QUERY_ENDING_CHARS})?
+      )
+    }iox
     TOOT_URI_RE = %r!\Ahttps://([^/]+)/@\w{1,30}/(\d+)\z!.freeze
     TOOT_ACTIVITY_URI_RE = %r!\Ahttps://(?<domain>[^/]*)/users/(?<acct>[^/]*)/statuses/(?<status_id>[^/]*)/activity\z!.freeze
+    USERNAME_RE = /[a-z0-9_]+([a-z0-9_\.-]+[a-z0-9_]+)?/i
+    MENTION_RE = /(?<=^|[^\/[:word:]])@((#{USERNAME_RE})(?:@[[:word:]\.\-]+[[:word:]]+)?)/i
 
     handle TOOT_URI_RE do |uri|
       Status.findbyuri(uri) || Status.fetch(uri)

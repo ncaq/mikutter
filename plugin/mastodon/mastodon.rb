@@ -155,6 +155,14 @@ Plugin.create(:mastodon) do
     [world]
   end
 
+  on_mastodon_server_created do |server|
+    Plugin::Mastodon::API.call(
+      :get, server.domain, '/api/v1/instance'
+    ).next do |response|
+      server.configuration = response[:configuration]
+    end
+  end
+  
   # サーバー編集
   on_mastodon_update_instance do |domain|
     Thread.new {
