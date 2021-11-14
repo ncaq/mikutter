@@ -19,6 +19,8 @@ module Gdk
     NON_TAG_PATTERN_EXACT = Regexp.union(ENTITY_ENCODED_PATTERN_EXACT,
                                          CHARACTER_PATTERN_EXACT)
 
+    WHITE = [0xffff, 0xffff, 0xffff].freeze
+    BLACK = [0, 0, 0].freeze
 
     def initialize(*args)
       @textselector_pressing = @textselect_start = @textselect_end = nil
@@ -57,8 +59,8 @@ module Gdk
 
     def textselector_attr_list(attr_list=Pango::AttrList.new)
       if textselector_range
-        bg = ::Pango::AttrBackground.new(*Plugin::Gtk3::MiraclePainter::BLACK)
-        fg = ::Pango::AttrForeground.new(*Plugin::Gtk3::MiraclePainter::WHITE)
+        bg = ::Pango::AttrBackground.new(*BLACK)
+        fg = ::Pango::AttrForeground.new(*WHITE)
         bg.start_index = fg.start_index = plain_description[0...textselector_range.first].bytesize
         bg.end_index = fg.end_index = plain_description[0...textselector_range.last].bytesize
         attr_list.insert(bg)

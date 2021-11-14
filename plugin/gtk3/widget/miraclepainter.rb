@@ -310,13 +310,6 @@ class Plugin::Gtk3::MiraclePainter < Gtk::ListBoxRow
     timeline.keypress(Gtk.keyname [event.keyval, event.state])
   end
 
-  def signal_do_state_flags_changed(prev_flags)
-    notice "#{self}*state_flags_changed(prev_flags=#{prev_flags.inspect}) " \
-      "state_flags=#{state_flags.inspect}" if VERBOSE
-
-    (state_flags & Gtk::StateFlags::SELECTED).zero? and textselector_unselect
-  end
-
   # for keybindings (Shift-F10 or Menu)
   # see https://developer.gnome.org/gtk3/stable/gtk-migrating-checklist.html#checklist-popup-menu
   def signal_do_popup_menu
