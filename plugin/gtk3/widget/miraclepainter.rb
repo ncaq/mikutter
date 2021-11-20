@@ -679,7 +679,7 @@ private
       }
       if clickable?(pointed_note)
         # the cursor is placed on link
-        'pointer'
+        'hand2'
       else
         'text'
       end
