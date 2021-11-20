@@ -20,9 +20,9 @@ module Plugin::MastodonAccountViewer
       closeup(Gtk::WebIcon.new(my_account.account.icon, ICON_SIZE).tooltip(my_account.title))
       closeup(gen_follow_relation)
       closeup(Gtk::WebIcon.new(counterpart.icon, ICON_SIZE).tooltip(counterpart.title))
-      closeup(followbutton)
-      closeup(menubutton)
       unless me?
+        closeup(followbutton)
+        closeup(menubutton)
         retrieve_relation_status
       end
     end
