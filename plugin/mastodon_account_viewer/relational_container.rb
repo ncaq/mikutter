@@ -17,12 +17,12 @@ module Plugin::MastodonAccountViewer
       @following = @follower = @blocked = @mute = :unknown
       @transaction_level = 0
 
-      closeup(Gtk::WebIcon.new(my_account.account.icon, ICON_SIZE).tooltip(my_account.title))
-      closeup(gen_follow_relation)
-      closeup(Gtk::WebIcon.new(counterpart.icon, ICON_SIZE).tooltip(counterpart.title))
+      pack_start(Gtk::WebIcon.new(my_account.account.icon, ICON_SIZE).set_tooltip_text(my_account.title), expand: false)
+      pack_start(gen_follow_relation, expand: false)
+      pack_start(Gtk::WebIcon.new(counterpart.icon, ICON_SIZE).set_tooltip_text(counterpart.title), expand: false)
       unless me?
-        closeup(followbutton)
-        closeup(menubutton)
+        pack_start(followbutton, expand: false)
+        pack_start(menubutton, expand: false)
         retrieve_relation_status
       end
     end
@@ -119,21 +119,21 @@ module Plugin::MastodonAccountViewer
         Gtk::Label.new(_('それはあなたです！'))
       else
         Gtk::Box.new(:vertical, 0)
-          .closeup(gen_following_relation)
-          .closeup(gen_followed_relation)
+          .pack_start(gen_following_relation, expand: false)
+          .pack_start(gen_followed_relation, expand: false)
       end
     end
 
     def gen_following_relation
       Gtk::Box.new(:horizontal)
-        .closeup(following_arrow_widget)
-        .closeup(following_label)
+        .pack_start(following_arrow_widget, expand: false)
+        .pack_start(following_label, expand: false)
     end
 
     def gen_followed_relation
       Gtk::Box.new(:horizontal)
-        .closeup(followed_arrow_widget)
-        .closeup(followed_label)
+        .pack_start(followed_arrow_widget, expand: false)
+        .pack_start(followed_label, expand: false)
     end
 
     def followbutton
