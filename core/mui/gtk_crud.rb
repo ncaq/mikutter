@@ -140,22 +140,31 @@ class Gtk::CRUD < Gtk::CompatListView
     column_schemer.flatten.each_with_index{ |scheme, index|
       case scheme[:widget]
       when :message_picker
-        widget.closeup(Mtk.message_picker(lambda{ |new|
+        widget.pack_start(Mtk.message_picker(lambda{ |new|
                                             if(new.nil?)
                                               results[index].freeze_ifn
                                             else
-                                              results[index] = new.freeze_ifn end }))
+                                              results[index] = new.freeze_ifn
+                                            end
+                                          }), expand: false)
       when nil
         ;
       else
-        widget.closeup(Mtk.__send__((scheme[:widget] or :input), lambda{ |new|
+        widget.pack_start(widget, Mtk.__send__((scheme[:widget] or :input), lambda{ |new|
                                    if(new.nil?)
                                      results[index].freeze_ifn
                                    else
-                                     results[index] = new.freeze_ifn end },
-                                 scheme[:label], *(scheme[:args].to_a or []))) end }
+                                     results[index] = new.freeze_ifn
+                                   end
+                                 },
+                                 scheme[:label], *(scheme[:args].to_a or [])), expand: false)
+      end
+    }
     { :widget => widget,
       :result => lambda{
-        results } } end
+        results
+      }
+    }
+  end
 
 end

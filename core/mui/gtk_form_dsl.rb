@@ -651,7 +651,7 @@ module Gtk::FormDSL
     container.pack_start(Gtk::Label.new(title), expand: false, fill: true, padding: 0)
     container.pack_start(Gtk::Alignment.new(1.0, 0.5, 0, 0).add(keyconfig), expand: true, fill: true, padding: 0)
     keyconfig.change_hook = ->(modify) { self[config] = modify }
-    closeup(container)
+    pack_start(container, expand: false)
     container
   end
 
