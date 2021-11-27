@@ -397,7 +397,8 @@ module Gtk
         @options[:delegated_by].post.buffer.text = ''
       elsif !(@header.empty? and @footer.empty?)
         post.buffer.text = @header + @footer
-        post.buffer.place_cursor(post.buffer.get_iter_at_offset(@header.size)) end
+        post.buffer.place_cursor(post.buffer.get_iter_at(offset: @header.size))
+      end
       post.accepts_tab = false end
 
     # PostBoxを複製するときのために、このPostBoxを生成した時に指定された全ての名前付き引数と値のペアを返す

@@ -125,8 +125,8 @@ class Gtk::IntelligentTextview < Gtk::TextView
           start = pos.offset
           pixbuf = photo.load_pixbuf(width: font_size, height: font_size) do |loaded_pixbuf|
             unless buffer.destroyed?
-              insertion_start = buffer.get_iter_at_offset(start)
-              buffer.delete(insertion_start, buffer.get_iter_at_offset(start+1))
+              insertion_start = buffer.get_iter_at(offset: start)
+              buffer.delete(insertion_start, buffer.get_iter_at(offset: start+1))
               buffer.insert(insertion_start, loaded_pixbuf)
             end
           end
@@ -139,7 +139,7 @@ class Gtk::IntelligentTextview < Gtk::TextView
                                  }, nil)
           start = pos.offset
           buffer.insert(pos, note.description)
-          buffer.apply_tag(tagname, buffer.get_iter_at_offset(start), pos)
+          buffer.apply_tag(tagname, buffer.get_iter_at(offset: start), pos)
         else
           buffer.insert(pos, note.description, { tags: %w[shell] })
         end
