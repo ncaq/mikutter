@@ -24,7 +24,7 @@ class Plugin::Gtk3::WorldShifter < Gtk::EventBox
   def open_menu(event)
     @menu ||= Gtk::Menu.new.tap do |menu|
       Plugin.collect(:worlds).each do |world|
-        item = Gtk::ImageMenuItem.new(label: world.title, accel_group: false)
+        item = Gtk::ImageMenuItem.new(label: world.title, use_underline: false)
         item.set_image Gtk::WebIcon.new(world.icon, UserConfig[:gtk_accountbox_geometry], UserConfig[:gtk_accountbox_geometry])
         item.always_show_image = true
         item.ssc(:activate) { |w|
@@ -34,7 +34,7 @@ class Plugin::Gtk3::WorldShifter < Gtk::EventBox
         menu.append item
       end
       menu.append Gtk::SeparatorMenuItem.new
-      item = Gtk::ImageMenuItem.new(label: Plugin[:gtk3]._('Worldを追加'), accel_group: false)
+      item = Gtk::ImageMenuItem.new(label: Plugin[:gtk3]._('Worldを追加'), use_underline: false)
       item.set_image Gtk::WebIcon.new(Skin[:add], UserConfig[:gtk_accountbox_geometry], UserConfig[:gtk_accountbox_geometry])
       item.always_show_image = true
       item.ssc(:activate) { |w|
