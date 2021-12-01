@@ -47,6 +47,7 @@ Plugin.create :change_account do
   settings _('アカウント情報') do
     listview = ::Plugin::ChangeAccount::AccountControl.new(self)
     listview.hexpand = true
+    listview.vexpand = true
     btn_add = Gtk::Button.new stock_id: Gtk::Stock::ADD
     btn_delete = Gtk::Button.new stock_id: Gtk::Stock::DELETE
     btn_add.ssc(:clicked) do
@@ -64,7 +65,7 @@ Plugin.create :change_account do
 
     grid = Gtk::Grid.new
     grid.column_spacing = 6
-    grid << listview
+    grid << Gtk::ScrolledWindow.new.add(listview)
     grid << (Gtk::Grid.new.tap do |grid|
       grid.orientation = :vertical
       grid.row_spacing = 6
