@@ -7,13 +7,13 @@ def source(url)
 
 source 'https://rubygems.org'
 
-ruby '>= 2.5.0'
+ruby '>= 2.7.0'
 
 group :default do
   gem 'addressable','>= 2.7.0', '< 2.8'
   gem 'delayer','>= 1.1.2', '< 2.0'
   gem 'delayer-deferred','>= 2.2.0', '< 3.0'
-  gem 'diva','>= 1.0.2', '< 2.0'
+  gem 'diva','>= 2.0.0', '< 3.0'
   gem 'memoist','>= 0.16.2', '< 0.17'
   gem 'oauth','>= 0.5.4'
   gem 'pluggaloid','>= 1.5.0', '< 2.0'

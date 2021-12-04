@@ -2,7 +2,7 @@
 
 module Plugin::World
   # Worldを復元するために必要なプラグインがロードできないときに、一時的にmikutterでそのWorldの代わりに使われる。
-  # to_hashがfieldsの値をそのまま返すようになっている。
+  # to_hがfieldsの値をそのまま返すようになっている。
   class LostWorld < Diva::Model
     field.string :slug, required: true
     field.string :provider, required: true
@@ -24,7 +24,7 @@ module Plugin::World
       "/#{provider.to_s}/#{slug.to_s}"
     end
 
-    def to_hash
+    def to_h
       @fields
     end
   end
