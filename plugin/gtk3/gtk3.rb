@@ -3,6 +3,8 @@
 # RubyGnomeを用いてUIを表示するプラグイン
 require 'gtk3'
 
+require_relative 'patch'
+
 require 'mui/gtk_contextmenu'
 require 'mui/gtk_compatlistview'
 require 'mui/gtk_crud'
