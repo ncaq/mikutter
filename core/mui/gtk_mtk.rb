@@ -162,7 +162,7 @@ module Mtk
     keyconfig = Gtk::KeyConfig.new(title, proc.call(nil))
     container = Gtk::Box.new(:horizontal, 0)
     container.pack_start(Gtk::Label.new(title), expand: false, fill: true, padding: 0)
-    container.closeup(keyconfig.right)
+    container.pack_start(keyconfig.right, expand: false)
     keyconfig.change_hook = proc
     return container
   end
@@ -216,17 +216,17 @@ module Mtk
     button end
 
   def fontselect(key, label)
-    Gtk::Box.new(:horizontal, 0).add(Gtk::Label.new(label).left).closeup(_fontselect(key, label))
+    Gtk::Box.new(:horizontal, 0).add(Gtk::Label.new(label).left).pack_start(_fontselect(key, label), expand: false)
   end
   deprecate :fontselect, :none, 2020, 8
 
   def colorselect(key, label)
-    Gtk::Box.new(:horizontal, 0).add(Gtk::Label.new(label).left).closeup(_colorselect(key, label))
+    Gtk::Box.new(:horizontal, 0).add(Gtk::Label.new(label).left).pack_start(_colorselect(key, label), expand: false)
   end
   deprecate :colorselect, :none, 2020, 8
 
   def fontcolorselect(font, color, label)
-    self.fontselect(font, label).closeup(_colorselect(color, label))
+    self.fontselect(font, label).pack_start(_colorselect(color, label), expand: false)
   end
   deprecate :fontcolorselect, :none, 2020, 8
 

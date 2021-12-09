@@ -55,7 +55,7 @@ Plugin.create(:mastodon_account_viewer) do
     ::Gtk::Table.new(2, header_columns.size).tap { |table|
       header_columns.each_with_index do |(key, value), index|
         table.
-          attach(::Gtk::Label.new(key.to_s).right, 0, 1, index, index + 1).
+          attach(::Gtk::Label.new(key.to_s).set_halign(:end), 0, 1, index, index + 1).
           attach(cell_widget(value), 1, 2, index, index + 1)
       end
     }.set_row_spacing(0, 4).
@@ -78,7 +78,7 @@ Plugin.create(:mastodon_account_viewer) do
   def relation_bar(user)
     container = ::Gtk::Box.new(:vertical, 4)
     Plugin.collect(:mastodon_worlds).each do |me|
-      container.closeup(Plugin::MastodonAccountViewer::RelationalContainer.new(me, user, self))
+      container.pack_start(Plugin::MastodonAccountViewer::RelationalContainer.new(me, user, self), expand: false)
     end
     container
   end

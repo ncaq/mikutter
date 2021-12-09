@@ -34,7 +34,7 @@ class Gtk::TimeLine < Gtk::Box
     super(:vertical)
     @tl = InnerTL.new
     @tl.imaginary = imaginary
-    closeup(postbox).pack_start(init_tl)
+    pack_start(postbox, expand: false).pack_start(init_tl)
   end
 
   def init_tl
@@ -56,7 +56,7 @@ class Gtk::TimeLine < Gtk::Box
       false }
 
     init_remover
-    @shell = (Gtk::Box.new :horizontal).pack_start(@tl).closeup(scrollbar) end
+    @shell = (Gtk::Box.new :horizontal).pack_start(@tl).pack_start(scrollbar, expand: false) end
 
   # TLに含まれているMessageを順番に走査する。最新のものから順番に。
   def each(index=1)

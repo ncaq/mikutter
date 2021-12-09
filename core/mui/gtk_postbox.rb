@@ -223,7 +223,7 @@ module Gtk
         itv.bg_modifier
         ev = Gtk::EventBox.new
         ev.style_context.add_provider(get_style_provider(message), Gtk::StyleProvider::PRIORITY_APPLICATION)
-        w_reply.add(Gtk::WebIcon.new(message.icon, 32, 32).top) if message.respond_to?(:icon)
+        w_reply.add(Gtk::WebIcon.new(message.icon, 32, 32).set_valign(:start)) if message.respond_to?(:icon)
         w_replies.add(ev.add(w_reply.add(itv)))
         @reply_widgets << itv }
       w_replies end
@@ -399,7 +399,8 @@ module Gtk
         post.buffer.text = @header + @footer
         post.buffer.place_cursor(post.buffer.get_iter_at(offset: @header.size))
       end
-      post.accepts_tab = false end
+      post.accepts_tab = false
+    end
 
     # PostBoxを複製するときのために、このPostBoxを生成した時に指定された全ての名前付き引数と値のペアを返す
     # ==== Return

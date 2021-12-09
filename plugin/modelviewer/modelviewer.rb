@@ -91,7 +91,7 @@ Plugin.create :modelviewer do
 
   def model_icon(model)
     return ::Gtk::EventBox.new unless model.respond_to?(:icon)
-    icon = ::Gtk::EventBox.new.add(::Gtk::WebIcon.new(model.icon, UserConfig[:profile_icon_size], UserConfig[:profile_icon_size]).tooltip(_('アイコンを開く')))
+    icon = ::Gtk::EventBox.new.add(::Gtk::WebIcon.new(model.icon, UserConfig[:profile_icon_size], UserConfig[:profile_icon_size]).set_tooltip_text(_('アイコンを開く')))
     icon.ssc(:button_press_event) do
       Plugin.call(:open, model.icon)
       true
