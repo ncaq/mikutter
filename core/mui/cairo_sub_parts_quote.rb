@@ -61,7 +61,7 @@ class Gdk::SubPartsQuote < Gdk::SubPartsMessageBase
         helper.reset_height
       end
     end
-    helper.scale(@edge)
+    Gdk.scale(@edge)
   end
 
   def badge(_message)
@@ -69,16 +69,12 @@ class Gdk::SubPartsQuote < Gdk::SubPartsMessageBase
 
   def background_color(message)
     color = Plugin.filtering(:subparts_quote_background_color, message, UserConfig[:quote_background_color]).last
-    if color.is_a? Array and 3 == color.size
-      color.map{ |c| c.to_f / 65536 }
-    else
-      [1.0]*3 end end
+    rgb(color || WHITE)
+  end
 
   def main_text_color(message)
-    if UserConfig[:quote_text_color]
-      UserConfig[:quote_text_color].map{ |c| c.to_f / 65536 }
-    else
-      super end end
+    rgb(UserConfig[:quote_text_color] || super)
+  end
 
   def main_text_font(message)
     helper.font_description(UserConfig[:quote_text_font])
@@ -95,7 +91,8 @@ class Gdk::SubPartsQuote < Gdk::SubPartsMessageBase
   def icon_size
     if show_icon?
       if UserConfig[:quote_icon_size]
-        Gdk::Rectangle.new(0, 0, helper.scale(UserConfig[:quote_icon_size]), helper.scale(UserConfig[:quote_icon_size]))
+        size = Gdk.scale(UserConfig[:quote_icon_size])
+        Gdk::Rectangle.new(0, 0, size, size)
       else
         super end end end
 

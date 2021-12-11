@@ -54,7 +54,8 @@ module Plugin::Guide
     def initialize(*args)
       super
       if message[:confirm]
-        sid = helper.ssc(:click){ |this, e, x, y|
+        sid = helper.ssc(:clicked){ |this, e|
+          x, y = e.x, e.y
           ofsty = helper.mainpart_height
           helper.subparts.each{ |part|
             break if part == self
@@ -88,12 +89,12 @@ module Plugin::Guide
 
     private
 
-    def generate_buttons(context = Cairo::Context.dummy)
+    def generate_buttons(context = nil)
       if not message[:confirm]
         return nil end
       ofst = OutsideOffset + ButtonMargin
       message[:confirm].map{ |label, value|
-        layout = context.create_pango_layout
+        layout = (context || helper).create_pango_layout
         layout.font_description = helper.font_description(UserConfig[:mumble_basic_font])
         layout.text = label
         width = layout.size[0]/Pango::SCALE + ButtonLeft + ButtonRight

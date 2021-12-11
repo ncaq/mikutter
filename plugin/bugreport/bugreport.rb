@@ -15,15 +15,15 @@ Plugin.create :bugreport do
 
   def popup
     alert_thread = if(Thread.main != Thread.current) then Thread.current end
-    dialog = Gtk::Dialog.new("bug report")
+    dialog = Gtk::Dialog.new(title: "bug report")
     dialog.set_size_request(600, 400)
-    dialog.window_position = Gtk::Window::POS_CENTER
-    dialog.vbox.pack_start(main, true, true, 30)
-    dialog.add_button(Gtk::Stock::OK, Gtk::Dialog::RESPONSE_OK)
-    dialog.add_button(Gtk::Stock::CANCEL, Gtk::Dialog::RESPONSE_CANCEL)
-    dialog.default_response = Gtk::Dialog::RESPONSE_OK
+    dialog.window_position = Gtk::WindowPosition::CENTER
+    dialog.child.pack_start(main, expand: true, fill: true, padding: 30)
+    dialog.add_button(Gtk::Stock::OK, Gtk::ResponseType::OK)
+    dialog.add_button(Gtk::Stock::CANCEL, Gtk::ResponseType::CANCEL)
+    dialog.default_response = Gtk::ResponseType::OK
     quit = lambda{
-      dialog.hide_all.destroy
+      dialog.hide.destroy
       Gtk.main_iteration_do(false)
       if alert_thread
         alert_thread.run
@@ -31,7 +31,7 @@ Plugin.create :bugreport do
         Gtk.main_quit
       end }
     dialog.signal_connect("response"){ |widget, response|
-      if response == Gtk::Dialog::RESPONSE_OK
+      if response == Gtk::ResponseType::OK
         send
       else
         File.delete(File.expand_path(File.join(Environment::TMPDIR, 'mikutter_error'))) rescue nil
@@ -54,11 +54,19 @@ Plugin.create :bugreport do
   end
 
   def main
-    Gtk::VBox.new(false, 0).
-      closeup(Gtk::IntelligentTextview.new(imsorry)).
-      pack_start(Gtk::ScrolledWindow.
-                 new.set_policy(Gtk::POLICY_NEVER, Gtk::POLICY_ALWAYS).
-                 add(Gtk::IntelligentTextview.new(backtrace)))
+    sw = Gtk::ScrolledWindow.new
+    sw.set_policy :never, :always
+    sw.vexpand = true
+    sw.valign = :fill
+    sw << Gtk::IntelligentTextview.new(backtrace)
+
+    sorry = Gtk::IntelligentTextview.new(imsorry)
+    sorry.hexpand = true
+
+    grid = Gtk::Grid.new
+    grid.orientation = :vertical
+
+    grid << sorry << sw
   end
 
   def send
@@ -73,7 +81,7 @@ Plugin.create :bugreport do
         'exception_class' => exception.class,
         'description' => exception.to_s,
         'ruby_version' => RUBY_VERSION,
-        'rubygtk_version' => Gtk::BINDING_VERSION.join('.'),
+        'rubygtk_version' => GLib::BINDING_VERSION.join('.'),
         'platform' => RUBY_PLATFORM,
         'url' => 'exception',
         'version' => Environment::VERSION

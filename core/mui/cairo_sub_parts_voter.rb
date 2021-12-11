@@ -2,7 +2,7 @@
 
 require 'mui/cairo_sub_parts_helper'
 
-require 'gtk2'
+require 'gtk3'
 require 'cairo'
 
 class ::Gdk::SubPartsVoter < Gdk::SubParts
@@ -14,13 +14,14 @@ class ::Gdk::SubPartsVoter < Gdk::SubParts
     @icon_width, @icon_height, @margin, @votes, @user_icon = 24, 24, 2, get_default_votes.to_a, Hash.new
     @avatar_rect = []
     @icon_ofst = 0
-    helper.ssc(:click){ |this, e, x, y|
+    helper.ssc(:clicked){ |_, ev|
+      x, y = ev.x, ev.y
       ofsty = helper.mainpart_height
       helper.subparts.each{ |part|
         break if part == self
         ofsty += part.height }
       if ofsty <= y and (ofsty + height) >= y
-        case e.button
+        case ev.button
         when 1
           if(x >= @icon_ofst)
             user = get_user_by_point(x)
@@ -33,8 +34,9 @@ class ::Gdk::SubPartsVoter < Gdk::SubParts
       false
     }
     last_motion_user = nil
-    usertip = Gtk::Tooltips.instance
-    helper.ssc(:motion_notify_event){ |this, x, y|
+    helper.ssc(:motion_notify_event){ |_, ev|
+      x, y = ev.x, ev.y
+
       if 0 != height
         tipset = ''
         ofsty = helper.mainpart_height
@@ -47,46 +49,41 @@ class ::Gdk::SubPartsVoter < Gdk::SubParts
             last_motion_user = user
             if user
               tipset = user.title end end end
-        usertip.set_tip(helper.tree, tipset, '')
-        if tipset == ''
-          last_motion_user = nil
-          usertip.disable
-        else
-          usertip.enable end end
+        helper.tooltip_text = tipset
+      end
       false }
-    helper.ssc(:leave_notify_event){
-      usertip.set_tip(helper.tree, '', '')
-      usertip.disable
-      false
-    }
   end
 
   def icon_width
-    helper.scale(@icon_width)
+    Gdk.scale @icon_height
   end
 
   def icon_height
-    helper.scale(@icon_height)
+    Gdk.scale @icon_height
   end
 
   def margin
-    helper.scale(@margin)
+    Gdk.scale @margin
   end
 
   def get_user_by_point(x)
-    if(x >= @icon_ofst)
-      node = @avatar_rect.each_with_index.to_a.bsearch{|_| _[0].last > x }
-      if node
-        @votes[node.last] end end end
+    if x >= @icon_ofst
+      _, index = @avatar_rect.each_with_index.to_a.bsearch{ |range, i| range.last > x }
+      @votes[index] if index
+    end
+  end
 
   def render(context)
     if get_vote_count != 0
-      context.save{
+      context.save do
         context.translate(@margin, 0)
         put_title_icon(context)
         put_counter(context)
-        put_voter(context) } end
-    @last_height = height end
+        put_voter(context)
+      end
+    end
+    @last_height = height
+  end
 
   def height
     if get_vote_count == 0
@@ -95,30 +92,19 @@ class ::Gdk::SubPartsVoter < Gdk::SubParts
       icon_height end end
 
   def add(new)
-    if not @votes.include?(new)
-      before_height = height
+    if !@votes.include?(new)
       @votes << new
-      if(before_height == height)
-        helper.on_modify
-      else
-        helper.reset_height
-      end
-      self
+      helper.queue_draw
     end
+    self
   end
   alias << add
 
   def delete(user)
-    if not @votes.include?(user)
-      before_height = height
-      @votes.delete(user)
-      if(before_height == height)
-        helper.on_modify
-      else
-        helper.reset_height
-      end
-      self
+    if @votes.delete(user)
+      helper.queue_draw
     end
+    self
   end
 
   def name
@@ -176,9 +162,11 @@ class ::Gdk::SubPartsVoter < Gdk::SubParts
   end
 
   def user_icon(user)
-    @user_icon[user[:id]] ||= user.icon.load_pixbuf(width: icon_width, height: icon_height){ |pixbuf|
-      @user_icon[user[:id]] = pixbuf
-      helper.on_modify } end
+    @user_icon[user[:id]] ||= user.icon.load_pixbuf(width: icon_width, height: icon_height) do |pb|
+      @user_icon[user[:id]] = pb
+      helper.queue_draw
+    end
+  end
 
   def pl_count(context = Cairo::Context.dummy)
     layout = context.create_pango_layout
@@ -189,7 +177,7 @@ class ::Gdk::SubPartsVoter < Gdk::SubParts
   end
 
   def get_vote_count
-    votes.size
+    votes.size || votes.count
   end
 
 end

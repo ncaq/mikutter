@@ -7,7 +7,7 @@ require 'mui/gtk_web_image_loader'
 require 'serialthread'
 require 'skin'
 
-require 'gtk2'
+require 'gtk3'
 require 'observer'
 
 # Web上の画像をレンダリングできる。
@@ -27,12 +27,12 @@ module Gtk
       rect = Gdk::Rectangle.new(0, 0, rect, height) if height
       case url
       when Diva::Model
-        super(load_model(url, rect, set_loading_image: false))
+        super(pixbuf: load_model(url, rect, set_loading_image: false))
       when GdkPixbuf::Pixbuf
-        super(url)
+        super(pixbuf: url)
       else
         photo = Plugin.collect(:photo_filter, url, Pluggaloid::COLLECT).first
-        super(load_model(photo || Skin[:notfound], rect, set_loading_image: false))
+        super(pixbuf: load_model(photo || Skin[:notfound], rect, set_loading_image: false))
       end
     end
 

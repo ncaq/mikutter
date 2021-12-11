@@ -242,8 +242,8 @@ Plugin.create(:mastodon) do
              'mstdn.nere9.help' => _('nere9'),
              'mstdn.y-zu.org' => _('Yづドン'),
             ) do
-        option(:other, _('その他')) do
-          input _('ドメイン'), :domain
+        option :other do
+          input _('その他'), :domain
         end
       end
 
@@ -264,9 +264,15 @@ Plugin.create(:mastodon) do
       if error_msg.is_a? String
         label error_msg
       end
-      label _('Webページにアクセスして表示された認証コードを入力して、次へボタンを押してください。')
-      link instance.authorize_url
-      input _('認証コード'), :authorization_code
+
+      s = _('認証ページ')
+      # HTML escape
+      url = instance.authorize_url.gsub '&', '&amp;'
+      text = _('認証ページにアクセスして、表示されたコードを貼り付け、「進む」ボタンを押してください。')
+        .sub s, "<a href=\"#{url}\">#{s}</a>"
+      markup text
+
+      input _('認証コード'), :authorization_code, :paste
       if error_msg.is_a? String
         input _('アクセストークンがあれば入力してください'), :access_token
       end

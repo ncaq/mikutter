@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 
-require "gtk2"
-
-class Gtk::WorldShifter < Gtk::EventBox
+class Plugin::Gtk3::WorldShifter < Gtk::EventBox
   UserConfig[:gtk_accountbox_geometry] ||= 32
 
   def initialize
@@ -26,17 +24,19 @@ class Gtk::WorldShifter < Gtk::EventBox
   def open_menu(event)
     @menu ||= Gtk::Menu.new.tap do |menu|
       Plugin.collect(:worlds).each do |world|
-        item = Gtk::ImageMenuItem.new(world.title, false)
+        item = Gtk::ImageMenuItem.new(label: world.title, accel_group: false)
         item.set_image Gtk::WebIcon.new(world.icon, UserConfig[:gtk_accountbox_geometry], UserConfig[:gtk_accountbox_geometry])
+        item.always_show_image = true
         item.ssc(:activate) { |w|
           Plugin.call(:world_change_current, world)
-          @face.tooltip(world.title)
+          @face.tooltip_text = world.title
           false }
         menu.append item
       end
       menu.append Gtk::SeparatorMenuItem.new
-      item = Gtk::ImageMenuItem.new(Plugin[:gtk]._('Worldを追加'), false)
+      item = Gtk::ImageMenuItem.new(label: Plugin[:gtk3]._('Worldを追加'), accel_group: false)
       item.set_image Gtk::WebIcon.new(Skin[:add], UserConfig[:gtk_accountbox_geometry], UserConfig[:gtk_accountbox_geometry])
+      item.always_show_image = true
       item.ssc(:activate) { |w|
         Plugin.call(:request_world_add)
         false }
@@ -52,23 +52,23 @@ class Gtk::WorldShifter < Gtk::EventBox
   end
 
   def pluggaloid_event_listener
-    tag = Plugin[:gtk].handler_tag(:world_shifter) do
-      Plugin[:gtk].on_world_change_current{ refresh }
-      Plugin[:gtk].on_userconfig_modify do |key, newval|
+    tag = Plugin[:gtk3].handler_tag(:world_shifter) do
+      Plugin[:gtk3].on_world_change_current{ refresh }
+      Plugin[:gtk3].on_userconfig_modify do |key, newval|
         refresh if key == :world_shifter_visibility
       end
-      Plugin[:gtk].on_world_reordered do |_worlds|
+      Plugin[:gtk3].on_world_reordered do |_worlds|
         refresh
       end
-      Plugin[:gtk].on_world_after_created do |world|
+      Plugin[:gtk3].on_world_after_created do |world|
         refresh
       end
-      Plugin[:gtk].on_world_destroy do |world|
+      Plugin[:gtk3].on_world_destroy do |world|
         refresh
       end
     end
     ssc(:destroy) do
-      Plugin[:gtk].detach(tag)
+      Plugin[:gtk3].detach(tag)
     end
   end
 
@@ -109,12 +109,14 @@ class Gtk::WorldShifter < Gtk::EventBox
 
   def add_face_widget_ifn
     if not @face
-      @face = Gtk::Image.new(Skin[:loading].pixbuf(width: Gdk.scale(UserConfig[:gtk_accountbox_geometry]), height: Gdk.scale(UserConfig[:gtk_accountbox_geometry])))
+      size = Gdk.scale UserConfig[:gtk_accountbox_geometry]
+      pb = Skin[:loading].pixbuf width: size, height: size
+      @face = Gtk::Image.new pixbuf: pb
       self.add(@face).show_all
     end
     world, = Plugin.filtering(:world_current, nil)
     if world
-      @face.tooltip(world.title)
+      @face.tooltip_text = world.title
     end
   end
 

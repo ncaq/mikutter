@@ -1,21 +1,12 @@
 # -*- coding: utf-8 -*-
 
-# RubyGnome2を用いてUIを表示するプラグイン
+# RubyGnomeを用いてUIを表示するプラグイン
+require 'gtk3'
 
-require 'mui/cairo_cell_renderer_message'
-require 'mui/cairo_coordinate_module'
-require 'mui/cairo_icon_over_button'
-require 'mui/cairo_inner_tl'
-require 'mui/cairo_markup_generator'
-require 'mui/cairo_miracle_painter'
-require 'mui/cairo_replyviewer'
-require 'mui/cairo_sub_parts_favorite'
-require 'mui/cairo_sub_parts_helper'
-require 'mui/cairo_sub_parts_share'
-require 'mui/cairo_sub_parts_voter'
-require 'mui/cairo_textselector'
-require 'mui/cairo_timeline'
+require_relative 'patch'
+
 require 'mui/gtk_contextmenu'
+require 'mui/gtk_compatlistview'
 require 'mui/gtk_crud'
 require 'mui/gtk_extension'
 require 'mui/gtk_intelligent_textview'
@@ -29,32 +20,39 @@ require 'mui/gtk_timeline_utils'
 require 'mui/gtk_userlist'
 require 'mui/gtk_webicon'
 
-require_relative 'dialog_window'
+require_relative 'widget/dialog'
+require_relative 'widget/mikutterwindow'
+require_relative 'widget/miraclepainter'
+require_relative 'widget/tabcontainer'
+require_relative 'widget/tabtoolbar'
+require_relative 'widget/timeline'
+require_relative 'widget/worldshifter'
+
 require_relative 'konami_watcher'
 require_relative 'mainloop'
-require_relative 'mikutter_window'
 require_relative 'slug_dictionary'
-require_relative 'tab_container'
-require_relative 'tab_toolbar'
+require_relative 'toolbar_generator'
 
-require "gtk2"
-
-Plugin.create :gtk do
-  @slug_dictionary = Plugin::Gtk::SlugDictionary.new # widget_type => {slug => Gtk}
+Plugin.create :gtk3 do
+  @slug_dictionary = Plugin::Gtk3::SlugDictionary.new # widget_type => {slug => Gtk}
   @tabs_promise = {}                     # slug => Deferred
 
-  TABPOS = [Gtk::POS_TOP, Gtk::POS_BOTTOM, Gtk::POS_LEFT, Gtk::POS_RIGHT]
+  TABPOS = [:top, :bottom, :left, :right].freeze
 
   # ウィンドウ作成。
   # PostBoxとか複数のペインを持つための処理が入るので、Gtk::MikutterWindowクラスを新設してそれを使う
   on_window_created do |i_window|
-    window = ::Gtk::MikutterWindow.new(i_window, self)
+    window = Plugin::Gtk3::MikutterWindow.open i_window, self
+    @parent = window
     @slug_dictionary.add(i_window, window)
     window.title = i_window.name
-    window.set_size_request(240, 240)
+
     geometry = get_window_geometry(i_window.slug)
-    window.set_default_size(*geometry[:size])
-    window.move(*geometry[:position])
+    if geometry
+      window.set_default_size(*geometry[:size])
+      window.move(*geometry[:position])
+    end
+
     window.ssc(:event){ |window, event|
       if event.is_a? Gdk::EventConfigure
         geometry = (UserConfig[:windows_geometry] || {}).melt
@@ -101,9 +99,13 @@ Plugin.create :gtk do
   # ペイン作成。
   # ペインはGtk::NoteBook
   on_pane_created do |i_pane|
+    # pane => Gtk::Notebook
     pane = create_pane(i_pane)
-    pane.set_tab_border(0).set_group_id(0).set_scrollable(true)
+    pane.group_name = '0'
+    pane.scrollable = true
+    pane.show_border = false
     pane.set_tab_pos(TABPOS[UserConfig[:tab_position]])
+    pane.hexpand = true
     tab_position_listener = on_userconfig_modify do |key, val|
       next if key != :tab_position
       if pane.destroyed?
@@ -113,17 +115,17 @@ Plugin.create :gtk do
       end
     end
     pane.ssc(:page_reordered){ |this, tabcontainer, index|
-        Plugin.call(:rewind_window_order, i_pane.parent) if i_pane.parent
+      Plugin.call(:rewind_window_order, i_pane.parent) if i_pane.parent
       i_tab = tabcontainer.i_tab
       if i_tab
         i_pane.reorder_child(i_tab, index) end
       Plugin.call(:after_gui_tab_reordered, i_tab)
       false }
-    pane.ssc(:switch_page){ |this, page, pagenum|
-      if pagenum == pane.page
-        i_pane.set_active_child(pane.get_nth_page(pagenum).i_tab, true) end }
+    pane.ssc :switch_page do |_, tab|
+      i_pane.set_active_child(tab.i_tab, true)
+    end
     pane.signal_connect(:page_added){ |this, tabcontainer, index|
-      type_strict tabcontainer => ::Gtk::TabContainer
+      type_strict tabcontainer => Plugin::Gtk3::TabContainer
       Plugin.call(:rewind_window_order, i_pane.parent) if i_pane.parent
       i_tab = tabcontainer.i_tab
       next false if i_tab.parent == i_pane
@@ -168,7 +170,8 @@ Plugin.create :gtk do
   # ==== Return
   # Tab(Gtk::EventBox)
   def create_tab(i_tab)
-    tab = ::Gtk::EventBox.new.tooltip(i_tab.name)
+    tab = Gtk::EventBox.new
+    tab.tooltip_text = i_tab.name
     tab.visible_window = false
     @slug_dictionary.add(i_tab, tab)
     tab_update_icon(i_tab)
@@ -191,7 +194,7 @@ Plugin.create :gtk do
     tab.show_all end
 
   on_tab_toolbar_created do |i_tab_toolbar|
-    tab_toolbar = ::Gtk::TabToolbar.new(i_tab_toolbar).show_all
+    tab_toolbar = Plugin::Gtk3::TabToolbar.new(i_tab_toolbar).show_all
     @slug_dictionary.add(i_tab_toolbar, tab_toolbar)
   end
 
@@ -201,56 +204,19 @@ Plugin.create :gtk do
   end
 
   # タイムライン作成。
-  # Gtk::TimeLine
   on_timeline_created do |i_timeline|
-    gtk_timeline = ::Gtk::TimeLine.new(i_timeline)
-    @slug_dictionary.add(i_timeline, gtk_timeline)
-    gtk_timeline.tl.ssc(key_press_event: timeline_key_press_event(i_timeline),
-                        focus_in_event:  timeline_focus_in_event(i_timeline),
-                        destroy:         timeline_destroy_event(i_timeline))
-    gtk_timeline.show_all
+    timeline = Plugin::Gtk3::Timeline.new(i_timeline)
+    @slug_dictionary.add(i_timeline, timeline)
+    timeline.show_all
   end
-
-  # Timelineウィジェットのfocus_in_eventのコールバックを返す
-  # ==== Args
-  # [i_timeline] タイムラインのインターフェイス
-  # ==== Return
-  # Proc
-  def timeline_focus_in_event(i_timeline)
-    lambda { |this, event|
-      if this.focus?
-        i_timeline.active!(true, true) end
-      false } end
-
-  # Timelineウィジェットのkey_press_eventのコールバックを返す
-  # ==== Args
-  # [i_timeline] タイムラインのインターフェイス
-  # ==== Return
-  # Proc
-  def timeline_key_press_event(i_timeline)
-    lambda { |widget, event|
-      Plugin::GUI.keypress(::Gtk::keyname([event.keyval ,event.state]), i_timeline) } end
-
-  # Timelineウィジェットのdestroyのコールバックを返す
-  # ==== Args
-  # [i_timeline] タイムラインのインターフェイス
-  # ==== Return
-  # Proc
-  def timeline_destroy_event(i_timeline)
-    lambda { |this|
-      i_timeline.destroy
-      false } end
 
   on_gui_pane_join_window do |i_pane, i_window|
     window = widgetof(i_window)
     pane = widgetof(i_pane)
-    if pane.parent
-      if pane.parent != window.panes
-        pane.parent.remove(pane)
-        window.panes.pack_end(pane, false).show_all end
-    else
-      window.panes.pack_end(pane, false).show_all
-    end
+    pane.parent && pane.parent != window.panes and pane.parent.remove(pane)
+    # 左端にペインを追加
+    pane.parent && pane.parent == window.panes or
+      window.panes.attach_next_to pane, nil, :left, 1, 1
   end
 
   on_gui_tab_join_pane do |i_tab, i_pane|
@@ -285,8 +251,8 @@ Plugin.create :gtk do
     widget_join_tab(i_tab, widget) if widget end
 
   on_gui_timeline_add_messages do |i_timeline, messages|
-    gtk_timeline = widgetof(i_timeline)
-    gtk_timeline.add(messages) if gtk_timeline and not gtk_timeline.destroyed? end
+    timeline = widgetof(i_timeline)
+    timeline.bulk_add(messages) if timeline and not timeline.destroyed? end
 
   on_gui_postbox_join_widget do |i_postbox|
     type_strict i_postbox => Plugin::GUI::Postbox
@@ -320,8 +286,7 @@ Plugin.create :gtk do
 
   on_tab_toolbar_rewind do |i_tab_toolbar|
     tab_toolbar = widgetof(i_tab_toolbar)
-    if tab_toolbar
-      tab_toolbar.set_button end end
+    tab_toolbar&.set_button end
 
   on_gui_contextmenu do |event, contextmenu|
     widget = widgetof(event.widget)
@@ -333,41 +298,31 @@ Plugin.create :gtk do
     if timeline
       timeline.clear end end
 
-  on_gui_timeline_scroll do |i_timeline, msg|
-    tl = widgetof(i_timeline) or next
-
-    case msg
-    when :top
-      iter = tl.model.iter_first or next
-      tl.set_cursor iter.path, nil, false
-
-    when :up
-      tl.move_cursor ::Gtk::MovementStep::PAGES, -1
-
-    when :down
-      tl.move_cursor ::Gtk::MovementStep::PAGES, 1
-    end
+  on_gui_timeline_scroll do |i_timeline, to|
+    timeline = widgetof(i_timeline) or next
+    timeline.jump_to to
   end
 
-  on_gui_timeline_move_cursor_to do |i_timeline, message|
-    tl = widgetof(i_timeline)
-    if tl
-      path, column = tl.cursor
-      if path and column
-        case message
+  on_gui_timeline_move_cursor_to do |i_timeline, direction_or_index|
+    timeline = widgetof(i_timeline) or next
+
+    row = timeline.selected_rows.first or next
+    i = case direction_or_index
         when :prev
-          path.prev!
-          tl.set_cursor(path, column, false)
+          [row.index - 1, 0].max
         when :next
-          path.next!
-          tl.set_cursor(path, column, false)
+          [row.index + 1, timeline.size].min
         else
-          if message.is_a? Integer
-            path, = *tl.get_path(0, message)
-              tl.set_cursor(path, column, false) if path end end end end end
+          next unless direction_or_index.is_a? Integer
+          direction_or_index
+        end
+
+    timeline.select_row_at_index i
+  end
 
   on_gui_timeline_set_order do |i_timeline, order|
-    widgetof(i_timeline).set_order(&order) end
+    widgetof(i_timeline).order = order
+  end
 
   filter_gui_timeline_select_messages do |i_timeline, messages|
     timeline = widgetof(i_timeline)
@@ -453,9 +408,7 @@ Plugin.create :gtk do
         i_tab = i_child
         pane = widgetof(i_pane)
         tab = widgetof(i_tab)
-        if pane and tab
-          pagenum = pane.get_tab_pos_by_tab(tab)
-          pane.page = pagenum if pagenum and pane.page != pagenum end
+        pane && tab and pane.page = pane.get_tab_pos_by_tab(tab)
       elsif i_parent.is_a?(Plugin::GUI::Window)
         i_term = i_child.respond_to?(:active_chain) ? i_child.active_chain.last : i_child
         if i_term
@@ -470,13 +423,30 @@ Plugin.create :gtk do
   on_posted do |service, messages|
     messages.each{ |message|
       if(replyto_source = message.replyto_source)
-        Gdk::MiraclePainter.findbymessage(replyto_source).each{ |mp|
-          mp.on_modify } end } end
+        Plugin::Gtk3::Timeline.update_rows replyto_source
+      end
+    }
+  end
 
-  on_favorite do |service, user, message|
-    if(user.me?)
-      Gdk::MiraclePainter.findbymessage(message).each{ |mp|
-        mp.on_modify } end end
+  on_message_modified(&Plugin::Gtk3::Timeline.method(:update_rows))
+  on_destroyed(&Plugin::Gtk3::Timeline.method(:remove_rows))
+
+  share = ->(_, model) do
+    Plugin::Gtk3::Timeline.update_rows(model)
+  end
+
+  on_share(&share)
+  on_before_share(&share)
+  on_fail_share(&share)
+  on_destroy_share(&share)
+
+  favorite = ->(_, _, model) do
+    Plugin::Gtk3::Timeline.update_rows(model)
+  end
+
+  on_favorite(&favorite)
+  on_before_favorite(&favorite)
+  on_fail_favorite(&favorite)
 
   on_konami_activate do
     Gtk.konami_load
@@ -490,28 +460,22 @@ Plugin.create :gtk do
       [i_postbox, editable] end end
 
   filter_gui_timeline_cursor_position do |i_timeline, y|
-    timeline = widgetof(i_timeline)
-    if timeline
-      path, column = *timeline.cursor
-      if path
-        rect = timeline.get_cell_area(path, column)
-        next [i_timeline, rect.y + (rect.height / 2).to_i] end
-    end
-    [i_timeline, y] end
+    raise NotImplementedError
+  end
 
   filter_gui_timeline_selected_messages do |i_timeline, messages|
     timeline = widgetof(i_timeline)
     if timeline
-      [i_timeline, messages + timeline.get_active_messages]
+      [i_timeline, messages + timeline.selected_rows.map(&:model)]
     else
       [i_timeline, messages] end end
 
   filter_gui_timeline_selected_text do |i_timeline, message, text|
     timeline = widgetof(i_timeline)
     next [i_timeline, message, text] if not timeline
-    record = timeline.get_record_by_message(message)
+    record = timeline.selected_rows.find { |row| row.model == message }
     next [i_timeline, message, text] if not record
-    range = record.miracle_painter.textselector_range
+    range = record.textselector_range
     next [i_timeline, message, text] if not range
     if UserConfig[:miraclepainter_expand_custom_emoji]
       adjust = score_of(message).each_with_object(Hash.new(0)) do |note, state|
@@ -542,7 +506,14 @@ Plugin.create :gtk do
     [widgetof(i_widget)] end
 
   on_gui_dialog do |plugin, title, default, proc, promise|
-    Plugin::Gtk::DialogWindow.open(plugin: plugin, title: title, default: default, promise: promise, &proc)
+    Plugin::Gtk3::Dialog.open(
+      plugin: plugin,
+      title: title,
+      default: default,
+      promise: promise,
+      parent: @parent,
+      &proc
+    )
   end
 
   filter_before_mainloop_exit do
@@ -575,23 +546,23 @@ Plugin.create :gtk do
     if container_index
       container = pane.get_nth_page(container_index)
       if container
-        return container.pack_start(widget, i_tab.pack_rule[container.children.size]) end end
+        widget.vexpand = i_tab.pack_rule[container.children.size]
+        return container.add(widget) end end
     if tab.parent
-      raise Plugin::Gtk::GtkError, "Gtk Widget #{tab.inspect} of Tab(#{i_tab.slug.inspect}) has parent Gtk Widget #{tab.parent.inspect}" end
-    container = ::Gtk::TabContainer.new(i_tab).show_all
+      raise Plugin::Gtk3::GtkError, "Gtk Widget #{tab.inspect} of Tab(#{i_tab.slug.inspect}) has parent Gtk Widget #{tab.parent.inspect}" end
+    container = Plugin::Gtk3::TabContainer.new(i_tab).show_all
     container.ssc(:key_press_event){ |w, event|
       Plugin::GUI.keypress(::Gtk::keyname([event.keyval ,event.state]), i_tab) }
-    container.pack_start(widget, i_tab.pack_rule[container.children.size])
-    pane.insert_page(
-      where_should_insert_it(
-        i_tab,
-        pane.each_pages.map{ |target_page|
-          find_implement_widget_by_gtkwidget(pane.get_tab_label(target_page))
-        },
-        i_tab.parent.children
-      ),
-      container, tab
+    widget.vexpand = i_tab.pack_rule[container.children.size]
+    container.add(widget)
+    pos = where_should_insert_it(
+      i_tab,
+      pane.each_pages.map{ |target_page|
+        find_implement_widget_by_gtkwidget(pane.get_tab_label(target_page))
+      },
+      i_tab.parent.children
     )
+    pane.insert_page(container, tab, pos)
     pane.set_tab_reorderable(container, true).set_tab_detachable(container, true)
     true end
 
@@ -599,7 +570,7 @@ Plugin.create :gtk do
     type_strict i_tab => Plugin::GUI::TabLike
     tab = widgetof(i_tab)
     if tab
-      tab.tooltip(i_tab.name)
+      tab.tooltip_text = i_tab.name
       tab.remove(tab.child) if tab.child
       if i_tab.icon
         tab.add(::Gtk::WebIcon.new(i_tab.icon, 24, 24).show)
@@ -609,13 +580,9 @@ Plugin.create :gtk do
 
   def get_window_geometry(slug)
     type_strict slug => Symbol
-    geo = UserConfig[:windows_geometry]
-    if defined? geo[slug]
-      geo[slug]
-    else
-      size = [Gdk.screen_width/3, Gdk.screen_height*4/5]
-      { size: size,
-        position: [Gdk.screen_width - size[0], Gdk.screen_height/2 - size[1]/2] } end end
+    geometry = UserConfig[:windows_geometry]
+    geometry and geometry[slug]
+  end
 
   # ペインを作成
   # ==== Args
@@ -623,7 +590,7 @@ Plugin.create :gtk do
   # ==== Return
   # ペイン(Gtk::Notebook)
   def create_pane(i_pane)
-    pane = ::Gtk::Notebook.new
+    pane = Gtk::Notebook.new
     @slug_dictionary.add(i_pane, pane)
     pane.ssc('key_press_event'){ |widget, event|
       Plugin::GUI.keypress(::Gtk::keyname([event.keyval ,event.state]), i_pane) }
@@ -714,9 +681,8 @@ Plugin.create :gtk do
   filter_clipboard_read do |_|
     [Gtk::Clipboard.paste]
   end
-
 end
 
-module Plugin::Gtk
+module Plugin::Gtk3
   class GtkError < Exception
   end end

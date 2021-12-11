@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 require 'mui/gtk_extension'
 
-require 'gtk2'
+require 'gtk3'
 
 class Gtk::KeyConfig < Gtk::Button
 
@@ -23,11 +23,12 @@ class Gtk::KeyConfig < Gtk::Button
   private
 
   def clicked_event(event)
-    box = Gtk::VBox.new
+    box = Gtk::Box.new(:vertical)
     label = Gtk::Label.new
     button = Gtk::Button.new
-    dialog = Gtk::Dialog.new(title, self.get_ancestor(Gtk::Window), Gtk::Dialog::MODAL,
-                             [ Gtk::Stock::OK, Gtk::Dialog::RESPONSE_OK])
+    dialog = Gtk::Dialog.new(title: title, parent: self.get_ancestor(Gtk::Window),
+                             flags: Gtk::DialogFlags::MODAL,
+                             buttons: [[Gtk::Stock::OK, Gtk::ResponseType::OK]])
     label.text = keycode
     box.border_width = 20
     button.add(label)
@@ -35,7 +36,7 @@ class Gtk::KeyConfig < Gtk::Button
     box.pack_start(button)
     button.signal_connect(:key_press_event, &key_set(label))
     button.signal_connect(:button_press_event, &button_set(label))
-    dialog.vbox.add(box)
+    dialog.child.add(box)
     dialog.show_all
     dialog.run
     dialog.destroy

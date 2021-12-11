@@ -4,7 +4,7 @@ require 'mui/gtk_contextmenu'
 require 'plugin'
 require 'miku/miku'
 
-require 'gtk2'
+require 'gtk3'
 require 'uri'
 
 class Gtk::IntelligentTextview < Gtk::TextView
@@ -31,8 +31,7 @@ class Gtk::IntelligentTextview < Gtk::TextView
 
   # URLを開く
   def self.openurl(url)
-    # gen_openurl_proc(url).call
-    Gtk::TimeLine.openurl(url)
+    Plugin.call(:open, url)
     false end
 
   def initialize(msg = nil, default_fonts = {}, *rest, style: nil)
@@ -41,8 +40,17 @@ class Gtk::IntelligentTextview < Gtk::TextView
     @style_generator = style
     self.editable = false
     self.cursor_visible = false
-    self.wrap_mode = Gtk::TextTag::WRAP_CHAR
+    self.wrap_mode = :char
     gen_body(msg) if msg
+    style_context.add_class('intelligentTextView')
+    Gtk::CssProvider.new.tap do |provider|
+      provider.load_from_data(<<~CSS)
+        .intelligentTextView, .intelligentTextView > text {
+          background-color: transparent;
+        }
+      CSS
+      style_context.add_provider(provider, Gtk::StyleProvider::PRIORITY_APPLICATION)
+    end
   end
 
   # このウィジェットの背景色を返す
@@ -53,8 +61,6 @@ class Gtk::IntelligentTextview < Gtk::TextView
       @style_generator.to_proc.call
     elsif @style_generator
       @style_generator
-    else
-      parent.style.bg(Gtk::STATE_NORMAL)
     end
   end
   alias :get_background :style_generator
@@ -62,16 +68,23 @@ class Gtk::IntelligentTextview < Gtk::TextView
 
   # TODO プライベートにする
   def set_cursor(textview, cursor)
-    textview.get_window(Gtk::TextView::WINDOW_TEXT).set_cursor(Gdk::Cursor.new(cursor))
+    textview.get_window(:text).set_cursor(Gdk::Cursor.new(cursor))
   end
 
   def bg_modifier(color = style_generator)
     if color.is_a? Gtk::Style
-      self.style = color
-    elsif get_window(Gtk::TextView::WINDOW_TEXT).respond_to?(:background=)
-      get_window(Gtk::TextView::WINDOW_TEXT).background = color end
+      warn 'Gtk::IntelligentTextview#bg_modifier(Gtk::Style) is deprecated.'
+      color = color.to_style_provider
+    end
+    if color.is_a? Gtk::StyleProvider
+      style_context.remove_provider(@style_provider) if @style_provider
+      style_context.add_provider(color, Gtk::StyleProvider::PRIORITY_APPLICATION)
+      @style_provider = color
+    elsif color && get_window(:text).respond_to?(:background=)
+      get_window(:text).background = color
+    end
     queue_draw
-    false end
+  end
 
   # 新しいテキスト _msg_ に内容を差し替える。
   # ==== Args
@@ -99,7 +112,7 @@ class Gtk::IntelligentTextview < Gtk::TextView
     when String
       type_strict fonts => Hash
       tags = fonts2tags(fonts)
-      buffer.insert(buffer.start_iter, msg, 'shell')
+      buffer.insert(buffer.start_iter, msg, { tags: %w[shell] })
       apply_links
       apply_inner_widget
     when Enumerable # score
@@ -112,8 +125,8 @@ class Gtk::IntelligentTextview < Gtk::TextView
           start = pos.offset
           pixbuf = photo.load_pixbuf(width: font_size, height: font_size) do |loaded_pixbuf|
             unless buffer.destroyed?
-              insertion_start = buffer.get_iter_at_offset(start)
-              buffer.delete(insertion_start, buffer.get_iter_at_offset(start+1))
+              insertion_start = buffer.get_iter_at(offset: start)
+              buffer.delete(insertion_start, buffer.get_iter_at(offset: start+1))
               buffer.insert(insertion_start, loaded_pixbuf)
             end
           end
@@ -126,9 +139,9 @@ class Gtk::IntelligentTextview < Gtk::TextView
                                  }, nil)
           start = pos.offset
           buffer.insert(pos, note.description)
-          buffer.apply_tag(tagname, buffer.get_iter_at_offset(start), pos)
+          buffer.apply_tag(tagname, buffer.get_iter_at(offset: start), pos)
         else
-          buffer.insert(pos, note.description, 'shell')
+          buffer.insert(pos, note.description, { tags: %w[shell] })
         end
       end
     end
@@ -137,8 +150,6 @@ class Gtk::IntelligentTextview < Gtk::TextView
   end
 
   def set_events(tag_shell)
-    self.signal_connect('realize'){
-      self.parent.signal_connect('style-set'){ bg_modifier } }
     self.signal_connect('realize'){ bg_modifier }
     self.signal_connect('visibility-notify-event'){
       if fonts['font'] and tag_shell.font != UserConfig[fonts['font']]
@@ -147,7 +158,7 @@ class Gtk::IntelligentTextview < Gtk::TextView
         tag_shell.foreground_gdk = Gdk::Color.new(*UserConfig[fonts['foreground']]) end
       false }
     self.signal_connect('event'){
-      set_cursor(self, Gdk::Cursor::XTERM)
+      set_cursor(self, :xterm)
       false }
   end
 
@@ -157,14 +168,14 @@ class Gtk::IntelligentTextview < Gtk::TextView
       result = false
       if(event.is_a?(Gdk::EventButton)) and
           (event.event_type == Gdk::Event::BUTTON_RELEASE) and
-          not(textview.buffer.selection_bounds[2])
+          not(textview.buffer.selection_bounds)
         if (event.button == 1 and leftclick)
           leftclick.call(tagname, textview)
         elsif(event.button == 3 and rightclick)
           rightclick.call(tagname, textview)
           result = true end
       elsif(event.is_a?(Gdk::EventMotion))
-        set_cursor(textview, Gdk::Cursor::HAND2)
+        set_cursor(textview, :hand2)
       end
       result }
     tag end

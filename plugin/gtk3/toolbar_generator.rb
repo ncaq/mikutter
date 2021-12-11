@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 
-module Plugin::Gtk
+module Plugin::Gtk3
   module ToolbarGenerator
 
     # ツールバーに表示するボタンを _container_ にpackする。
     # 返された時点では空で、後からボタンが入る(showメソッドは自動的に呼ばれる)。
     # ==== Args
-    # [container] packするコンテナ
+    # [container] Gtk::Container, packするコンテナ
     # ==== Return
     # container
     def self.generate(container, event, role)
@@ -20,15 +20,15 @@ module Plugin::Gtk
           name = if defined? face.call then lambda{ |x| face.call(event) } else face end
           toolitem = ::Gtk::Button.new
           toolitem.add(::Gtk::WebIcon.new(command[:icon], 16, 16))
-          toolitem.tooltip(name)
-          toolitem.relief = ::Gtk::RELIEF_NONE
+          toolitem.tooltip_text = name
+          toolitem.relief = :none
           toolitem.ssc(:clicked){
             current_world, = Plugin.filtering(:world_current, nil)
             event.world = current_world
             command[:exec].call(event)
             true
           }
-          container.closeup(toolitem) }
+          container.add(toolitem) }
         #container.ssc(:realize, &:queue_resize)
         container.show_all if not commands.empty?
       }.trap{ |e|

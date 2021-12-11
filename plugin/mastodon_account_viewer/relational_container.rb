@@ -3,26 +3,26 @@
 require_relative 'relational_menu'
 
 module Plugin::MastodonAccountViewer
-  class RelationalContainer < Gtk::HBox
+  class RelationalContainer < Gtk::Box
     ICON_SIZE = Gdk::Rectangle.new(0, 0, 32, 32).freeze
     ARROW_SIZE = Gdk::Rectangle.new(0, 0, 16, 16).freeze
 
     attr_reader :my_account, :counterpart
 
     def initialize(my_account, counterpart, updater)
-      super(false, ICON_SIZE.width / 2)
+      super(:horizontal, ICON_SIZE.width / 2)
       @my_account = my_account
       @counterpart = counterpart
       @updater = updater
       @following = @follower = @blocked = @mute = :unknown
       @transaction_level = 0
 
-      closeup(Gtk::WebIcon.new(my_account.account.icon, ICON_SIZE).tooltip(my_account.title))
-      closeup(gen_follow_relation)
-      closeup(Gtk::WebIcon.new(counterpart.icon, ICON_SIZE).tooltip(counterpart.title))
-      closeup(followbutton)
-      closeup(menubutton)
+      pack_start(Gtk::WebIcon.new(my_account.account.icon, ICON_SIZE).set_tooltip_text(my_account.title), expand: false)
+      pack_start(gen_follow_relation, expand: false)
+      pack_start(Gtk::WebIcon.new(counterpart.icon, ICON_SIZE).set_tooltip_text(counterpart.title), expand: false)
       unless me?
+        pack_start(followbutton, expand: false)
+        pack_start(menubutton, expand: false)
         retrieve_relation_status
       end
     end
@@ -115,25 +115,25 @@ module Plugin::MastodonAccountViewer
     end
 
     def gen_follow_relation
-      Gtk::VBox.new
-        .closeup(gen_following_relation)
-        .closeup(gen_followed_relation)
-    end
-
-    def gen_following_relation
       if me?
         Gtk::Label.new(_('それはあなたです！'))
       else
-        Gtk::HBox.new
-          .closeup(following_arrow_widget)
-          .closeup(following_label)
+        Gtk::Box.new(:vertical, 0)
+          .pack_start(gen_following_relation, expand: false)
+          .pack_start(gen_followed_relation, expand: false)
       end
     end
 
+    def gen_following_relation
+      Gtk::Box.new(:horizontal)
+        .pack_start(following_arrow_widget, expand: false)
+        .pack_start(following_label, expand: false)
+    end
+
     def gen_followed_relation
-      Gtk::HBox.new
-        .closeup(followed_arrow_widget)
-        .closeup(followed_label)
+      Gtk::Box.new(:horizontal)
+        .pack_start(followed_arrow_widget, expand: false)
+        .pack_start(followed_label, expand: false)
     end
 
     def followbutton
@@ -150,7 +150,7 @@ module Plugin::MastodonAccountViewer
     end
 
     def menubutton
-      @menubutton ||= Gtk::Button.new(' … ').tap do |b|
+      @menubutton ||= Gtk::Button.new(label: ' … ').tap do |b|
         b.sensitive = false
         b.ssc(:clicked) do
           Plugin::MastodonAccountViewer::RelationalMenu.new(self).show_all.popup(nil, nil, 0, 0)

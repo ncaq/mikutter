@@ -1,10 +1,7 @@
 # -*- coding: utf-8 -*-
 
-require 'gtk2'
+require 'gtk3'
 require 'cairo'
-
-class Gtk::TimeLine < Gtk::VBox
-end
 
 require 'mui/gtk_crud'
 require 'mui/cairo_cell_renderer_message'
@@ -19,7 +16,7 @@ UserConfig[:timeline_max] ||= 200
 =begin rdoc
   タイムラインのGtkウィジェット。
 =end
-class Gtk::TimeLine
+class Gtk::TimeLine < Gtk::Box
 
   include Gtk::TimeLineUtils
   include Gtk::TimelineDarkMatterPurification
@@ -34,10 +31,10 @@ class Gtk::TimeLine
       [] end end
 
   def initialize(imaginary=nil)
-    super()
+    super(:vertical)
     @tl = InnerTL.new
     @tl.imaginary = imaginary
-    closeup(postbox).pack_start(init_tl)
+    pack_start(postbox, expand: false).pack_start(init_tl)
   end
 
   def init_tl
@@ -54,12 +51,12 @@ class Gtk::TimeLine
     }
     @tl.set_size_request(100, 100)
     @tl.get_column(0).sizing = Gtk::TreeViewColumn::FIXED
-    @tl.ssc(:expose_event){
+    @tl.ssc(:draw){
       emit_expose_miraclepainter
       false }
 
     init_remover
-    @shell = Gtk::HBox.new.pack_start(@tl).closeup(scrollbar) end
+    @shell = (Gtk::Box.new :horizontal).pack_start(@tl).pack_start(scrollbar, expand: false) end
 
   # TLに含まれているMessageを順番に走査する。最新のものから順番に。
   def each(index=1)
@@ -188,8 +185,8 @@ class Gtk::TimeLine
   # スクロールなどの理由で新しくTLに現れたMiraclePainterにシグナルを送る
   def emit_expose_miraclepainter
     @exposing_miraclepainter ||= []
-    if @tl.visible_range
-      current, last = @tl.visible_range.map{ |path| @tl.model.get_iter(path) }
+    val, current, last = @tl.visible_range.map{ |path| @tl.model.get_iter(path) }
+    if val
       messages = Set.new
       while current[0].to_i >= last[0].to_i
         messages << current[1]
@@ -200,7 +197,7 @@ class Gtk::TimeLine
       @exposing_miraclepainter = messages end end
 
   def postbox
-    @postbox ||= Gtk::VBox.new end
+    @postbox ||= Gtk::Box.new :vertical end
 
   Delayer.new{
     plugin = Plugin::create(:core)
@@ -212,13 +209,14 @@ class Gtk::TimeLine
         tl.remove_if_exists_all(messages) if not(tl.destroyed?) } }
   }
 
-  Gtk::RC.parse_string <<EOS
-style "timelinestyle"
-{
-  GtkTreeView::vertical-separator = 0
-  GtkTreeView::horizontal-separator = 0
-}
-widget "*.timeline" style "timelinestyle"
-EOS
+  # FIXME: gtk3 style
+#   Gtk::RC.parse_string <<EOS
+# style "timelinestyle"
+# {
+#   GtkTreeView::vertical-separator = 0
+#   GtkTreeView::horizontal-separator = 0
+# }
+# widget "*.timeline" style "timelinestyle"
+# EOS
 
 end

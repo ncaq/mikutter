@@ -82,8 +82,16 @@ Plugin.create :mastodon_setting do
 
     settings _('公開タイムライン') do
       treeview = Plugin::MastodonSetting::InstanceSettingList.new
-      btn_add = Gtk::Button.new(Gtk::Stock::ADD)
-      btn_delete = Gtk::Button.new(Gtk::Stock::DELETE)
+      treeview.hexpand = true
+      add_tab_observer = on_mastodon_instance_created(&treeview.method(:add_record))
+      delete_tab_observer = on_mastodon_delete_instance(&treeview.method(:remove_record))
+      treeview.ssc(:destroy) do
+        detach add_tab_observer
+        detach delete_tab_observer
+      end
+
+      btn_add = Gtk::Button.new stock_id: Gtk::Stock::ADD
+      btn_delete = Gtk::Button.new stock_id: Gtk::Stock::DELETE
       btn_add.ssc(:clicked) do
         Plugin.call(:mastodon_instances_open_create_dialog)
         true
@@ -94,21 +102,17 @@ Plugin.create :mastodon_setting do
           Plugin.call(:mastodon_instances_delete_with_confirm, domain) end
         true
       end
-      scrollbar = ::Gtk::VScrollbar.new(treeview.vadjustment)
-      pack_start(
-        Gtk::HBox.new(false, 4).
-          add(treeview).
-          closeup(scrollbar).
-          closeup(
-            Gtk::VBox.new.
-              closeup(btn_add).
-              closeup(btn_delete)))
-      add_tab_observer = on_mastodon_instance_created(&treeview.method(:add_record))
-      delete_tab_observer = on_mastodon_delete_instance(&treeview.method(:remove_record))
-      treeview.ssc(:destroy) do
-        detach add_tab_observer
-        detach delete_tab_observer
-      end
+
+      box = Gtk::ButtonBox.new :vertical
+      box.layout_style = :start
+      box.spacing = 6
+      box << btn_add << btn_delete
+
+      grid = ::Gtk::Grid.new
+      grid.column_spacing = 6
+      grid << treeview << box
+
+      attach_next_to grid, nil, :bottom, 2, 1
     end
   end
 end

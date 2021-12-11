@@ -3,7 +3,7 @@ slug: :mastodon_account_viewer
 depends:
   mikutter: 3.10.0
   plugin:
-    - gtk
+    - gtk3
     - mastodon
     - modelviewer
     - uitranslator

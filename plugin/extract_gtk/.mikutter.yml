@@ -4,7 +4,7 @@ depends:
   mikutter: '4.1'
   plugin:
   - extract
-  - gtk
+  - gtk3
   - settings
   - gui
   - uitranslator

@@ -72,9 +72,10 @@ module Plugin::OpenimgGtk
     def window_settings
       set_title(photo.perma_link.to_s)
       set_role('mikutter_image_preview'.freeze)
-      set_type_hint(Gdk::Window::TYPE_HINT_DIALOG)
+      set_type_hint(:dialog)
       set_default_size(*default_size)
-      add(Gtk::VBox.new.closeup(w_toolbar).add(w_wrap))
+      add(Gtk::Box.new(:vertical).pack_start(w_toolbar)
+                                 .pack_start(w_wrap, fill: true, expand: true))
     end
 
     def redraw(repaint: true)
@@ -132,17 +133,17 @@ module Plugin::OpenimgGtk
     def w_wrap
       @w_wrap ||= ::Gtk::DrawingArea.new.tap{|w|
         w.ssc(:size_allocate, &gen_wrap_size_allocate)
-        w.ssc(:expose_event, &gen_wrap_expose_event)
+        w.ssc(:draw, &gen_wrap_expose_event)
       }
     end
 
     def w_toolbar
-      @w_toolbar ||= ::Gtk::Toolbar.new.tap{|w| w.insert(0, w_browser) }
+      @w_toolbar ||= ::Gtk::Toolbar.new.tap { |w| w.insert(w_browser, 0) }
     end
 
     def w_browser
       @w_browser ||= ::Gtk::ToolButton.new(
-        Gtk::Image.new(Skin[:forward].pixbuf(width: 24, height: 24))
+        icon_widget: Gtk::Image.new(pixbuf: Skin[:forward].pixbuf(width: 24, height: 24))
       ).tap{|w|
         w.ssc(:clicked, &gen_browser_clicked)
       }

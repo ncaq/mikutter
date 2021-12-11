@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+#
+require 'pathname'
 
 require_relative 'phantom'
 require_relative 'listener'

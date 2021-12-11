@@ -1,0 +1,13 @@
+---
+slug: :gtk3
+depends:
+  mikutter: '0.2'
+  plugin:
+  - gui
+  - uitranslator
+version: '1.0'
+author:
+  - toshi_a
+  - katsyoshi
+name: Gtk3
+description: Gtk3を使ってウィンドウを描画する

@@ -6,15 +6,15 @@ require 'mui/gtk_keyconfig'
 require 'mui/gtk_message_picker'
 require 'mui/gtk_selectbox'
 
-require 'gtk2'
+require 'gtk3'
 
 module Mtk
   extend self
   extend Gem::Deprecate
 
   def adjustment(name, config, min, max)
-    container = Gtk::HBox.new(false, 0)
-    container.pack_start(Gtk::Label.new(name), false, true, 0)
+    container = Gtk::Box.new(:horizontal, 0)
+    container.pack_start(Gtk::Label.new(name), expand: false, fill: true, padding: 0)
     adj = Gtk::Adjustment.new((UserConfig[config] or min), min*1.0, max*1.0, 1.0, 5.0, 0.0)
     spinner = Gtk::SpinButton.new(adj, 0, 0)
     spinner.wrap = true
@@ -22,7 +22,7 @@ module Mtk
       UserConfig[config] = widget.value.to_i
       false
     }
-    container.pack_start(Gtk::Alignment.new(1.0, 0.5, 0, 0).add(spinner), true, true, 0)
+    container.pack_start(Gtk::Alignment.new(1.0, 0.5, 0, 0).add(spinner), expand: true, fill: true, padding: 0)
   end
   deprecate :adjustment, :none, 2020, 8
 
@@ -37,8 +37,8 @@ module Mtk
           UserConfig[key]
         else
           UserConfig[key] = new end } end
-    container = Gtk::HBox.new(false, 0)
-    input = Gtk::ComboBox.new(true)
+    container = Gtk::Box.new(:horizontal, 0)
+    input = Gtk::ComboBoxText.new
     sorted_keys = values.keys.freeze
     sorted_keys.each{ |x|
       input.append_text(values[x].respond_to?(:call) ? values[x].call(nil) : values[x])
@@ -48,8 +48,8 @@ module Mtk
       proc.call(*[sorted_keys[widget.active], widget][0, proc.arity])
       nil
     }
-    container.pack_start(Gtk::Label.new(label), false, true, 0) if label
-    container.pack_start(Gtk::Alignment.new(1.0, 0.5, 0, 0).add(input), true, true, 0)
+    container.pack_start(Gtk::Label.new(label), expand: false, fill: true, padding: 0) if label
+    container.pack_start(Gtk::Alignment.new(1.0, 0.5, 0, 0).add(input), expand: true, fill: true, padding: 0)
   end
 
   def choosemany(key, label, values)
@@ -66,9 +66,9 @@ module Mtk
       proc.call(*[selected, input][0, proc.arity])
     }
     if label
-      Gtk::HBox.new(false, 0).
-        pack_start(Gtk::Label.new(label), false, true, 0).
-        pack_start(Gtk::Alignment.new(1.0, 0.5, 0, 0).add(input), true, true, 0)
+      Gtk::Box.new(:horizontal, 0).
+        pack_start(Gtk::Label.new(label), expand: false, fill: true, padding: 0).
+        pack_start(Gtk::Alignment.new(1.0, 0.5, 0, 0).add(input), expand: true, fill: true, padding: 0)
     else
       input end end
   deprecate :choosemany, :none, 2020, 8
@@ -124,7 +124,7 @@ module Mtk
     input.ssc(:changed){ |widget|
       UserConfig[key] = widget.text
     }
-    self.group(title, default, Gtk::HBox.new(false, 0).add(custom).add(input))
+    self.group(title, default, Gtk::Box.new(:horizontal, 0).add(custom).add(input))
   end
   deprecate :default_or_custom, :none, 2020, 8
 
@@ -137,12 +137,12 @@ module Mtk
           UserConfig[key] = new
         else
           UserConfig[key].to_s end } end
-    container = Gtk::HBox.new(false, 0)
+    container = Gtk::Box.new(:horizontal, 0)
     input = Gtk::Entry.new
     input.text = proc.call(nil)
     input.visibility = visibility
-    container.pack_start(Gtk::Label.new(label), false, true, 0) if label
-    container.pack_start(Gtk::Alignment.new(1.0, 0.5, 0, 0).add(input), true, true, 0)
+    container.pack_start(Gtk::Label.new(label), expand: false, fill: true, padding: 0) if label
+    container.pack_start(Gtk::Alignment.new(1.0, 0.5, 0, 0).add(input), expand: true, fill: true, padding: 0)
     input.ssc(:changed){ |widget|
       proc.call(widget.text) }
     callback&.call(container, input)
@@ -160,9 +160,9 @@ module Mtk
         else
           UserConfig[key].to_s end } end
     keyconfig = Gtk::KeyConfig.new(title, proc.call(nil))
-    container = Gtk::HBox.new(false, 0)
-    container.pack_start(Gtk::Label.new(title), false, true, 0)
-    container.closeup(keyconfig.right)
+    container = Gtk::Box.new(:horizontal, 0)
+    container.pack_start(Gtk::Label.new(title), expand: false, fill: true, padding: 0)
+    container.pack_start(keyconfig.right, expand: false)
     keyconfig.change_hook = proc
     return container
   end
@@ -174,10 +174,10 @@ module Mtk
       group.set_label_widget(title)
     else
       group.set_label(title) end
-    box = Gtk::VBox.new(false, 0).set_border_width(4)
+    box = Gtk::Box.new(:vertical, 0).set_border_width(4)
     group.add(box)
     children.each{ |w|
-      box.pack_start(w, false)
+      box.pack_start(w, expand: false)
     }
     group
   end
@@ -186,10 +186,10 @@ module Mtk
   def expander(title, expanded, *children)
     group = Gtk::Expander.new(title).set_border_width(8)
     group.expanded = expanded
-    box = Gtk::VBox.new(false, 0).set_border_width(4)
+    box = Gtk::Box.new(:vertical, 0).set_border_width(4)
     group.add(box)
     children.each{ |w|
-      box.pack_start(w, false)
+      box.pack_start(w, expand: false)
     }
     group
   end
@@ -216,17 +216,17 @@ module Mtk
     button end
 
   def fontselect(key, label)
-    Gtk::HBox.new(false, 0).add(Gtk::Label.new(label).left).closeup(_fontselect(key, label))
+    Gtk::Box.new(:horizontal, 0).add(Gtk::Label.new(label).left).pack_start(_fontselect(key, label), expand: false)
   end
   deprecate :fontselect, :none, 2020, 8
 
   def colorselect(key, label)
-    Gtk::HBox.new(false, 0).add(Gtk::Label.new(label).left).closeup(_colorselect(key, label))
+    Gtk::Box.new(:horizontal, 0).add(Gtk::Label.new(label).left).pack_start(_colorselect(key, label), expand: false)
   end
   deprecate :colorselect, :none, 2020, 8
 
   def fontcolorselect(font, color, label)
-    self.fontselect(font, label).closeup(_colorselect(color, label))
+    self.fontselect(font, label).pack_start(_colorselect(color, label), expand: false)
   end
   deprecate :fontcolorselect, :none, 2020, 8
 

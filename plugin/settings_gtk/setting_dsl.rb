@@ -6,7 +6,7 @@ require 'mui/gtk_form_dsl'
 require 'mui/gtk_form_dsl_multi_select'
 require 'mui/gtk_form_dsl_select'
 
-require 'gtk2'
+require 'gtk3'
 
 =begin rdoc
 プラグインに、簡単に設定ファイルを定義する機能を提供する。
@@ -23,7 +23,7 @@ settingsの中身は、 Plugin::Settings のインスタンスの中で実行さ
 (チェックボックス)。明確にウィジェットを設定できるわけではなくて、値の意味を定義するだけなので、
 前後関係などに影響されてウィジェットが変わる場合があるかも。
 =end
-class Plugin::SettingsGtk::SettingDSL < Gtk::VBox
+class Plugin::SettingsGtk::SettingDSL < Gtk::Grid
   include Gtk::FormDSL
 
   def create_inner_setting
@@ -31,9 +31,14 @@ class Plugin::SettingsGtk::SettingDSL < Gtk::VBox
   end
 
   def initialize(plugin)
+    super()
+    self.orientation = :vertical
+    self.row_spacing = 12
+    self.column_spacing = 12
+    self.margin = 12
+
     type_strict plugin => Plugin
     @plugin = plugin
-    super()
   end
 
   def [](key)

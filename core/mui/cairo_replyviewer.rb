@@ -41,7 +41,7 @@ class Gdk::ReplyViewer < Gdk::SubPartsMessageBase
         helper.reset_height
       end
     end
-    helper.scale(@edge)
+    Gdk.scale(@edge)
   end
 
   def badge(_message)
@@ -50,13 +50,16 @@ class Gdk::ReplyViewer < Gdk::SubPartsMessageBase
 
   def background_color(message)
     color = Plugin.filtering(:subparts_replyviewer_background_color, message, nil).last
-    if color.is_a? Array and 3 == color.size
-      color.map{ |c| c.to_f / 65536 }
+    if color.is_a?(Array) && color.size == 3
+      color.map{ |c| c.fdiv(0xffff) }.freeze
     else
-      [1.0]*3 end end
+      [1.0, 1.0, 1.0].freeze
+    end
+  end
 
   def main_text_color(message)
-    UserConfig[:reply_text_color].map{ |c| c.to_f / 65536 } end
+    UserConfig[:reply_text_color].map{ |c| c.fdiv(0xffff) }
+  end
 
   def main_text_font(message)
     helper.font_description(UserConfig[:reply_text_font]) end
@@ -72,7 +75,8 @@ class Gdk::ReplyViewer < Gdk::SubPartsMessageBase
   def icon_size
     if show_icon?
       if UserConfig[:reply_icon_size]
-        Gdk::Rectangle.new(0, 0, helper.scale(UserConfig[:reply_icon_size]), helper.scale(UserConfig[:reply_icon_size]))
+        size = Gdk.scale UserConfig[:reply_icon_size]
+        Gdk::Rectangle.new(0, 0, size, size)
       else
         super
       end

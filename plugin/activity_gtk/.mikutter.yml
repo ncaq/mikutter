@@ -5,7 +5,7 @@ depends:
   plugin:
   - activity
   - gui
-  - gtk
+  - gtk3
   - uitranslator
   - skin
 version: '4.1'

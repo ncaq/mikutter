@@ -4,13 +4,13 @@
 つぶやき入力ボックス。
 =end
 
-require 'gtk2'
+require 'gtk3'
 require 'thread'
-require 'mui/cairo_miracle_painter'
 require 'mui/gtk_intelligent_textview'
 
 module Gtk
   class PostBox < Gtk::EventBox
+    extend Gem::Deprecate
     attr_accessor :return_to_top
 
     @@ringlock = Mutex.new
@@ -87,8 +87,9 @@ module Gtk
     def widget_post
       return @post if defined?(@post)
       @post = gen_widget_post
+      @post.hexpand = true
       post_set_default_text(@post)
-      @post.wrap_mode = Gtk::TextTag::WRAP_CHAR
+      @post.wrap_mode = :char
       @post.border_width = 2
       @post.buffer.ssc('changed') { |textview|
         refresh_buttons(false)
@@ -100,15 +101,15 @@ module Gtk
     def widget_remain
       return @remain if defined?(@remain)
       @remain = Gtk::Label.new('---')
-      tag = Plugin[:gtk].handler_tag
-      @remain.ssc_atonce(:expose_event) {
-        Plugin[:gtk].on_world_change_current(tags: tag) { |world|
+      tag = Plugin[:gtk3].handler_tag
+      @remain.ssc_atonce(:draw) {
+        Plugin[:gtk3].on_world_change_current(tags: tag) { |world|
           update_remain_charcount
         }
         false
       }
       @remain.ssc(:destroy) {
-        Plugin[:gtk].detach(tag)
+        Plugin[:gtk3].detach(tag)
       }
       Delayer.new{
         update_remain_charcount
@@ -120,7 +121,8 @@ module Gtk
 
     def widget_send
       return @send if defined?(@send)
-      @send = Gtk::Button.new.add(Gtk::WebIcon.new(Skin.get_path('post.png'), 16, 16))
+      @send = Gtk::Button.new
+      @send.add(Gtk::WebIcon.new(Skin.get_path('post.png'), 16, 16))
       @send.sensitive = postable?
       @send.ssc(:clicked) do |button|
         post_it
@@ -131,7 +133,9 @@ module Gtk
 
     def widget_tool
       return @tool if defined?(@tool)
-      @tool = Gtk::Button.new.add(Gtk::WebIcon.new(Skin.get_path('close.png'), 16, 16))
+      @tool = Gtk::Button.new
+      @tool.add(Gtk::WebIcon.new(Skin.get_path('close.png'), 16, 16))
+      @tool.sensitive = destructible? || posting?
       @tool.signal_connect_after('focus_out_event', &method(:focus_out_event))
       @tool.ssc(:event) do
         @tool.sensitive = destructible? || posting?
@@ -177,7 +181,7 @@ module Gtk
     def post_it(world: target_world)
       if postable?
         return unless before_post(world: world || target_world)
-        @posting = Plugin[:gtk].compose(
+        @posting = Plugin[:gtk3].compose(
           world || target_world,
           to_display_only? ? nil : @to.first,
           **compose_options
@@ -204,17 +208,23 @@ module Gtk
 
     def generate_box
       @reply_widgets = []
-      result = Gtk::HBox.new(false, 0).closeup(widget_tool).pack_start(widget_post).closeup(widget_remain).closeup(widget_send)
-      w_replies = Gtk::VBox.new.add(result)
+      result = Gtk::Grid.new
+      result.orientation = :horizontal
+      result.add(widget_tool).add(widget_post).add(widget_remain).add(widget_send)
+      w_replies = Gtk::Grid.new
+      w_replies.orientation = :vertical
+      w_replies.add(result)
       @to.select{|m|m.respond_to?(:description)}.each{ |message|
-        w_reply = Gtk::HBox.new
+        w_reply = Gtk::Grid.new
+        w_reply.orientation = :horizontal
         itv = Gtk::IntelligentTextview.new(message.description, { 'font' => :mumble_basic_font })
-        itv.style_generator = lambda{ get_backgroundstyle(message) }
+        itv.hexpand = true
+        itv.style_generator = lambda{ get_style_provider(message) }
         itv.bg_modifier
         ev = Gtk::EventBox.new
-        ev.style = get_backgroundstyle(message)
-        w_reply.closeup(Gtk::WebIcon.new(message.icon, 32, 32).top) if message.respond_to?(:icon)
-        w_replies.closeup(ev.add(w_reply.add(itv)))
+        ev.style_context.add_provider(get_style_provider(message), Gtk::StyleProvider::PRIORITY_APPLICATION)
+        w_reply.add(Gtk::WebIcon.new(message.icon, 32, 32).set_valign(:start)) if message.respond_to?(:icon)
+        w_replies.add(ev.add(w_reply.add(itv)))
         @reply_widgets << itv }
       w_replies end
 
@@ -222,7 +232,7 @@ module Gtk
       Gtk::TextView.new end
 
     def postable?
-      not(widget_post.buffer.text.empty?) and (/[^\p{blank}]/ === widget_post.buffer.text) and Plugin[:gtk].compose?(target_world, to_display_only? ? nil : @to.first, visibility: @visibility)
+      not(widget_post.buffer.text.empty?) and (/[^\p{blank}]/ === widget_post.buffer.text) and Plugin[:gtk3].compose?(target_world, to_display_only? ? nil : @to.first, visibility: @visibility)
     end
 
     # 新しいPostBoxを作り、そちらにフォーカスを回す
@@ -349,7 +359,7 @@ module Gtk
 
     def remain_charcount
       if not widget_post.destroyed?
-        Plugin[:gtk].spell(:remain_charcount, target_world, **compose_options)
+        Plugin[:gtk3].spell(:remain_charcount, target_world, **compose_options)
       end
     end
 
@@ -370,12 +380,16 @@ module Gtk
       else
         UserConfig[:mumble_basic_bg] end end
 
-    def get_backgroundstyle(message)
-      style = Gtk::Style.new()
+    def get_style_provider(message)
       color = get_backgroundcolor(message)
-      [Gtk::STATE_ACTIVE, Gtk::STATE_NORMAL, Gtk::STATE_SELECTED, Gtk::STATE_PRELIGHT, Gtk::STATE_INSENSITIVE].each{ |state|
-        style.set_bg(state, *color) }
-      style end
+      Gtk::CssProvider.new.tap do |provider|
+        provider.load_from_data(<<~CSS)
+          *, *:active, *:disabled, *:hover, *:focus {
+            background-color: rgb(#{color[0] / 256}, #{color[1] / 256}, #{color[2] / 256});
+          }
+        CSS
+      end
+    end
 
     def post_set_default_text(post)
       if @options[:delegated_by]
@@ -383,8 +397,10 @@ module Gtk
         @options[:delegated_by].post.buffer.text = ''
       elsif !(@header.empty? and @footer.empty?)
         post.buffer.text = @header + @footer
-        post.buffer.place_cursor(post.buffer.get_iter_at_offset(@header.size)) end
-      post.accepts_tab = false end
+        post.buffer.place_cursor(post.buffer.get_iter_at(offset: @header.size))
+      end
+      post.accepts_tab = false
+    end
 
     # PostBoxを複製するときのために、このPostBoxを生成した時に指定された全ての名前付き引数と値のペアを返す
     # ==== Return

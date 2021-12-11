@@ -7,7 +7,7 @@ require 'mui/gtk_form_dsl_select'
 module Plugin::ExtractGtk
 end
 
-class Plugin::ExtractGtk::OptionWidget < Gtk::VBox
+class Plugin::ExtractGtk::OptionWidget < Gtk::Grid
   include Gtk::FormDSL
 
   def create_inner_setting
@@ -17,7 +17,9 @@ class Plugin::ExtractGtk::OptionWidget < Gtk::VBox
   def initialize(plugin, extract)
     @plugin = plugin
     @extract = extract
+
     super()
+    self.row_spacing = self.column_spacing = self.margin = 12
   end
 
   def [](key)
@@ -38,5 +40,9 @@ class Plugin::ExtractGtk::OptionWidget < Gtk::VBox
     end
     @extract.notify_update
     value
+  end
+
+  def method_missing(method, *args, &block)
+    @plugin.send(method, *args, &block)
   end
 end

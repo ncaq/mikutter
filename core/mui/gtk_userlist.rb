@@ -2,7 +2,7 @@
 require 'mui/gtk_extension'
 require 'mui/gtk_inneruserlist'
 
-require 'gtk2'
+require 'gtk3'
 require 'set'
 
 class Gtk::UserList < Gtk::EventBox
@@ -25,10 +25,9 @@ class Gtk::UserList < Gtk::EventBox
   def initialize
     super
     @listview = Gtk::InnerUserList.new(self)
-    scrollbar = ::Gtk::VScrollbar.new(@listview.vadjustment)
-    add Gtk::HBox.new(false, 0).add(@listview).closeup(scrollbar)
+    add Gtk::ScrolledWindow.new.add(@listview)
     @listview.ssc(:row_activated, &self.class.row_activated)
-    @listview.ssc(:expose_event){
+    @listview.ssc(:draw){
       emit_expose_user
       false
     }
@@ -73,8 +72,8 @@ class Gtk::UserList < Gtk::EventBox
   private
 
   def emit_expose_user
-    if @listview.visible_range
-      current, last = @listview.visible_range
+    val, current, last = @listview.visible_range
+    if val
       Enumerator.new{|y|
         while (current <=> last) < 1
           y << @listview.model.get_iter(current)
