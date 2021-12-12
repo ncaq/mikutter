@@ -54,15 +54,6 @@ Plugin.create :extract_gtk do
 
     message = _("本当に抽出タブ「%{name}」を削除しますか？") % {name: extract.name}
 
-    # MessageDialog.newする方がBuilderを使うよりも見栄えが良くなる
-    # builder = Gtk::Builder.new
-    # s = (Pathname(__FILE__).dirname / 'extract_settings.glade').to_s
-    # builder.add_from_file s
-
-    # dialog = builder.get_object('dlg_delete')
-    # dialog.text = message
-    # dialog.set_transient_for window
-
     dialog = Gtk::MessageDialog.new(parent: window,
                                     type: :question,
                                     buttons: :none,
