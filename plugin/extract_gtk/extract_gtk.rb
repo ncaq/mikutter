@@ -38,16 +38,13 @@ Plugin.create :extract_gtk do
 
     add grid
 
-    Plugin.create :extract do
-      add_tab_observer = on_extract_tab_create(&tablist.method(:add_record))
-      update_tab_observer = on_extract_tab_update(&tablist.method(:update_record))
-      delete_tab_observer = on_extract_tab_delete(&tablist.method(:remove_record))
-
-      tablist.ssc(:destroy) do
-        detach add_tab_observer
-        detach update_tab_observer
-        detach delete_tab_observer
-      end
+    add_tab_observer = on_extract_tab_create(&tablist.method(:add_record))
+    update_tab_observer = on_extract_tab_update(&tablist.method(:update_record))
+    delete_tab_observer = on_extract_tab_delete(&tablist.method(:remove_record))
+    tablist.ssc(:destroy) do
+      detach add_tab_observer
+      detach update_tab_observer
+      detach delete_tab_observer
     end
   end
 
