@@ -69,21 +69,23 @@ Plugin.create :extract_gtk do
   end
 
   on_extract_tab_open_create_dialog do |window|
-    builder = Gtk::Builder.new
-    s = (Pathname(__FILE__).dirname / 'extract_settings.glade').to_s
-    builder.add_from_file s
-
-    title = _("抽出タブを作成 - %{mikutter}") % {mikutter: Environment::NAME}
-
-    dialog = builder.get_object('dlg_add')
-    dialog.title = title
-    dialog.set_transient_for window
-    builder.get_object('dlg_add_label').text = _('名前')
-    entry = builder.get_object 'dlg_add_entry'
+    dialog = Gtk::Dialog.new(title: _("抽出タブを作成 - %{mikutter}") % {mikutter: Environment::NAME}, parent: window)
+    dialog.add_button(Gtk::Stock::CANCEL, Gtk::Dialog::RESPONSE_REJECT)
+    dialog.add_button(Gtk::Stock::OK, Gtk::Dialog::RESPONSE_ACCEPT).tap do |button|
+      button.style_context.add_class('suggested-action')
+    end
+    prompt = Gtk::Entry.new
+    prompt.hexpand = true
+    box = Gtk::Box.new(:horizontal, 8).tap do |box|
+      box.pack_start(Gtk::Label.new(_("名前")), expand: false)
+      box.add(prompt)
+      box.show_all
+    end
+    dialog.child.add(box)
 
     case dialog.run
     when Gtk::ResponseType::ACCEPT
-      Plugin.call(:extract_tab_create, Plugin::Extract::Setting.new(name: entry.text))
+      Plugin.call(:extract_tab_create, Plugin::Extract::Setting.new(name: prompt.text))
     end
     dialog.destroy
   end
