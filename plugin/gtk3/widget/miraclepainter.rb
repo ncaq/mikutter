@@ -233,8 +233,13 @@ class Plugin::Gtk3::MiraclePainter < Gtk::ListBoxRow
         index = main_pos_to_index(x, y)
         if index
           clicked_note = score.find{|note|
-            index -= note.description.size
-            index <= 0
+            if UserConfig[:miraclepainter_expand_custom_emoji] && note.respond_to?(:inline_photo)
+              # 1 -> 置換された絵文字の文字長
+              index -= 1
+            else
+              index -= note.description.size
+            end
+            index < 0
           }
           Plugin.call(:open, clicked_note) if clickable?(clicked_note)
         end
@@ -674,8 +679,13 @@ private
     index = main_pos_to_index(x, y)
     if index # the cursor is placed on text
       pointed_note = score.find{|note|
-        index -= note.description.size
-        index <= 0
+        if UserConfig[:miraclepainter_expand_custom_emoji] && note.respond_to?(:inline_photo)
+          # 1 -> 置換された絵文字の文字長
+          index -= 1
+        else
+          index -= note.description.size
+        end
+        index < 0
       }
       if clickable?(pointed_note)
         # the cursor is placed on link
