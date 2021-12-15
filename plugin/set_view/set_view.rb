@@ -87,11 +87,6 @@ Plugin::create(:set_view) do
       end
     end
 
-    settings(_('背景色')) do
-      color(_('コメント付きシェア'), :quote_background_color).
-        tooltip(_('コメント付きシェアをすると、下に囲われて表示されるじゃないですか、あれです'))
-    end
-
     settings(_('リプライ先')) do
       fontcolor _('フォント'), :reply_text_font, :reply_text_color
       color(_('背景色'), :replyviewer_background_color)
@@ -115,7 +110,8 @@ Plugin::create(:set_view) do
 
     settings(_('コメント付きシェア')) do
       fontcolor _('フォント'), :quote_text_font, :quote_text_color
-      color(_('背景色'), :quote_background_color)
+      color(_('背景色'), :quote_background_color).
+        tooltip(_('コメント付きシェアをすると、下に囲われて表示されるじゃないですか、あれです'))
 
       multiselect _('表示項目'), :quote_present_policy do
         option(:header, _('ヘッダを表示する'))
