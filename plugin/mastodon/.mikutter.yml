@@ -3,6 +3,7 @@ slug: :mastodon
 depends:
   mikutter: '3.9.0'
   plugin:
+    - activity
     - extract
     - gui
     - openimg
