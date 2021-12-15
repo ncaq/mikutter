@@ -461,18 +461,18 @@ module Gtk::FormDSL
   # [title] ラベル
   # [&block] ブロック
   def settings(title, &block)
-    @headings ||= []
-    @headings << title
+    group = Gtk::Frame.new.set_border_width(1)
+    if(title.is_a?(Gtk::Widget))
+      group.set_label_widget(title)
+    else
+      group.set_label(title)
+    end
+    box = create_inner_setting.set_border_width(4)
+    box.instance_eval(&block)
+    group.add(box)
+    attach_next_to group, nil, :bottom, 2, 1
 
-    label = Gtk::Label.new @headings.map { |s| "<b>#{s}</b>" }.join ' > '
-    label.use_markup = true
-    label.halign = :start
-    attach_next_to label, nil, :bottom, 2, 1
-
-    instance_eval(&block)
-    @headings.pop
-
-    Chainable.new label
+    Chainable.new group
   end
 
   # 〜についてダイアログを出すためのボタン。押すとダイアログが出てくる
