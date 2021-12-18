@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 
 Plugin.create(:mastodon_custom_post) do
+  @visibilities = %w[direct private unlisted public].freeze
+
   command(
     :mastodon_custom_post,
     name: _('カスタム投稿'),
@@ -24,19 +26,9 @@ Plugin.create(:mastodon_custom_post) do
       self[:sensitive] = opt.world.account.source.sensitive
       boolean _('閲覧注意'), :sensitive
 
-      visibility_default = opt.world.account.source.privacy
-      if reply_to.is_a?(Plugin::Mastodon::Status)
-        # 返信先の公開範囲が狭い場合は返信先の公開範囲に合わせる。
-        # 但し編集はできるようにするため、この時点でデフォルト値を代入するのみ。
-        if reply_to.visibility == "direct"
-          visibility_default = "direct"
-        elsif visibility_default != "direct" && reply_to.visibility == "private"
-          visibility_default = "private"
-        elsif visibility_default != "direct" && visibility_default != "private" && reply_to.visibility == "unlisted"
-          visibility_default = "unlisted"
-        end
-      end
-      self[:visibility] = Plugin::Mastodon::Util.visibility2select(visibility_default)
+      self[:visibility] = Plugin::Mastodon::Util.visibility2select(
+        visibility_default(opt.world.account.source.privacy, reply_to)
+      )
       select _('公開範囲'), :visibility do
         option :"1public", _('公開')
         option :"2unlisted", _('未収載')
@@ -123,6 +115,22 @@ Plugin.create(:mastodon_custom_post) do
       else
         postbox.widget_post.buffer.text = ''
       end
+    end
+  end
+
+  def visibility_default(default, reply_to)
+    if reply_to.is_a?(Plugin::Mastodon::Status)
+      # 返信先の公開範囲が狭い場合は返信先の公開範囲に合わせる。
+      # 但し編集はできるようにするため、この時点でデフォルト値を代入するのみ。
+      @visibilities[
+        [
+          @visibilities.index(default),
+          @visibilities.index(reply_to.visibility),
+          @visibilities.size - 1
+        ].compact.min
+      ]
+    else
+      default
     end
   end
 end
