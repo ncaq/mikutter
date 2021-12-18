@@ -191,7 +191,7 @@ class Gtk::FormDSL::ListView < Gtk::TreeView
     target = iter[0]
     proc = @generate
     Plugin[:gui].dialog('hogefuga の編集') do
-      set_value target.to_hash
+      set_value target.to_h
       instance_exec(target, &proc)
     end.next do |values|
       iter[0] = @object_initializer.(values.to_h)
