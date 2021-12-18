@@ -152,6 +152,7 @@ Plugin.create :gtk3 do
 
   on_cluster_created do |i_cluster|
     pane = create_pane(i_cluster)
+    pane.scrollable = true
     pane.ssc(:page_reordered) do |this, tabcontainer, index|
       tabcontainer.i_tab&.yield_self do |i_tab|
         i_cluster.reorder_child(i_tab, index)
