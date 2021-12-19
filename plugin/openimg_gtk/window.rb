@@ -183,7 +183,29 @@ module Plugin::OpenimgGtk
     #
 
     def default_size
-      @size || [640, 480]
+      case UserConfig[:openimg_window_size_reference]
+      when :full
+        width = screen.width
+        height = screen.height
+      when :mainwindow
+        mainwindow = Plugin[:gtk3].widgetof(Plugin::GUI::Window.instance(:default))
+        geometry = screen.get_monitor_geometry(screen.get_monitor(mainwindow.window))
+        width = geometry.width
+        height = geometry.height
+      when :manual
+        monitor = UserConfig[:openimg_window_size_reference_manual_num]
+        max_monitor = screen.n_monitors
+        if monitor > max_monitor
+          monitor = 0
+        end
+
+        geometry = screen.get_monitor_geometry(monitor)
+        width = geometry.width
+        height = geometry.height
+      end
+
+      @size || [width * (UserConfig[:openimg_window_size_width_percent] / 100.0),
+                height * (UserConfig[:openimg_window_size_height_percent] / 100.0)]
     end
 
     def loading_surface
