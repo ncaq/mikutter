@@ -690,9 +690,9 @@ module Gtk::FormDSL
   def link(target)
     case target
     when String, URI, Addressable::URI, Diva::URI
-      button = Gtk::Button.new(target.to_s, false)
+      button = Gtk::Button.new(label: target.to_s, use_underline: false)
       button.
-        tooltip(target.to_s).
+        set_tooltip_text(target.to_s).
         set_alignment(0.0, 0.5).
         ssc(:clicked, &model_opener(target))
       attach_next_to(button, nil, :bottom, 2, 1)
@@ -701,10 +701,10 @@ module Gtk::FormDSL
       box = Gtk::Box.new(:horizontal, 0)
       if target.respond_to?(:icon)
         icon = Gtk::WebIcon.new(target.icon, 48, 48)
-        box.closeup(icon)
+        box.pack_start(icon, expand: false)
       end
       button.
-        tooltip(target.title).
+        set_tooltip_text(target.title).
         add(box.add(Gtk::Label.new(target.title))).
         ssc(:clicked, &model_opener(target))
       attach_next_to(button, nil, :bottom, 2, 1)
