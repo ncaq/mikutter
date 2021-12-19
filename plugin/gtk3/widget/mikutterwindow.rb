@@ -16,7 +16,10 @@ module Plugin::Gtk3
       @plugin = plugin
 
       @container = Gtk::Box.new(:vertical, 0)
-      @panes = Gtk::Grid.new
+      @panes = Gtk::Grid.new.tap do |panes|
+        panes.column_spacing = 6
+        panes.column_homogeneous = true
+      end
       header = Gtk::Box.new(:horizontal, 0)
       @postboxes = Gtk::Box.new(:vertical, 0)
 
