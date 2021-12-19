@@ -57,6 +57,7 @@ Plugin.create(:activity_gtk) do
 
   # アクティビティの古い通知を一定時間後に消す
   def reset_activity(model)
+    return if model.destroyed?
     Delayer.new(delay: 60) do
       if not model.destroyed?
         iters = model.to_enum(:each).to_a
