@@ -65,7 +65,7 @@ module Plugin::Guide
             if button
               helper.signal_handler_disconnect(sid)
               message[:confirm] = nil
-              helper.reset_height
+              helper.queue_resize
               message[:confirm_callback].call(button.value) end end
           false } end
     end
