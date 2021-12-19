@@ -74,6 +74,7 @@ module Plugin::Gtk3
     # Gtk::Statusbar
     def create_statusbar
       statusbar = Gtk::Statusbar.new
+      statusbar.margin = 0
       statusbar.push(statusbar.get_context_id("system"), @plugin._("Statusbar default message"))
       @statusbar = statusbar.pack_start(status_button(Gtk::Box.new(:horizontal)), expand: false)
     end
