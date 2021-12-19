@@ -31,8 +31,8 @@ Plugin.create(:openimg_gtk) do
       adjustment('幅 (%)', :openimg_window_size_width_percent, 1, 100)
       adjustment('高さ (%)', :openimg_window_size_height_percent, 1, 100)
       select('サイズの基準', :openimg_window_size_reference) do
-        option(:full, 'デスクトップ全体')
         option(:mainwindow, 'メインウィンドウがあるディスプレイ')
+        option(:full, 'デスクトップ全体')
         option(:manual, 'ディスプレイ番号を指定') do
           adjustment('ディスプレイ番号', :openimg_window_size_reference_manual_num, 0, 99)
         end
