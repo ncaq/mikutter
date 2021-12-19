@@ -10,7 +10,7 @@ require_relative 'window'
 Plugin.create(:openimg_gtk) do
   UserConfig[:openimg_window_size_width_percent] ||= 70
   UserConfig[:openimg_window_size_height_percent] ||= 70
-  UserConfig[:openimg_window_size_reference] ||= :full
+  UserConfig[:openimg_window_size_reference] ||= :mainwindow
   UserConfig[:openimg_window_size_reference_manual_num] ||= 0
   
   filter_openimg_pixbuf_from_display_url do |photo, loader, thread|
