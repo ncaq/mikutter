@@ -90,7 +90,7 @@ module Plugin::Gtk3
         false
       end
       @container.ssc(:state_changed) do |widget, state|
-        action_area.sensitive = state == :insensitive
+        action_area.sensitive = widget.sensitive?
         false
       end
     end
