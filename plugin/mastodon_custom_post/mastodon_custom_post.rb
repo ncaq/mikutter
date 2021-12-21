@@ -120,8 +120,6 @@ Plugin.create(:mastodon_custom_post) do
 
   def visibility_default(default, reply_to)
     if reply_to.is_a?(Plugin::Mastodon::Status)
-      # 返信先の公開範囲が狭い場合は返信先の公開範囲に合わせる。
-      # 但し編集はできるようにするため、この時点でデフォルト値を代入するのみ。
       @visibilities[
         [
           @visibilities.index(default),
