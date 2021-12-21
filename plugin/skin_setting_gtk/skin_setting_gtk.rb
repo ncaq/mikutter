@@ -15,13 +15,10 @@ Plugin.create :skin do
     frame = Gtk::Frame.new
     grid = Gtk::Grid.new
 
-    preview_icons(info[:dir]).each { |path|
-      image = Gtk::WebIcon.new(
-        Plugin.collect(:photo_filter, File.join(info[:dir], path), Pluggaloid::COLLECT),
-        32, 32
-      )
+    preview_icons(info[:dir]).each do |path|
+      image = Gtk::WebIcon.new(File.join(info[:dir], path), 32, 32)
       grid << image
-    }
+    end
 
     fix.put(frame.add(grid), 17, 0)
   end
