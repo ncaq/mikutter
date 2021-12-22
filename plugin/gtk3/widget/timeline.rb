@@ -60,7 +60,7 @@ module Plugin::Gtk3
           @order.(b.model) <=> @order.(a.model)
         end
       end
-      @listbox.ssc :destroy do
+      ssc(:destroy) do
         @imaginary.destroy
       end
 
