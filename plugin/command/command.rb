@@ -136,7 +136,7 @@ Plugin.create :command do
   command(:aboutuser,
           name: ->(opt) {
             if opt
-              (_("%{title}について") % { title: opt.messages&.first&.user&.title }).gsub(/_/, '__')
+              (_("%{title}について") % { title: opt.messages&.first&.user&.title })
             else
               _('投稿者について')
             end

@@ -78,12 +78,12 @@ module Gtk
         icon = icon.call(*[optional, widget][0, (icon.arity == -1 ? 1 : icon.arity)])
       end
       if icon
-        Gtk::ImageMenuItem.new(label: label_text).tap do |item|
+        Gtk::ImageMenuItem.new(label: label_text, use_underline: false).tap do |item|
           item.set_image(Gtk::WebIcon.new(icon, 16, 16))
           item.always_show_image = true
         end
       else
-        Gtk::MenuItem.new(label: label_text)
+        Gtk::MenuItem.new(label: label_text, use_underline: false)
       end
     end
   end
