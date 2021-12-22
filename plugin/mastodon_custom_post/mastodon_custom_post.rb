@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 
 Plugin.create(:mastodon_custom_post) do
+  @visibilities = %w[direct private unlisted public].freeze
+
   command(
     :mastodon_custom_post,
     name: _('カスタム投稿'),
@@ -24,12 +26,9 @@ Plugin.create(:mastodon_custom_post) do
       self[:sensitive] = opt.world.account.source.sensitive
       boolean _('閲覧注意'), :sensitive
 
-      visibility_default = opt.world.account.source.privacy
-      if reply_to.is_a?(Plugin::Mastodon::Status) && reply_to.visibility == "direct"
-        # 返信先がDMの場合はデフォルトでDMにする。但し編集はできるようにするため、この時点でデフォルト値を代入するのみ。
-        visibility_default = "direct"
-      end
-      self[:visibility] = Plugin::Mastodon::Util.visibility2select(visibility_default)
+      self[:visibility] = Plugin::Mastodon::Util.visibility2select(
+        visibility_default(opt.world.account.source.privacy, reply_to)
+      )
       select _('公開範囲'), :visibility do
         option :"1public", _('公開')
         option :"2unlisted", _('未収載')
@@ -116,6 +115,20 @@ Plugin.create(:mastodon_custom_post) do
       else
         postbox.widget_post.buffer.text = ''
       end
+    end
+  end
+
+  def visibility_default(default, reply_to)
+    if reply_to.is_a?(Plugin::Mastodon::Status)
+      @visibilities[
+        [
+          @visibilities.index(default),
+          @visibilities.index(reply_to.visibility),
+          @visibilities.size - 1
+        ].compact.min
+      ]
+    else
+      default
     end
   end
 end
