@@ -5,43 +5,46 @@ require_relative 'extract_tab_list'
 
 Plugin.create :extract_gtk do
   settings _("抽出タブ") do
-    builder = Gtk::Builder.new
-    s = (Pathname(__FILE__).dirname / 'extract_settings.glade').to_s
-    builder.add_from_file s
-
     tablist = Plugin::ExtractGtk::ExtractTabList.new(Plugin[:extract])
     tablist.hexpand = true
     tablist.vexpand = true
 
-    grid = builder.get_object 'grid'
+    btn_add = Gtk::Button.new(stock_id: Gtk::Stock::ADD)
+    btn_edit = Gtk::Button.new(stock_id: Gtk::Stock::EDIT)
+    btn_delete = Gtk::Button.new(stock_id: Gtk::Stock::DELETE)
+    btn_add.ssc(:clicked) do
+      Plugin.call(:extract_tab_open_create_dialog, toplevel)
+      true
+    end
+    btn_edit.ssc(:clicked) do
+      slug = tablist.selected_slug
+      Plugin.call(:extract_open_edit_dialog, slug) if slug
+      true
+    end
+    btn_delete.ssc(:clicked) do
+      slug = tablist.selected_slug
+      Plugin.call(:extract_tab_delete_with_confirm, toplevel, slug) if slug
+      true
+    end
+
+    grid = Gtk::Grid.new
+    grid.column_spacing = 6
+    grid << Gtk::ScrolledWindow.new.add(tablist)
+    grid << Gtk::Grid.new.tap do |grid|
+      grid.orientation = :vertical
+      grid.row_spacing = 6
+      grid << btn_add << btn_edit << btn_delete
+    end
+
     add grid
-    grid.attach ::Gtk::ScrolledWindow.new.add(tablist), 0, 0, 1, 1
 
-    builder.get_object('btn_add').ssc(:clicked) do
-      Plugin.call :extract_tab_open_create_dialog, toplevel
-      true
-    end
-    builder.get_object('btn_edit').ssc(:clicked) do
-      slug = tablist.selected_slug
-      slug and Plugin.call :extract_open_edit_dialog, slug
-      true
-    end
-    builder.get_object('btn_remove').ssc(:clicked) do
-      slug = tablist.selected_slug
-      slug and Plugin.call :extract_tab_delete_with_confirm, toplevel, slug
-      true
-    end
-
-    Plugin.create :extract do
-      add_tab_observer = on_extract_tab_create(&tablist.method(:add_record))
-      update_tab_observer = on_extract_tab_update(&tablist.method(:update_record))
-      delete_tab_observer = on_extract_tab_delete(&tablist.method(:remove_record))
-
-      tablist.ssc(:destroy) do
-        detach add_tab_observer
-        detach update_tab_observer
-        detach delete_tab_observer
-      end
+    add_tab_observer = on_extract_tab_create(&tablist.method(:add_record))
+    update_tab_observer = on_extract_tab_update(&tablist.method(:update_record))
+    delete_tab_observer = on_extract_tab_delete(&tablist.method(:remove_record))
+    tablist.ssc(:destroy) do
+      detach add_tab_observer
+      detach update_tab_observer
+      detach delete_tab_observer
     end
   end
 
@@ -50,15 +53,6 @@ Plugin.create :extract_gtk do
     extract or next
 
     message = _("本当に抽出タブ「%{name}」を削除しますか？") % {name: extract.name}
-
-    # MessageDialog.newする方がBuilderを使うよりも見栄えが良くなる
-    # builder = Gtk::Builder.new
-    # s = (Pathname(__FILE__).dirname / 'extract_settings.glade').to_s
-    # builder.add_from_file s
-
-    # dialog = builder.get_object('dlg_delete')
-    # dialog.text = message
-    # dialog.set_transient_for window
 
     dialog = Gtk::MessageDialog.new(parent: window,
                                     type: :question,
@@ -69,27 +63,29 @@ Plugin.create :extract_gtk do
     btn_remove.style_context.add_class 'destructive-action'
     case dialog.run
     when Gtk::ResponseType::ACCEPT
-      Plugin.call :extract_tab_delete, slug
+      Plugin.call(:extract_tab_delete, slug)
     end
     dialog.destroy
   end
 
   on_extract_tab_open_create_dialog do |window|
-    builder = Gtk::Builder.new
-    s = (Pathname(__FILE__).dirname / 'extract_settings.glade').to_s
-    builder.add_from_file s
-
-    title = _("抽出タブを作成 - %{mikutter}") % {mikutter: Environment::NAME}
-
-    dialog = builder.get_object('dlg_add')
-    dialog.title = title
-    dialog.set_transient_for window
-    builder.get_object('dlg_add_label').text = _('名前')
-    entry = builder.get_object 'dlg_add_entry'
+    dialog = Gtk::Dialog.new(title: _("抽出タブを作成 - %{mikutter}") % {mikutter: Environment::NAME}, parent: window)
+    dialog.add_button(Gtk::Stock::CANCEL, Gtk::Dialog::RESPONSE_REJECT)
+    dialog.add_button(Gtk::Stock::OK, Gtk::Dialog::RESPONSE_ACCEPT).tap do |button|
+      button.style_context.add_class('suggested-action')
+    end
+    prompt = Gtk::Entry.new
+    prompt.hexpand = true
+    box = Gtk::Box.new(:horizontal, 8).tap do |box|
+      box.pack_start(Gtk::Label.new(_("名前")), expand: false)
+      box.add(prompt)
+      box.show_all
+    end
+    dialog.child.add(box)
 
     case dialog.run
     when Gtk::ResponseType::ACCEPT
-      Plugin.call(:extract_tab_create, Plugin::Extract::Setting.new(name: entry.text))
+      Plugin.call(:extract_tab_create, Plugin::Extract::Setting.new(name: prompt.text))
     end
     dialog.destroy
   end

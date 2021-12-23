@@ -11,18 +11,19 @@ Plugin.create :settings_gtk do
 
   def setting_window
     return @window if defined?(@window) and @window
-    builder = Gtk::Builder.new
-    s = (Pathname(__FILE__).dirname / 'settings.glade').to_s
-    builder.add_from_file s
-    @window = builder.get_object 'window'
-    rect = { width: 256, height: 256 }
-    @window.icon = Skin['settings.png'].load_pixbuf(**rect) do |pb|
-      @window.destroyed? or @window.icon = pb
+
+    @window = window = Gtk::Window.new(_('設定'))
+    window.set_size_request(320, 240)
+    window.set_default_size(768, 480)
+    window.icon = Skin[:settings].load_pixbuf(width: 256, height: 256) do |pb|
+      window.icon = pb unless window.destroyed?
     end
-    settings = builder.get_object 'settings'
-    scrolled_menu = builder.get_object 'scrolled_menu'
+
     menu = Plugin::SettingsGtk::Menu.new
-    scrolled_menu.add_with_viewport menu
+    settings = Gtk::Grid.new
+    scrolled = Gtk::ScrolledWindow.new.set_hscrollbar_policy(:never)
+    scrolled_menu = Gtk::ScrolledWindow.new.set_hscrollbar_policy(:never)
+    window.add(Gtk::Paned.new(:horizontal).add1(scrolled_menu.add_with_viewport(menu)).add2(scrolled.add_with_viewport(settings)))
 
     menu.ssc(:cursor_changed) do
       if menu.selection.selected
@@ -39,12 +40,12 @@ Plugin.create :settings_gtk do
       false
     end
 
-    @window.ssc(:destroy) do
+    window.ssc(:destroy) do
       @window = nil
       false
     end
 
-    @window
+    window
   end
 end
 

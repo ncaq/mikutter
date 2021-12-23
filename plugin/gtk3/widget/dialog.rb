@@ -5,7 +5,7 @@ require 'mui/gtk_form_dsl_multi_select'
 require 'mui/gtk_form_dsl_select'
 
 module Plugin::Gtk3
-  module Dialog
+  class Dialog < Gtk::Dialog
     # ダイアログを開く。このメソッドを直接利用せずに、Pluginのdialog DSLを利用すること。
     # ==== Args
     # [title:] ダイアログのタイトルバーに表示する内容(String)
@@ -16,29 +16,23 @@ module Plugin::Gtk3
     # [&proc] DSLブロック
     # ==== Return
     # 作成されたDialogのインスタンス
-    module_function def open(**kw, &p)
-      # dialog.gladeからUIを構築
-      builder = Gtk::Builder.new
-      s = (Pathname(__FILE__).dirname / 'dialog.glade').to_s
-      builder.add_from_file s
-      dialog = builder.get_object :dialog
-      dialog.extend self
-      dialog.init builder: builder, **kw, &p
+    def self.open(**kwrest, &proc)
+      dialog = new(**kwrest, &proc)
       dialog.show_all
       dialog
     end
 
-    def init(title:, parent:, promise:, plugin:, builder:, default:, &p)
+    def initialize(title:, parent:, promise:, plugin:, default:, &p)
+      super(title: title, parent: parent)
       @plugin = plugin
       @promise = promise
-
-      self.title = title
-      self.transient_for = parent
-
       @container = Container.new(plugin, default.to_h.dup, &p)
       @container.error_observer = self
       child.add @container
-      @btn_ok = builder.get_object :btn_ok
+      set_size_request(480, 300)
+      set_window_position(:center)
+      add_button(Gtk::Stock::OK, :ok)
+      add_button(Gtk::Stock::CANCEL, :cancel)
       register_response_listener
       @container.run
     end
@@ -96,7 +90,7 @@ module Plugin::Gtk3
         false
       end
       @container.ssc(:state_changed) do |widget, state|
-        action_area.sensitive = state == :insensitive
+        action_area.sensitive = widget.sensitive?
         false
       end
     end

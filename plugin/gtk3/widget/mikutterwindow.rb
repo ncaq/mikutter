@@ -4,44 +4,45 @@ require 'pathname'
 
 # PostBoxや複数のペインを持つWindow
 module Plugin::Gtk3
-  module MikutterWindow
+  class MikutterWindow < Gtk::Window
 
     attr_reader :panes, :statusbar
 
-    module_function def open(imaginally, plugin)
-      # Gtk::Builderで生成したGtk::Windowに特異メソッドを生やす
-      builder = Gtk::Builder.new
-      s = (Pathname(__FILE__).dirname / 'mikutterwindow.glade').to_s
-      builder.add_from_file s
-      window = builder.get_object 'window'
-      window.extend self
-      window.init imaginally, plugin, builder
-      window
-    end
-
-    def init(imaginally, plugin, builder)
+    def initialize(imaginally, plugin)
       type_strict plugin => Plugin
+      super()
+
       @imaginally = imaginally
       @plugin = plugin
 
-      @container = builder.get_object 'container'
-      @panes = builder.get_object 'panes'
-      @postboxes = builder.get_object 'postboxes'
-      @statusbar = builder.get_object 'statusbar'
-      context_id = @statusbar.get_context_id('system')
-      status_message = @plugin._('Statusbar default message')
-      @statusbar.push(context_id, status_message)
-      status_button_container = builder.get_object 'status_button_container'
-      infrate_status_button status_button_container
-      header = builder.get_object 'header'
-      header.attach(WorldShifter.new, 0, 0, 1, 1)
+      @container = Gtk::Box.new(:vertical, 0)
+      @panes = Gtk::Grid.new.tap do |panes|
+        panes.column_spacing = 6
+        panes.column_homogeneous = true
+      end
+      header = Gtk::Box.new(:horizontal, 0)
+      @postboxes = Gtk::Box.new(:vertical, 0)
+
+      header.pack_start(WorldShifter.new, expand: false)
+        .pack_start(@postboxes, expand: true, fill: true)
+
+      @container.pack_start(header, expand: false)
+        .pack_start(@panes, expand: true, fill: true)
+        .pack_start(create_statusbar, expand: false)
+
+      add(@container)
+
+      set_size_request(240, 240)
 
       Plugin[:gtk3].on_userconfig_modify do |key, newval|
-        key == :postbox_visibility and refresh end
+        refresh if key == :postbox_visibility
+      end
       Plugin[:gtk3].on_world_after_created do |new_world|
-        refresh end
+        refresh
+      end
       Plugin[:gtk3].on_world_destroy do |deleted_world|
-        refresh end
+        refresh
+      end
     end
 
     def add_postbox(i_postbox)
@@ -68,13 +69,22 @@ module Plugin::Gtk3
       @postboxes.children.each(&(visible? ? :show_all : :hide))
     end
 
+    # ステータスバーを返す
+    # ==== Return
+    # Gtk::Statusbar
+    def create_statusbar
+      statusbar = Gtk::Statusbar.new
+      statusbar.push(statusbar.get_context_id("system"), @plugin._("Statusbar default message"))
+      @statusbar = statusbar.pack_start(status_button(Gtk::Box.new(:horizontal)), expand: false)
+    end
+
     # ステータスバーに表示するWindowレベルのボタンを _container_ にpackする。
     # 返された時点では空で、後からボタンが入る(showメソッドは自動的に呼ばれる)。
     # ==== Args
     # [container] packするコンテナ
     # ==== Return
     # container
-    def infrate_status_button(container)
+    def status_button(container)
       current_world, = Plugin.filtering(:world_current, nil)
       ToolbarGenerator.generate(
         container,
