@@ -619,10 +619,10 @@ private
   def render_main_icon_aspectframe(context)
     context.save do
       context.save do
-        context.translate(main_icon_rect.x, main_icon_rect.y + icon_height*13/14)
+        context.translate(main_icon_rect.x, main_icon_rect.y + Gdk.scale(ICON_SIZE[1])*13/14)
         w = Gdk.scale(ICON_SIZE[0])
         context.set_source_pixbuf(
-          gb_foot.load_pixbuf(width: w, height: 9 / 20 * w) { queue_draw }
+          gb_foot.load_pixbuf(width: w, height: 9 * w / 20) { queue_draw }
         )
         context.paint
       end
