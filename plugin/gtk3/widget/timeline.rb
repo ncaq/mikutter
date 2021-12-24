@@ -67,6 +67,7 @@ module Plugin::Gtk3
       add @postbox
       add(Gtk::ScrolledWindow.new.tap do |sw|
             sw.set_policy :never, :automatic
+            sw.overlay_scrolling = false
             sw.expand = true
             sw.add @listbox
           end)
