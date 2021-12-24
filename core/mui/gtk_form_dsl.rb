@@ -328,11 +328,10 @@ module Gtk::FormDSL
           .request_text { |_, text| entry.text = text }
       end
 
-      box = Gtk::Box.new(:horizontal).apply do
-        style_context.add_class :linked
-        add entry, expand: true
-        add button
-      end
+      box = Gtk::Box.new(:horizontal)
+      box.style_context.add_class(:linked)
+      box.add(entry, expand: true)
+      box.add(button)
       widget_right = box
     end
 
@@ -657,24 +656,22 @@ module Gtk::FormDSL
 
   # 引数のテキストを表示する。
   def label(text)
-    Gtk::Label.new(text).apply do
-      self.halign = :start
-      self.wrap = true
-      self.xalign = 0
-    end.tap do |label|
-      attach_next_to label, nil, :bottom, 2, 1
+    Gtk::Label.new(text).tap do |label|
+      label.halign = :start
+      label.wrap = true
+      label.xalign = 0
+      attach_next_to(label, nil, :bottom, 2, 1)
     end
   end
 
   # 引数のテキストを表示する。
   def markup(text)
-    Gtk::Label.new.apply do
-      self.halign = :start
-      self.wrap = true
-      self.markup = text
-      self.xalign = 0
-    end.tap do |label|
-      attach_next_to label, nil, :bottom, 2, 1
+    Gtk::Label.new.tap do |label|
+      label.halign = :start
+      label.wrap = true
+      label.markup = text
+      label.xalign = 0
+      attach_next_to(label, nil, :bottom, 2, 1)
     end
   end
 
