@@ -18,7 +18,7 @@ msgstr ""
 "Plural-Forms: nplurals=1; plural=0;\n"
 
 msgid "Statusbar default message"
-msgstr "欲しい情報を、ほしいままに。"
+msgstr "できること、超人的。"
 
 msgid "Worldを追加"
 msgstr ""
