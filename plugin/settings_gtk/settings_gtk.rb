@@ -21,8 +21,12 @@ Plugin.create :settings_gtk do
 
     menu = Plugin::SettingsGtk::Menu.new
     settings = Gtk::Grid.new
-    scrolled = Gtk::ScrolledWindow.new.set_hscrollbar_policy(:never)
-    scrolled_menu = Gtk::ScrolledWindow.new.set_hscrollbar_policy(:never)
+    scrolled = Gtk::ScrolledWindow.new
+    scrolled.set_policy(:never, :automatic)
+    scrolled.overlay_scrolling = false
+    scrolled_menu = Gtk::ScrolledWindow.new
+    scrolled_menu.set_policy(:never, :automatic)
+    scrolled_menu.overlay_scrolling = false
     window.add(Gtk::Paned.new(:horizontal).add1(scrolled_menu.add_with_viewport(menu)).add2(scrolled.add_with_viewport(settings)))
 
     menu.ssc(:cursor_changed) do
