@@ -204,5 +204,9 @@ module Plugin::Gtk3
       get_ancestor(Gtk::Window).set_focus(pb.post)
       pb
     end
+
+    def postbox_delegation_generator(i_timeline)
+      ->(params) { i_timeline.create_postbox(params) }
+    end
   end
 end
