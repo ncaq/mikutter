@@ -71,8 +71,9 @@ module Mopt
         Prelude.load_all
         unless Prelude.commands.empty?
           puts "plugin commands are:"
-          length = [29, Prelude.commands.map { |cmd| cmd.full_name.size }.max + 1].max
-          Prelude.commands.each do |cmd|
+          commands = Prelude.commands.sort_by(&:full_name)
+          length = [29, commands.map { |cmd| cmd.full_name.size }.max + 1].max
+          commands.each do |cmd|
             puts "        #{cmd.full_name.ljust(length)}#{cmd.description}"
           end
         end
