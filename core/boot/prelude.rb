@@ -29,7 +29,6 @@ module Prelude
     end
 
     def commands_nocached
-      Prelude.load_all
       [@namespaces&.values&.map(&:commands), @commands_dict&.values].compact.flatten.freeze
     end
   end
@@ -101,6 +100,16 @@ module Prelude
       nil
     end
 
+    def load_by_slug(slug)
+      Prelude.plugin_context = spec = Miquire::Plugin.get_spec_by_slug(slug)
+      return unless spec
+      Array(spec[:prelude]).each do |file|
+        require File.join(spec[:path], file)
+      end
+    ensure
+      Prelude.plugin_context = nil
+    end
+
     def load_all
       Miquire::Plugin.each_spec do |spec|
         Prelude.plugin_context = spec
@@ -116,6 +125,7 @@ module Prelude
       require_relative '../utils'
       require 'boot/check_config_permission'
 
+      load_by_slug(command_name.split(':', 2).first.to_sym)
       cmd = Prelude.commands.find { |c| c.full_name == command_name }
       if cmd
         require 'fileutils'

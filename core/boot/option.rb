@@ -68,6 +68,7 @@ module Mopt
         puts "        spec [directory]             generate plugin spec. ex) mikutter spec ~/.mikutter/plugin/test"
         puts "        makepot                      generate .pot file all plugins."
 
+        Prelude.load_all
         unless Prelude.commands.empty?
           puts "plugin commands are:"
           length = [29, Prelude.commands.map { |cmd| cmd.full_name.size }.max + 1].max
