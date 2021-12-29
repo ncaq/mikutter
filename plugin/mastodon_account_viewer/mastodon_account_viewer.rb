@@ -17,7 +17,7 @@ Plugin.create(:mastodon_account_viewer) do
     }
     param_toot_count = {
       count: user.statuses_count,
-      toots_per_day: since_day == 0 ? user.statuses_count : '%{avg}.2f' % { avg: Rational(user.statuses_count, since_day).to_f }
+      toots_per_day: since_day == 0 ? user.statuses_count : Rational(user.statuses_count, since_day).to_f.round(2)
     }
     [
       [_('名前'), user.display_name],
@@ -33,40 +33,34 @@ Plugin.create(:mastodon_account_viewer) do
     set_icon user.icon
     score = score_of(user.profile)
     bio = ::Gtk::IntelligentTextview.new(score)
-    container = Gtk::VBox.new.
-                  closeup(user_field_table(
-                            user.fields&.map do |f|
-                              f.emojis ||= user.emojis
-                              [f.name, f]
-                            end
-                          )).
-                  closeup(bio).
-                  closeup(relation_bar(user))
-    scrolledwindow = ::Gtk::ScrolledWindow.new
-    scrolledwindow.set_policy(::Gtk::POLICY_AUTOMATIC, ::Gtk::POLICY_AUTOMATIC)
-    scrolledwindow.add_with_viewport(container)
-    scrolledwindow.style = container.style
-    wrapper = Gtk::EventBox.new
-    wrapper.no_show_all = true
-    wrapper.show
-    nativewidget wrapper.add(scrolledwindow)
-    wrapper.ssc(:expose_event) do
-      wrapper.no_show_all = false
-      wrapper.show_all
-      false
-    end
+    bio.hexpand = true
+
+    grid = Gtk::Grid.new
+    grid.orientation = :vertical
+    grid.row_spacing = 8
+    grid.margin = 4
+    grid <<
+      user_field_table(
+        user.fields&.map do |f|
+          f.emojis ||= user.emojis
+          [f.name, f]
+        end) <<
+      bio <<
+      relation_bar(user)
+
+    nativewidget grid
   end
 
   def user_field_table(header_columns)
     ::Gtk::Table.new(2, header_columns.size).tap { |table|
       header_columns.each_with_index do |(key, value), index|
         table.
-          attach(::Gtk::Label.new(key.to_s).right, 0, 1, index, index + 1).
+          attach(::Gtk::Label.new(key.to_s).set_halign(:end), 0, 1, index, index + 1).
           attach(cell_widget(value), 1, 2, index, index + 1)
       end
     }.set_row_spacing(0, 4).
       set_row_spacing(1, 4).
-      set_column_spacing(0, 16)
+      set_col_spacing(0, 16)
   end
 
   def cell_widget(model_or_str)
@@ -82,9 +76,9 @@ Plugin.create(:mastodon_account_viewer) do
 
   # フォロー関係の表示・操作用ウィジェット
   def relation_bar(user)
-    container = ::Gtk::VBox.new(false, 4)
+    container = ::Gtk::Box.new(:vertical, 4)
     Plugin.collect(:mastodon_worlds).each do |me|
-      container.closeup(Plugin::MastodonAccountViewer::RelationalContainer.new(me, user, self))
+      container.pack_start(Plugin::MastodonAccountViewer::RelationalContainer.new(me, user, self), expand: false)
     end
     container
   end

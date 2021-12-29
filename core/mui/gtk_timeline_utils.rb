@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-require 'gtk2'
+require 'gtk3'
 
 =begin rdoc
   TimeLineオブジェクト用のメソッド集

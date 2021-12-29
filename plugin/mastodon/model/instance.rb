@@ -7,6 +7,12 @@ module Plugin::Mastodon
     field.string :client_secret, required: true
     field.bool :retrieve, required: true
 
+    field.string :title, required: false
+    field.string :short_description, required: false
+    field.string :description, required: false
+    field.string :version, required: false
+    field.has :configuration, ServerConfiguration, required: false
+
     class << self
       def add(domain, retrieve = true)
         Delayer::Deferred.new.next {

@@ -46,8 +46,10 @@ Plugin.create :change_account do
   # サブ垢は心の弱さ
   settings _('アカウント情報') do
     listview = ::Plugin::ChangeAccount::AccountControl.new(self)
-    btn_add = Gtk::Button.new(Gtk::Stock::ADD)
-    btn_delete = Gtk::Button.new(Gtk::Stock::DELETE)
+    listview.hexpand = true
+    listview.vexpand = true
+    btn_add = Gtk::Button.new stock_id: Gtk::Stock::ADD
+    btn_delete = Gtk::Button.new stock_id: Gtk::Stock::DELETE
     btn_add.ssc(:clicked) do
       Plugin.call(:request_world_add)
       true
@@ -60,16 +62,22 @@ Plugin.create :change_account do
       delete_world_with_confirm(worlds)
       false
     end
-    pack_start(Gtk::HBox.new(false, 4).
-                 add(listview).
-                 closeup(Gtk::VBox.new.
-                           closeup(btn_add).
-                           closeup(btn_delete)))
+
+    grid = Gtk::Grid.new
+    grid.column_spacing = 6
+    grid << Gtk::ScrolledWindow.new.add(listview)
+    grid << (Gtk::Grid.new.tap do |grid|
+      grid.orientation = :vertical
+      grid.row_spacing = 6
+      grid << btn_add << btn_delete
+    end)
+
+    add grid
   end
 
   on_request_world_add do
     dialog(_('アカウント追加')){
-      select 'Select world', :world do
+      select 'Select world', :world, mode: :list do
         worlds, = Plugin.filtering(:world_setting_list, Hash.new)
         worlds.values.each do |world|
           option world, world.name

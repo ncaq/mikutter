@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-require 'gtk2'
+require 'gtk3'
 require 'cairo'
 
 =begin rdoc
@@ -14,6 +14,7 @@ class Gdk::SubPartsMessageBase < Gdk::SubParts
   extend Memoist
 
   DEFAULT_ICON_SIZE = 32
+  WHITE = [1.0, 1.0, 1.0].freeze
 
   # SubPartsに表示する _Message_ 。
   # 複数表示可能なので、それらを上に表示されるものから順番に返す。
@@ -26,7 +27,7 @@ class Gdk::SubPartsMessageBase < Gdk::SubParts
 
   # :nodoc:
   memoize def score(message)
-    Plugin[:gtk].score_of(message)
+    Plugin[:gtk3].score_of(message)
   end
 
   # ヘッダの左の、Screen name、名前が表示されている場所に表示するテキスト。
@@ -114,17 +115,15 @@ class Gdk::SubPartsMessageBase < Gdk::SubParts
   def on_click(e, message)
   end
 
-  # SubParts内の _Message_ の背景色を返す
+  # SubParts内の _Diva::Model_ の背景色を返す
   # ==== Args
-  # [message] Message
+  # [model] Diva::Model
   # ==== Return
   # Array :: red, green, blueの配列。各要素は0.0..1.0の範囲。
-  def background_color(message)
-    color = Plugin.filtering(:message_background_color, helper, nil).last
-    if color.is_a? Array and 3 == color.size
-      color.map{ |c| c.to_f / 65536 }
-    else
-      [1.0]*3 end end
+  def background_color(model)
+    color = Plugin.filtering(:message_bg_color, model, nil).last
+    rgb(color || WHITE)
+  end
 
   # SubParts内の _Message_ の枠の色を返す
   # ==== Args
@@ -134,12 +133,19 @@ class Gdk::SubPartsMessageBase < Gdk::SubParts
   def edge_color(message)
     [0.5]*3 end
 
+  # GTK2のGtk::ColorとGTK3のGdk::RGBAをRGBの_Float_値に変換する
+  def rgb(color)
+    r, g, b = color
+    return [r, g, b] if r.is_a? Float
+    [r.fdiv(65536), g.fdiv(65536), b.fdiv(65536)].freeze
+  end
+
   # アイコンのサイズを返す。
   # ==== Return
   # [Gdk::Rectangle] サイズ(px)。xとyは無視され、widthとheightのみが利用される
   # [nil] アイコンを表示しない
   def icon_size
-    Gdk::Rectangle.new(0, 0, helper.scale(DEFAULT_ICON_SIZE), helper.scale(DEFAULT_ICON_SIZE))
+    Gdk::Rectangle.new(0, 0, Gdk.scale(DEFAULT_ICON_SIZE), Gdk.scale(DEFAULT_ICON_SIZE))
   end
 
   # _message_ の本文のテキスト色を返す
@@ -173,21 +179,21 @@ class Gdk::SubPartsMessageBase < Gdk::SubParts
   end
 
   def margin
-    helper.scale(@margin)
+    Gdk.scale(@margin)
   end
 
   def edge
-    helper.scale(@edge)
+    Gdk.scale(@edge)
   end
 
   # Fixnum 枠線の太さ(px)
   def border_weight
-    helper.scale(@border_weight)
+    Gdk.scale(@border_weight)
   end
 
   # Fixnum バッジの半径(px)
   def badge_radius
-    helper.scale(@badge_radius)
+    Gdk.scale(@badge_radius)
   end
 
   # :nodoc:
@@ -198,9 +204,9 @@ class Gdk::SubPartsMessageBase < Gdk::SubParts
   # :nodoc:
   def render_messages
     if not helper.destroyed?
-      helper.on_modify
-      helper.reset_height
-      helper.ssc(:click) { |this, e, x, y|
+      helper.queue_allocate
+      helper.ssc(:clicked) { |_, ev|
+        x, y = ev.x, ev.y
         ofsty = helper.mainpart_height
         helper.subparts.each { |part|
           break if part == self
@@ -210,7 +216,7 @@ class Gdk::SubPartsMessageBase < Gdk::SubParts
           messages.each { |m|
             my += message_height(m)
             if y <= ofsty + my
-              on_click(e, m)
+              on_click(ev, m)
               break end } end } end end
 
   # :nodoc:
@@ -221,10 +227,12 @@ class Gdk::SubPartsMessageBase < Gdk::SubParts
 
   # :nodoc:
   def height
-    if not helper.destroyed? and messages and not messages.empty?
-      messages.inject(0) { |s, m| s + message_height(m) }
+    if helper.destroyed?
+      0
     else
-      0 end end
+      messages&.sum(&method(:message_height)) || 0
+    end
+  end
 
   private
 
@@ -251,7 +259,7 @@ class Gdk::SubPartsMessageBase < Gdk::SubParts
       context.save do
         context.translate(icon_width + margin*2, header_height || 0)
         context.set_source_rgb(*main_text_color(message))
-        pango_layout = main_message(message, context)
+        pango_layout = main_message(message)
         if pango_layout.line_count <= text_max_line_count(message)
           context.show_pango_layout(pango_layout)
         else
@@ -277,31 +285,40 @@ class Gdk::SubPartsMessageBase < Gdk::SubParts
     else
       (result / pango_layout.line_count) * text_max_line_count(message) + pango_layout.spacing/Pango::SCALE * 2 end end
 
-  def emoji_height
-    default_font.forecast_font_size
+  def header_left_context(message)
+    PangoCairo::FontMap.default.create_context.tap do |context|
+      context.set_font_description(header_left_font(message))
+    end
   end
-  deprecate :emoji_height, "Pango::FontDescription#forecast_font_size", 2020, 6
 
   # ヘッダ（左）のための Pango::Layout のインスタンスを返す
-  def header_left(message, context = Cairo::Context.dummy)
-    text, font, attr_list = header_left_content(message)
+  def header_left(message, context=nil)
+    text, _font, attr_list = header_left_content(message)
     if text
-      layout = context.create_pango_layout
+      layout = Pango::Layout.new(header_left_context(message))
       layout.attributes = attr_list if attr_list
-      layout.font_description = font if font
       layout.text = text
-      layout end end
+      layout
+    end
+  end
+
+  def header_right_context(message)
+    PangoCairo::FontMap.default.create_context.tap do |context|
+      context.set_font_description(header_right_font(message))
+    end
+  end
 
   # ヘッダ（右）のための Pango::Layout のインスタンスを返す
-  def header_right(message, context = Cairo::Context.dummy)
-    text, font, attr_list = header_right_content(message)
+  def header_right(message, context=nil)
+    text, _font, attr_list = header_right_content(message)
     if text
-      layout = context.create_pango_layout
+      layout = Pango::Layout.new(header_right_context(message))
       layout.attributes = attr_list if attr_list
-      layout.font_description = font if font
       layout.text = text
       layout.alignment = Pango::Alignment::RIGHT
-      layout end end
+      layout
+    end
+  end
 
   def render_header(message, context, base_y)
     context.save do
@@ -336,27 +353,43 @@ class Gdk::SubPartsMessageBase < Gdk::SubParts
         context.show_pango_layout(hr_layout)
         hr_layout end end end
 
-  def main_message(message, context = Cairo::Context.dummy)
-    layout = context.create_pango_layout
-    layout.width = (width - icon_width - margin*3 - edge*2) * Pango::SCALE
-    layout.attributes = description_attr_list(message)
-    layout.wrap = Pango::WrapMode::CHAR
-    layout.font_description = default_font
-    layout.text = plain_description(message)
-    layout.context.set_shape_renderer do |c, shape, _|
-      photo = shape.data
-      if photo
-        width, height = shape.ink_rect.width/Pango::SCALE, shape.ink_rect.height/Pango::SCALE
-        pixbuf = photo.load_pixbuf(width: width, height: height){ helper.on_modify }
-        x = layout.index_to_pos(shape.start_index).x / Pango::SCALE
-        y = layout.index_to_pos(shape.start_index).y / Pango::SCALE
-        c.translate(x, y)
-        c.set_source_pixbuf(pixbuf)
-        c.rectangle(0, 0, width, height)
-        c.fill
+  def main_message_context
+    PangoCairo::FontMap.default.create_context.tap do |context|
+      context.set_font_description(default_font)
+    end
+  end
+
+  # _message_ に対する _Pango::Layout_ を得る。
+  # @params message [Diva::Model] 対象Message Model
+  # @params _context [nil] 互換性のため
+  def main_message(message, _context=nil)
+    Pango::Layout.new(main_message_context).tap do |layout|
+      layout.width = (width - icon_width - margin*3 - edge*2) * Pango::SCALE
+      layout.attributes = description_attr_list(
+        message,
+        emoji_height: layout.context.font_description.forecast_font_size
+      )
+      layout.wrap = Pango::WrapMode::CHAR
+      layout.text = plain_description(message)
+      layout.context.set_shape_renderer do |c, shape, _|
+        photo = shape.data
+        if photo
+          draw_area = layout.index_to_pos(shape.start_index)
+          width = draw_area.width / Pango::SCALE
+          height = draw_area.height / Pango::SCALE
+          pixbuf = photo.load_pixbuf(width: width, height: height) do
+            helper.queue_resize
+          end
+          x = draw_area.x / Pango::SCALE
+          y = draw_area.y / Pango::SCALE
+          c.translate(x, y)
+          c.set_source_pixbuf(pixbuf)
+          c.rectangle(0, 0, width, height)
+          c.fill
+        end
       end
     end
-    layout end
+  end
 
   def render_outline(message, context, base_y)
     render_outline_floating(message, context, base_y) end
@@ -450,19 +483,18 @@ class Gdk::SubPartsMessageBase < Gdk::SubParts
       context.paint end end
 
   def main_icon(message)
-    message.user.icon.load_pixbuf(width: icon_size.width, height: icon_size.width){ helper.on_modify }
+    message.user.icon.load_pixbuf(width: icon_size.width, height: icon_size.width){ helper.queue_draw }
   end
 
   # 表示する際に本文に適用すべき装飾オブジェクトを作成する
   # ==== Return
   # Pango::AttrList 本文に適用する装飾
-  def description_attr_list(message, attr_list=Pango::AttrList.new)
+  def description_attr_list(message, attr_list: Pango::AttrList.new, emoji_height: 24)
     score(message).inject(0){|start_index, note|
       end_index = start_index + note.description.bytesize
       if UserConfig[:miraclepainter_expand_custom_emoji] && note.respond_to?(:inline_photo)
         end_index += -note.description.bytesize + 1
-        wh = default_font.forecast_font_size * Pango::SCALE
-        rect = Pango::Rectangle.new(0, 0, wh, wh)
+        rect = Pango::Rectangle.new(0, 0, emoji_height * Pango::SCALE, emoji_height * Pango::SCALE)
         shape = Pango::AttrShape.new(rect, rect, note.inline_photo)
         shape.start_index = start_index
         shape.end_index = end_index

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-require 'gtk2'
+require 'gtk3'
 
 module Gdk
   module TextSelector
@@ -19,6 +19,8 @@ module Gdk
     NON_TAG_PATTERN_EXACT = Regexp.union(ENTITY_ENCODED_PATTERN_EXACT,
                                          CHARACTER_PATTERN_EXACT)
 
+    WHITE = [0xffff, 0xffff, 0xffff].freeze
+    BLACK = [0, 0, 0].freeze
 
     def initialize(*args)
       @textselector_pressing = @textselect_start = @textselect_end = nil
@@ -33,7 +35,7 @@ module Gdk
       @textselector_pressing = true
       before = textselector_range
       @textselect_end = @textselect_start = index + trail
-      on_modify if before == textselector_range
+      queue_draw if before == textselector_range
       self end
 
     def textselector_release(index = nil, trail=0)
@@ -44,20 +46,21 @@ module Gdk
     def textselector_unselect
       @textselect_end = @textselect_start = nil
       @textselector_pressing = false
-      on_modify
+      queue_draw
       self end
 
     def textselector_select(index, trail=0)
       if(@textselector_pressing)
         before = textselector_range
         @textselect_end = index + trail
-        on_modify if before == textselector_range end
+        queue_draw if before == textselector_range
+      end
       self end
 
     def textselector_attr_list(attr_list=Pango::AttrList.new)
       if textselector_range
-        bg = ::Pango::AttrBackground.new(*Gdk::MiraclePainter::BLACK)
-        fg = ::Pango::AttrForeground.new(*Gdk::MiraclePainter::WHITE)
+        bg = ::Pango::AttrBackground.new(*BLACK)
+        fg = ::Pango::AttrForeground.new(*WHITE)
         bg.start_index = fg.start_index = plain_description[0...textselector_range.first].bytesize
         bg.end_index = fg.end_index = plain_description[0...textselector_range.last].bytesize
         attr_list.insert(bg)

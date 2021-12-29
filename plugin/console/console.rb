@@ -13,9 +13,7 @@ Plugin.create :console do
       Plugin::GUI::Tab.instance(:console).active!
       next end
     widget_result = ::Gtk::TextView.new
-    scroll_result_v, scroll_result_h = gen_scrollbars(widget_result)
     widget_input = ::Gtk::TextView.new
-    scroll_input_v, scroll_input_h = gen_scrollbars(widget_input)
 
     widget_result.set_editable(false)
 
@@ -31,15 +29,15 @@ Plugin.create :console do
         iter = widget_result.buffer.end_iter
         begin
           result = Kernel.instance_eval(widget.buffer.text)
-          widget_result.buffer.insert(iter, ">>> ", "prompt")
-          widget_result.buffer.insert(iter, "#{widget.buffer.text}\n", "echo")
-          widget_result.buffer.insert(iter, "#{result.inspect}\n", "result")
+          widget_result.buffer.insert(iter, ">>> ", { tags: %w[prompt] })
+          widget_result.buffer.insert(iter, "#{widget.buffer.text}\n", { tags: %w[echo] })
+          widget_result.buffer.insert(iter, "#{result.inspect}\n", { tags: %w[result] })
         rescue Exception => e
-          widget_result.buffer.insert(iter, ">>> ", "prompt")
-          widget_result.buffer.insert(iter, "#{widget.buffer.text}\n", "echo")
-          widget_result.buffer.insert(iter, "#{e.class}: ", "errorclass")
-          widget_result.buffer.insert(iter, "#{e}\n", "error")
-          widget_result.buffer.insert(iter, e.backtrace.join("\n") + "\n", "backtrace")
+          widget_result.buffer.insert(iter, ">>> ", { tags: %w[prompt] })
+          widget_result.buffer.insert(iter, "#{widget.buffer.text}\n", { tags: %w[echo] })
+          widget_result.buffer.insert(iter, "#{e.class}: ", { tags: %w[errorclass] })
+          widget_result.buffer.insert(iter, "#{e}\n", { tags: %w[error] })
+          widget_result.buffer.insert(iter, e.backtrace.join("\n") + "\n", { tags: %w[backtrace] })
         end
         Delayer.new {
           if not widget_result.destroyed?
@@ -52,31 +50,11 @@ Plugin.create :console do
       set_icon Skin[:console]
       set_deletable true
       temporary_tab
-      nativewidget Plugin::Console::ConsoleControl.new().
-        pack1(::Gtk::Table.new(2, 3).
-              attach(widget_result, 0, 1, 0, 1, ::Gtk::FILL|::Gtk::SHRINK|::Gtk::EXPAND, ::Gtk::FILL|::Gtk::SHRINK|::Gtk::EXPAND).
-              attach(scroll_result_h, 0, 1, 1, 2, ::Gtk::SHRINK|::Gtk::FILL, ::Gtk::FILL).
-              attach(scroll_result_v, 1, 2, 0, 1, ::Gtk::FILL, ::Gtk::SHRINK|::Gtk::FILL),
-              true, false).
-        pack2(::Gtk::Table.new(2, 3).
-              attach(widget_input, 0, 1, 0, 1, ::Gtk::FILL|::Gtk::SHRINK|::Gtk::EXPAND, ::Gtk::FILL|::Gtk::SHRINK|::Gtk::EXPAND).
-              attach(scroll_input_h, 0, 1, 1, 2, ::Gtk::SHRINK|::Gtk::FILL, ::Gtk::FILL).
-              attach(scroll_input_v, 1, 2, 0, 1, ::Gtk::FILL, ::Gtk::SHRINK|::Gtk::FILL),
-              false, false)
+      nativewidget Plugin::Console::ConsoleControl.new(:vertical).
+                     pack1(::Gtk::ScrolledWindow.new.tap { |w| w.add(widget_result) }, resize: true, shrink: false).
+                     pack2(::Gtk::ScrolledWindow.new.tap { |w| w.add(widget_input) }, resize: false, shrink: false)
       active!
     end
-  end
-
-  # _widget_ のためのスクロールバーを作って返す
-  # ==== Args
-  # [widget] Gtk::TextView
-  # ==== Return
-  # 縦スクロールバーと横スクロールバー
-  def gen_scrollbars(widget)
-    scroll_v = ::Gtk::VScrollbar.new
-    scroll_h = ::Gtk::HScrollbar.new
-    widget.set_scroll_adjustment(scroll_h.adjustment, scroll_v.adjustment)
-    return scroll_v, scroll_h
   end
 
   # タグを作る
@@ -85,18 +63,18 @@ Plugin.create :console do
   def gen_tags(buffer)
     type_strict buffer => ::Gtk::TextBuffer
     buffer.create_tag("prompt",
-                      foreground_gdk: Gdk::Color.new(0, 0x6666, 0))
+                      foreground_rgba: Gdk::RGBA.parse('#006600'))
     buffer.create_tag("echo",
                       weight: Pango::Weight::BOLD)
     buffer.create_tag("result",
-                      foreground_gdk: Gdk::Color.new(0, 0, 0x6666))
+                      foreground_rgba: Gdk::RGBA.parse('#000066'))
     buffer.create_tag("errorclass",
-                      foreground_gdk: Gdk::Color.new(0x6666, 0, 0))
+                      foreground_rgba: Gdk::RGBA.parse('#660000'))
     buffer.create_tag("error",
                       weight: Pango::Weight::BOLD,
-                      foreground_gdk: Gdk::Color.new(0x9999, 0, 0))
+                      foreground_rgba: Gdk::RGBA.parse('#990000'))
     buffer.create_tag("backtrace",
-                      foreground_gdk: Gdk::Color.new(0x3333, 0, 0))
+                      foreground_rgba: Gdk::RGBA.parse('#330000'))
   end
 
 end

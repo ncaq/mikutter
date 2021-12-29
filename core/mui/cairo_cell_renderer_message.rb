@@ -2,7 +2,7 @@
 
 require 'mui/cairo_miracle_painter'
 
-require 'gtk2'
+require 'gtk3'
 
 module Gtk
   class CellRendererMessage < CellRendererPixbuf
@@ -24,14 +24,12 @@ module Gtk
                Integer, Integer)
 
     signal_new("motion_notify_event", GLib::Signal::RUN_FIRST, nil, nil,
-               Gtk::BINDING_VERSION >= [2,0,3] ? Gdk::EventMotion : Gdk::EventButton,
+               Gdk::EventMotion,
                Gtk::TreePath, Gtk::TreeViewColumn,
                Integer, Integer)
 
     signal_new("leave_notify_event", GLib::Signal::RUN_FIRST, nil, nil,
-               Gtk::BINDING_VERSION >= [2,0,3] ? Gdk::EventCrossing : Gdk::EventButton,
-               Gtk::TreePath, Gtk::TreeViewColumn,
-               Integer, Integer)
+               Gdk::EventCrossing, Gtk::TreePath, Gtk::TreeViewColumn, Integer, Integer)
 
     signal_new("click", GLib::Signal::RUN_FIRST, nil, nil,
                Gdk::EventButton, Gtk::TreePath, Gtk::TreeViewColumn,
@@ -129,7 +127,9 @@ module Gtk
       else
         self.pixbuf = Skin[:notfound].pixbuf(width: 64, height: 64) end
     rescue Exception => err
-      error "#{err.class} by uri: #{uri} model: #{record ? record.message.inspect : nil}"
+      error "#{err.class}: \"#{err.message}\" by uri: #{uri} model: #{record&.message&.inspect}"
+      # for ruby >= 2.5
+      error "#{err.full_message}" if err.respond_to?(:full_message)
       raise if Mopt.debug
       error err
       self.pixbuf = Skin[:notfound].pixbuf(width: 64, height: 64) end
@@ -179,30 +179,24 @@ module Gtk
               last_pressed.released end end
           last_pressed = nil end
         false }
-      ssc(:motion_notify_event, @tree){ |r, e, path, column, cell_x, cell_y|
+      ssc(:motion_notify_event, @tree){ |r, ev, path, column, cell_x, cell_y|
         record = @tree.get_record(path)
-        record.miracle_painter.point_moved(cell_x, cell_y) if record
+        record.miracle_painter.point_moved(ev, cell_x, cell_y) if record
         false }
-      ssc(:leave_notify_event, @tree){ |r, e, path, column, cell_x, cell_y|
+      ssc(:leave_notify_event, @tree){ |r, ev, path, column, cell_x, cell_y|
         record = @tree.get_record(path)
-        record.miracle_painter.point_leaved(cell_x, cell_y) if record
+        record.miracle_painter.point_leaved(ev, cell_x, cell_y) if record
         false }
     end
 
-    # RubyGtk2 2.0.3以降は、motion_notify_eventやleave_notify_eventに
-    # 発行されるイベントが変更されている
-    if Gtk::BINDING_VERSION >= [2,0,3]
-      def emit_leave_notify_from_event_motion(e, *args)
-        signal_emit("leave_notify_event",
-                    Gdk::EventCrossing.new(Gdk::Event::LEAVE_NOTIFY).tap{ |le|
-                      le.time = e.time
-                      le.x, le.y = e.x, e.y
-                      le.x_root, le.y_root = e.x_root, e.y_root
-                      le.focus = true
-                    }, *args) end
-    else
-      def emit_leave_notify_from_event_motion(e, *args)
-        signal_emit("leave_notify_event", e, *args) end end
-
+    def emit_leave_notify_from_event_motion(e, *args)
+      # signal_emit("leave_notify_event",
+      #             Gdk::EventCrossing.new(Gdk::Event::LEAVE_NOTIFY).tap{ |le|
+      #               le.time = e.time
+      #               le.x, le.y = e.x, e.y
+      #               le.x_root, le.y_root = e.x_root, e.y_root
+      #               le.focus = true
+      #             }, *args) end
+    end
   end
 end

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 require 'userconfig'
 
-require 'gtk2'
+require 'gtk3'
 require 'monitor'
 require_if_exist 'Win32API'
 
@@ -81,9 +81,11 @@ class GLib::Instantiatable
 
 end
 
-class Gtk::Object
-  def self.main_quit
-    Mainloop.reserve_exit end end
+class Gdk::Rectangle
+  def to_s
+    "#<Gtk::Rectangle x=#{x} y=#{y} width=#{width} height=#{height}>"
+  end
+end
 
 module Gtk
   NO_ACTION = '(割り当てなし)'.freeze
@@ -127,11 +129,11 @@ module Gtk
     return NO_ACTION if key.empty? or key[0] == 0 or not key.all?
 
     r = ""
-    r << PRESS_WITH_CONTROL if (key[1] & Gdk::Window::CONTROL_MASK) != 0
-    r << PRESS_WITH_SHIFT if (key[1] & Gdk::Window::SHIFT_MASK) != 0
-    r << PRESS_WITH_ALT if (key[1] & Gdk::Window::MOD1_MASK) != 0
-    r << PRESS_WITH_SUPER if (key[1] & Gdk::Window::SUPER_MASK) != 0
-    r << PRESS_WITH_HYPER if (key[1] & Gdk::Window::HYPER_MASK) != 0
+    r << PRESS_WITH_CONTROL if (key[1] & :control_mask) != 0
+    r << PRESS_WITH_SHIFT if (key[1] & :shift_mask) != 0
+    r << PRESS_WITH_ALT if (key[1] & :mod1_mask) != 0
+    r << PRESS_WITH_SUPER if (key[1] & :super_mask) != 0
+    r << PRESS_WITH_HYPER if (key[1] & :hyper_mask) != 0
     return r + Gdk::Keyval.to_name(key[0]) end
 
   def self.buttonname(key)
@@ -139,18 +141,18 @@ module Gtk
     type, button, state = key
     return NO_ACTION if key.empty? or type == 0 or not key.all?
     r = ""
-    r << PRESS_WITH_CONTROL if (state & Gdk::Window::CONTROL_MASK) != 0
-    r << PRESS_WITH_SHIFT if (state & Gdk::Window::SHIFT_MASK) != 0
-    r << PRESS_WITH_ALT if (state & Gdk::Window::MOD1_MASK) != 0
-    r << PRESS_WITH_SUPER if (state & Gdk::Window::SUPER_MASK) != 0
-    r << PRESS_WITH_HYPER if (state & Gdk::Window::HYPER_MASK) != 0
+    r << PRESS_WITH_CONTROL if (state & Gdk::ModifierType::CONTROL_MASK) != 0
+    r << PRESS_WITH_SHIFT if (state & Gdk::ModifierType::SHIFT_MASK) != 0
+    r << PRESS_WITH_ALT if (state & Gdk::ModifierType::MOD1_MASK) != 0
+    r << PRESS_WITH_SUPER if (state & Gdk::ModifierType::SUPER_MASK) != 0
+    r << PRESS_WITH_HYPER if (state & Gdk::ModifierType::HYPER_MASK) != 0
     r << "Button #{button} "
     case type
-    when Gdk::Event::BUTTON_PRESS
+    when Gdk::EventType::BUTTON_PRESS
       r << 'Click'.freeze
-    when Gdk::Event::BUTTON2_PRESS
+    when Gdk::EventType::BUTTON2_PRESS
       r << 'Double Click'.freeze
-    when Gdk::Event::BUTTON3_PRESS
+    when Gdk::EventType::BUTTON3_PRESS
       r << 'Triple Click'.freeze
     else
       return NO_ACTION end
@@ -184,52 +186,57 @@ class Gtk::Lock
   end
 end
 
-class Gtk::Widget < Gtk::Object
+# TODO: gtk3: remove it
+class Gtk::Widget
+  extend Gem::Deprecate
+
   # ウィジェットを上寄せで配置する
   def top
     Gtk::Alignment.new(0.0, 0, 0, 0).add(self)
   end
+  deprecate :top, "set_valign(:start)", 2018, 9
 
   # ウィジェットを横方向に中央寄せで配置する
   def center
     Gtk::Alignment.new(0.5, 0, 0, 0).add(self)
   end
+  deprecate :center, "set_halign(:center)", 2018, 9
 
   # ウィジェットを左寄せで配置する
   def left
     Gtk::Alignment.new(0, 0, 0, 0).add(self)
   end
+  deprecate :left, "set_halign(:start)", 2018, 9
 
   # ウィジェットを右寄せで配置する
   def right
     Gtk::Alignment.new(1.0, 0, 0, 0).add(self)
   end
+  deprecate :right, "set_halign(:end)", 2018, 9
 
   # ウィジェットにツールチップ _text_ をつける
   def tooltip(text)
-    Gtk::Tooltips.instance.set_tip(self, text, '')
+    self.tooltip_text = text
     self end
+  deprecate :tooltip, "set_tooltip_text(text)", 2018, 9
 
 end
 
-class Gtk::Tooltips
-  def self.instance
-    @tooltip_class ||= Gtk::Tooltips.new
-  end
-end
+class Gtk::Box
+  extend Gem::Deprecate
 
-class Gtk::Container < Gtk::Widget
   # _widget_ を詰めて配置する。closeupで配置されたウィジェットは無理に親の幅に合わせられることがない。
-  # pack_start(_widget_, false)と等価。
+  # pack_start(_widget_, expand: false)と等価。
   def closeup(widget)
-    self.pack_start(widget, false)
+    pack_start(widget, expand: false)
   end
+  deprecate :closeup, "pack_start(widget, expand: false)", 2018, 9
 end
 
 class Gtk::TextBuffer < GLib::Object
   # _idx_ 文字目を表すイテレータと、そこから _size_ 文字後ろを表すイテレータの2要素からなる配列を返す。
   def get_range(idx, size)
-    [self.get_iter_at_offset(idx), self.get_iter_at_offset(idx + size)]
+    [self.get_iter_at(offset: idx), self.get_iter_at(offset: idx + size)]
   end
 end
 
@@ -263,14 +270,14 @@ class Gtk::Dialog
   # YESボタンが押されたらtrue、それ以外が押されたらfalseを返す
   def self.confirm(message)
     Gtk::Lock.synchronize{
-      dialog = Gtk::MessageDialog.new(nil,
-                                      Gtk::Dialog::DESTROY_WITH_PARENT,
-                                      Gtk::MessageDialog::QUESTION,
-                                      Gtk::MessageDialog::BUTTONS_YES_NO,
-                                      message)
+      dialog = Gtk::MessageDialog.new(parent: nil,
+                                      flags: Gtk::DialogFlags::DESTROY_WITH_PARENT,
+                                      type: Gtk::MessageType::QUESTION,
+                                      buttons: Gtk::ButtonsType::YES_NO,
+                                      message: message)
       res = dialog.run
       dialog.destroy
-      res == Gtk::Dialog::RESPONSE_YES
+      res == Gtk::ResponseType::YES
     }
   end
 end
@@ -304,7 +311,7 @@ end
 class Cairo::Context
   class << self
     def dummy
-      @dummy ||= Gdk::Pixmap.new(nil, 1, 1, Gdk::Visual.system.depth).create_cairo_context
+      @dummy ||= Cairo::Context.new(Cairo::ImageSurface.new(Cairo::Format::ARGB32, 1, 1))
     end
   end
 end
@@ -321,7 +328,12 @@ class Pango::FontDescription
 
   @forecast_font_description = Hash.new
   def self.forecast_font_size(fd)
-    @forecast_font_description[fd.hash] ||= Cairo::Context.dummy.create_pango_layout.yield_self do |layout|
+    @forecast_font_description[fd.hash] ||=
+      PangoCairo::FontMap
+        .default
+        .create_context
+        .then(&Pango::Layout.method(:new))
+        .then do |layout|
       layout.font_description = fd
       layout.text = '.'
       layout.pixel_size[1]
@@ -348,12 +360,44 @@ module Gdk
     def scale(val)
       case UserConfig[:ui_scale]
       when :auto
-        resolution = Gdk::Visual.system.screen.resolution < 0 ? 96 : Gdk::Visual.system.screen.resolution
-        val * resolution / 96
+        @resolution ||= Gdk::Visual.system.screen.resolution
+        @resolution < 0 and @resolution = 96
+        val * @resolution / 96
       else
         val * UserConfig[:ui_scale]
       end.to_i
     end
+  end
+end
+
+class Gtk::Style
+  CSS_PSEUDO_CLASS_BY_STATE_TYPE = {
+    Gtk::StateType::NORMAL => '',
+    Gtk::StateType::ACTIVE => ':active',
+    Gtk::StateType::SELECTED => ':focus',
+    Gtk::StateType::PRELIGHT => ':hover',
+    Gtk::StateType::INSENSITIVE => ':disabled'
+  }
+
+  # NOTE: gtk2向けコードとの後方互換のために用意したが使われないことを祈る
+  def to_style_provider
+    Gtk::CssProvider.new.tap do |provider|
+      styles = {}
+      CSS_PSEUDO_CLASS_BY_STATE_TYPE.each do |type, pseudo_class|
+        color = bg[type]
+        if color
+          selector = "*#{pseudo_class}"
+          styles[selector] ||= ''
+          styles[selector] += "background-color: rgb(#{color[0] / 256}, #{color[1] / 256}, #{color[2] / 256});"
+        end
+      end
+      css = styles.map { |selector, style| "#{selector} { #{style} }" }.join(' ')
+      provider.load_from_data(css)
+    end
+  rescue NotImplementedError => e
+    # NotImplementedErrorが発生し、内容に正しくアクセスできない可能性がある
+    error e
+    Gtk::CssProvider.new
   end
 end
 
@@ -367,4 +411,33 @@ end
 
 module MUI
   Skin = ::Skin
+
+  module ColorConverter
+    refine NilClass do
+      def rgba
+        Gdk::RGBA.new
+      end
+    end
+
+    refine Array do
+      def rgba
+        case first
+        when Integer
+          # Gdk::Color style
+          Gdk::RGBA.new(*map { |i| i.to_f / 65535 })
+        when Float
+          # Gdk::RGBA style
+          Gdk::RGBA.new(*self)
+        else
+          raise TypeError, 'receiver values are not compatible'
+        end
+      end
+    end
+
+    refine Gdk::RGBA do
+      def to_color_array
+        to_a[0..2].map { |f| f * 65535 }.map(&:to_i)
+      end
+    end
+  end
 end

@@ -34,16 +34,26 @@ Plugin.create :shortcutkey do
 
   settings _("ショートカットキー") do
     listview = Plugin::Shortcutkey::ShortcutKeyListView.new(Plugin[:shortcutkey])
+    listview.halign = :fill
+    listview.hexpand = true
+    listview.vexpand = true
+
     filter_entry = listview.filter_entry = Gtk::Entry.new
     filter_entry.primary_icon_pixbuf = Skin[:search].pixbuf(width: 24, height: 24)
     filter_entry.ssc(:changed){
       listview.model.refilter
     }
-    pack_start(Gtk::VBox.new(false, 4).
-               closeup(filter_entry).
-               add(Gtk::HBox.new(false, 4).
-                   add(listview).
-                   closeup(listview.buttons(Gtk::VBox))))
+
+    grid = Gtk::Grid.new
+    grid.orientation = :vertical
+    grid.row_spacing = 6
+    grid << filter_entry << Gtk::Grid.new.tap do |grid|
+      grid.vexpand = true
+      grid.column_spacing = 6
+      grid << ::Gtk::ScrolledWindow.new.add(listview).set_valign(:fill) << listview.buttons(:vertical).set_valign(:start)
+    end
+
+    native grid
   end
 
   def world_by_uri(uri)

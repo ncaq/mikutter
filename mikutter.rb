@@ -59,7 +59,6 @@ Plugin.call(:boot, nil)
 # _profile_ がtrueなら、プロファイリングした結果を一時ディレクトリに保存する
 def boot!(profile)
   begin
-    Mainloop.before_mainloop
     if profile
       require 'ruby-prof'
       begin

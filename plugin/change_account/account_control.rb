@@ -61,7 +61,7 @@ module ::Plugin::ChangeAccount
           add_column(world)
         end
         @plugin.on_world_destroy do |world|
-          _, _, iter = Enumerator.new(model).find{|m,p,i| i[COL_WORLD] == world }
+          _, _, iter = model.enum_for.find{ |_, _, i| i[COL_WORLD] == world }
           model.remove(iter) if iter
         end
       end

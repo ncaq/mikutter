@@ -89,7 +89,7 @@ class Gtk::FormDSL::ListView < Gtk::TreeView
     @columns.each do |label, *fields|
       col = Gtk::TreeViewColumn.new(label)
       fields.each do |field|
-        col.pack_start(field.renderer, false)
+        col.pack_start(field.renderer, expand: false)
         col.add_attribute(field.renderer, field.type, index)
         #col.resizable = scheme[:resizable]
         append_column(col)
@@ -110,11 +110,13 @@ class Gtk::FormDSL::ListView < Gtk::TreeView
     end
   end
 
-  def buttons(container_class)
-    container = container_class.new
-    container.closeup(create_button) if @creatable
-    container.closeup(update_button) if @updatable
-    container.closeup(delete_button) if @deletable
+  def buttons(orientation: :vertical, layout: :start)
+    box = Gtk::ButtonBox.new orientation
+    box.layout_style = layout
+    box.spacing = 6
+    @creatable and box << create_button
+    @updatable and box << update_button
+    @deletable and box << delete_button
   end
 
   private
@@ -136,7 +138,7 @@ class Gtk::FormDSL::ListView < Gtk::TreeView
   end
 
   def create_button
-    create = Gtk::Button.new(Gtk::Stock::ADD)
+    create = Gtk::Button.new stock_id: Gtk::Stock::ADD
     create.ssc(:clicked) do
       record_create
       true
@@ -145,7 +147,7 @@ class Gtk::FormDSL::ListView < Gtk::TreeView
   end
 
   def update_button
-    edit = Gtk::Button.new(Gtk::Stock::EDIT)
+    edit = Gtk::Button.new(stock_id: Gtk::Stock::EDIT)
     edit.set_sensitive(false)
     selection.ssc(:changed) do
       edit.set_sensitive(selection.count_selected_rows != 0)
@@ -159,7 +161,7 @@ class Gtk::FormDSL::ListView < Gtk::TreeView
   end
 
   def delete_button
-    delete = Gtk::Button.new(Gtk::Stock::DELETE)
+    delete = Gtk::Button.new(stock_id: Gtk::Stock::DELETE)
     delete.set_sensitive(false)
     selection.ssc(:changed) do
       delete.set_sensitive(selection.count_selected_rows != 0)
@@ -189,7 +191,7 @@ class Gtk::FormDSL::ListView < Gtk::TreeView
     target = iter[0]
     proc = @generate
     Plugin[:gui].dialog('hogefuga の編集') do
-      set_value target.to_hash
+      set_value target.to_h
       instance_exec(target, &proc)
     end.next do |values|
       iter[0] = @object_initializer.(values.to_h)

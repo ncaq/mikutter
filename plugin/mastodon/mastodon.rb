@@ -9,10 +9,7 @@ require_relative 'util'
 require_relative 'api'
 require_relative 'parser'
 require_relative 'model/model'
-require_relative 'patch'
 require_relative 'spell'
-require_relative 'setting'
-require_relative 'subparts_status_info'
 require_relative 'extractcondition'
 require_relative 'score'
 
@@ -83,10 +80,11 @@ Plugin.create(:mastodon) do
     Delayer.new(delay: 10 * HYDE, &followings_updater) # 26分ごとにプロフィールとフォロー一覧を更新する
   end
 
-  # 起動時
-  Delayer.new {
-    followings_updater.call
-  }
+  # worldのロード完了時の処理
+  world_load_listener = on_mastodon_worlds__add do
+    world_load_listener.detach
+    Delayer.new { followings_updater.call }
+  end
 
   # Mastodonサーバが初期化されたら、サーバの集合に加える
   collection(:mastodon_servers) do |servers|
@@ -157,6 +155,14 @@ Plugin.create(:mastodon) do
     [world]
   end
 
+  on_mastodon_server_created do |server|
+    Plugin::Mastodon::API.call(
+      :get, server.domain, '/api/v1/instance'
+    ).next do |response|
+      server.configuration = response[:configuration]
+    end
+  end
+  
   # サーバー編集
   on_mastodon_update_instance do |domain|
     Thread.new {
@@ -236,8 +242,8 @@ Plugin.create(:mastodon) do
              'mstdn.nere9.help' => _('nere9'),
              'mstdn.y-zu.org' => _('Yづドン'),
             ) do
-        option(:other, _('その他')) do
-          input _('ドメイン'), :domain
+        option :other do
+          input _('その他'), :domain
         end
       end
 
@@ -258,9 +264,15 @@ Plugin.create(:mastodon) do
       if error_msg.is_a? String
         label error_msg
       end
-      label _('Webページにアクセスして表示された認証コードを入力して、次へボタンを押してください。')
-      link instance.authorize_url
-      input _('認証コード'), :authorization_code
+
+      s = _('認証ページ')
+      # HTML escape
+      url = instance.authorize_url.gsub '&', '&amp;'
+      text = _('認証ページにアクセスして、表示されたコードを貼り付け、「進む」ボタンを押してください。')
+        .sub s, "<a href=\"#{url}\">#{s}</a>"
+      markup text
+
+      input _('認証コード'), :authorization_code, :paste
       if error_msg.is_a? String
         input _('アクセストークンがあれば入力してください'), :access_token
       end

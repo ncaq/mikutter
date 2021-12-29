@@ -13,7 +13,7 @@ Plugin.create :quoted_message do
           condition: ->(opt) { opt.messages.all?(&:perma_link) },
           visible: true,
           role: :timeline) do |opt|
-    Gtk::Clipboard.copy(opt.messages.map(&:perma_link).join("\n"))
+    Plugin.call(:clipboard_write, opt.messages.map(&:perma_link).join("\n"))
   end
 
   command(:quoted_message,

@@ -261,7 +261,7 @@ end
 # 環境や設定の不備で終了する。msgには、何が原因かを文字列で渡す。このメソッドは
 # 処理を返さずにアボートする。
 def chi_fatal_alert(msg)
-  require_if_exist 'gtk2'
+  require_if_exist 'gtk3'
   if defined?(Gtk::MessageDialog)
     dialog = Gtk::MessageDialog.new(nil,
                                     Gtk::Dialog::DESTROY_WITH_PARENT,
@@ -391,10 +391,17 @@ end
 
 class String
   def match_regexp(str)
-    if(str.is_a? String)
-      match(Regexp.new(str))
+    if str.is_a?(String)
+      begin
+        match(Regexp.new(str))
+      rescue RegexpError => err
+        error err
+        nil
+      end
     else
-      match(str) end end
+      match(str)
+    end
+  end
 
   def matches(regexp)
     warn "String#matches is obsolete method. use String#scan"

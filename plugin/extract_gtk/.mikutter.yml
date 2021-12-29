@@ -1,0 +1,15 @@
+---
+slug: :extract_gtk
+depends:
+  mikutter: '4.1'
+  plugin:
+  - extract
+  - gtk3
+  - settings
+  - gui
+  - uitranslator
+  - skin
+version: '1.0'
+author: toshi_a
+name: 抽出タブ設定
+description: 抽出タブに関する設定UIを提供する

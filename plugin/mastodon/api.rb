@@ -204,7 +204,9 @@ module Plugin::Mastodon
           body = query
           query = nil
         end
-        HTTPClient.new.request(method, uri.to_s, query, body, headers)
+        client = HTTPClient.new
+        client.ssl_config.set_default_paths
+        client.request(method, uri.to_s, query, body, headers)
       ensure
         files&.each(&:close)
       end

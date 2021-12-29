@@ -2,15 +2,11 @@
 
 require 'userconfig'
 
-require 'gtk2'
+require 'gtk3'
 require 'cairo'
 
 module Gdk::SubPartsHelper
   extend Gem::Deprecate
-
-  def initialize(*args)
-    @subparts_height = nil
-    super end
 
   # 今サポートされている全てのSubPartsを配列で返す
   # ==== Return
@@ -32,14 +28,9 @@ module Gdk::SubPartsHelper
     self end
 
   def subparts_height
-    result = _subparts_height
-    reset_height if(@subparts_height != result)
-    @subparts_height = result end
-
-  private
-
-  def _subparts_height
-    subparts.inject(0){ |sum, part| sum + part.height } end end
+    subparts.sum(&:height)
+  end
+end
 
 class Gdk::SubParts
   extend Gem::Deprecate
@@ -66,14 +57,8 @@ class Gdk::SubParts
   end
 
   def width
-    helper.width end
+    helper.allocated_width end
 
   def height
     0 end
-
-  def dummy_context
-    Cairo::Context.dummy
-  end
-  deprecate :dummy_context, "Cairo::Context.dummy", 2020, 6
-
 end

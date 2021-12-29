@@ -1,0 +1,14 @@
+---
+slug: :activity_gtk
+depends:
+  mikutter: '4.1'
+  plugin:
+  - activity
+  - gui
+  - gtk3
+  - uitranslator
+  - skin
+version: '4.1'
+author: toshi_a
+name: Activity GTK
+description: お気に入り、リツイート等のイベントや、エラーやシステムメッセージをタイムライン形式で表示するタブを追加する

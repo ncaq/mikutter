@@ -54,6 +54,7 @@ module Plugin::MastodonSseStreaming
     def connect
       parser = Plugin::MastodonSseStreaming::Parser.new(self, @receiver)
       client = HTTPClient.new
+      client.ssl_config.set_default_paths
       notice "connect #{connection_type.perma_link.to_s}"
       response = client.request(:get, connection_type.perma_link.to_s, {}, {}, headers) do |fragment|
         @cooldown_time.reset

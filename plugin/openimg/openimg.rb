@@ -1,8 +1,5 @@
 # -*- coding: utf-8 -*-
 
-require 'gtk2'
-require 'cairo'
-require_relative 'window'
 require_relative 'model/photo'
 
 module Plugin::Openimg
@@ -37,11 +34,6 @@ Plugin.create :openimg do
     end
   end
 
-  filter_openimg_pixbuf_from_display_url do |photo, loader, thread|
-    loader = GdkPixbuf::PixbufLoader.new
-    [photo, loader, photo.download{|partial| loader.write partial }]
-  end
-
   filter_openimg_raw_image_from_display_url do |display_url, content|
     unless content
       content = Plugin.collect(:openimg_image_openers).lazy.select{ |opener|
@@ -67,14 +59,6 @@ Plugin.create :openimg do
 
   on_openimg_open do |display_url|
     Plugin.call(:open, display_url)
-  end
-
-  intent Plugin::Openimg::Photo do |intent_token|
-    Plugin::Openimg::Window.new(intent_token.model, intent_token).start_loading.show_all
-  end
-
-  intent :photo do |intent_token|
-    Plugin::Openimg::Window.new(intent_token.model, intent_token).start_loading.show_all
   end
 
   def addsupport(cond, element_rule = {}, &block); end

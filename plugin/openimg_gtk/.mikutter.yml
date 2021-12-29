@@ -1,0 +1,13 @@
+---
+slug: :openimg_gtk
+depends:
+  mikutter: 4.1.4
+  plugin:
+  - openimg
+  - intent
+  - skin
+  - gtk3
+version: '1.0'
+author: toshi_a
+name: 画像ビューア (GTK)
+description: 画像ビューアのGTK実装

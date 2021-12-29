@@ -1,0 +1,11 @@
+---
+slug: :basic_settings
+depends:
+  mikutter: 4.1.5
+  plugin:
+  - settings
+version: '1.0'
+author: toshi_a
+name: Basic settings
+description: >-
+  基本設定を提供します。

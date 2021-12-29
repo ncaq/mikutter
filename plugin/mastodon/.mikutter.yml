@@ -3,15 +3,12 @@ slug: :mastodon
 depends:
   mikutter: '3.9.0'
   plugin:
-    - command
+    - activity
     - extract
-    - gtk
     - gui
-    - modelviewer
     - openimg
     - photo
     - score
-    - settings
     - spell
     - uitranslator
     - world

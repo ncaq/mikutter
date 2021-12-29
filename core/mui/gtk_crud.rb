@@ -1,9 +1,4 @@
 # -*- coding: utf-8 -*-
-require 'gtk2'
-
-require 'mui/gtk_extension'
-require 'mui/gtk_contextmenu'
-require 'mui/gtk_compatlistview'
 
 # CRUDなリストビューを簡単に実現するためのクラス
 class Gtk::CRUD < Gtk::CompatListView
@@ -17,27 +12,29 @@ class Gtk::CRUD < Gtk::CompatListView
     handle_row_activated
   end
 
-  def buttons(box_klass)
-    box_klass.new(false, 4).closeup(create_button).closeup(update_button).closeup(delete_button)
+  def buttons(orientation)
+    box = Gtk::ButtonBox.new(orientation)
+    box.spacing = 6
+    box << create_button << update_button << delete_button
   end
 
   def create_button
     if not defined? @create_button
-      @create_button = Gtk::Button.new(Gtk::Stock::ADD)
+      @create_button = Gtk::Button.new stock_id: Gtk::Stock::ADD
       @create_button.ssc(:clicked) {
         record_create(nil, nil) } end
     @create_button end
 
   def update_button
     if not defined? @update_button
-      @update_button = Gtk::Button.new(Gtk::Stock::EDIT)
+      @update_button = Gtk::Button.new stock_id: Gtk::Stock::EDIT
       @update_button.ssc(:clicked) {
         record_update(nil, nil) } end
     @update_button end
 
   def delete_button
     if not defined? @delete_button
-      @delete_button = Gtk::Button.new(Gtk::Stock::DELETE)
+      @delete_button = Gtk::Button.new stock_id: Gtk::Stock::DELETE
       @delete_button.ssc(:clicked) {
         record_delete(nil, nil) } end
     @delete_button end
@@ -120,7 +117,7 @@ class Gtk::CRUD < Gtk::CompatListView
 
   def record_delete(optional, widget)
     if @deletable
-      self.selection.selected_each {|model, path, iter|
+      self.selection.each {|model, path, iter|
         if Gtk::Dialog.confirm("本当に削除しますか？\n" +
                                "一度削除するともうもどってこないよ。")
           force_record_delete(iter) end } end end
@@ -139,26 +136,35 @@ class Gtk::CRUD < Gtk::CompatListView
     Mtk.scrolled_dialog(dialog_title || "", input[:widget], self.toplevel || self, &input[:result]) end
 
   def gen_popup_window_widget(results = [])
-    widget = Gtk::VBox.new
+    widget = Gtk::Box.new(:vertical, 0)
     column_schemer.flatten.each_with_index{ |scheme, index|
       case scheme[:widget]
       when :message_picker
-        widget.closeup(Mtk.message_picker(lambda{ |new|
+        widget.pack_start(Mtk.message_picker(lambda{ |new|
                                             if(new.nil?)
                                               results[index].freeze_ifn
                                             else
-                                              results[index] = new.freeze_ifn end }))
+                                              results[index] = new.freeze_ifn
+                                            end
+                                          }), expand: false)
       when nil
         ;
       else
-        widget.closeup(Mtk.__send__((scheme[:widget] or :input), lambda{ |new|
+        widget.pack_start(widget, Mtk.__send__((scheme[:widget] or :input), lambda{ |new|
                                    if(new.nil?)
                                      results[index].freeze_ifn
                                    else
-                                     results[index] = new.freeze_ifn end },
-                                 scheme[:label], *(scheme[:args].to_a or []))) end }
+                                     results[index] = new.freeze_ifn
+                                   end
+                                 },
+                                 scheme[:label], *(scheme[:args].to_a or [])), expand: false)
+      end
+    }
     { :widget => widget,
       :result => lambda{
-        results } } end
+        results
+      }
+    }
+  end
 
 end

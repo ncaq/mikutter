@@ -1,0 +1,12 @@
+---
+slug: :mastodon_setting
+depends:
+  mikutter: '4.1'
+  plugin:
+    - mastodon
+    - settings
+    - gtk3
+version: '1.0'
+author: cobodo
+name: Mastodon setting
+description: Mastodonの設定UIを提供する

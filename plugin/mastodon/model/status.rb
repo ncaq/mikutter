@@ -56,8 +56,26 @@ module Plugin::Mastodon
 
     @@mute_mutex = Thread::Mutex.new
 
+    VALID_URL_PRECEDING_CHARS = /(?:[^A-Z0-9@＠$#＃]|^)/io
+    VALID_URL_QUERY_CHARS = /[a-z0-9!?\*'\(\);:&=\+\$\/%#\[\]\-_\.,~|@]/i
+    VALID_URL_QUERY_ENDING_CHARS = /[a-z0-9_&=#\/\-]/i
+    URL_PATTERN = %r{
+      (#{VALID_URL_PRECEDING_CHARS})
+      (
+        (https?:\/\/)
+        ((?:(?!-)[a-z0-9-]{1,63}(?<!-)\.)*(?:xn--)?[a-z]{2,})
+        (?::(\d{1,5}))?
+        (\/
+          [^\s#?!$&'\*,;=]*
+          (?:\#[^\s#?!$&'\*,;=]*)?
+        )?
+        (\?#{VALID_URL_QUERY_CHARS}*#{VALID_URL_QUERY_ENDING_CHARS})?
+      )
+    }iox
     TOOT_URI_RE = %r!\Ahttps://([^/]+)/@\w{1,30}/(\d+)\z!.freeze
     TOOT_ACTIVITY_URI_RE = %r!\Ahttps://(?<domain>[^/]*)/users/(?<acct>[^/]*)/statuses/(?<status_id>[^/]*)/activity\z!.freeze
+    USERNAME_RE = /[a-z0-9_]+([a-z0-9_\.-]+[a-z0-9_]+)?/i
+    MENTION_RE = /(?<=^|[^\/[:word:]])@((#{USERNAME_RE})(?:@[[:word:]\.\-]+[[:word:]]+)?)/i
 
     handle TOOT_URI_RE do |uri|
       Status.findbyuri(uri) || Status.fetch(uri)
@@ -288,11 +306,11 @@ module Plugin::Mastodon
     end
 
     def retweet_count
-      actual_status.reblogs_count
+      [actual_status.reblog_status_uris.size, actual_status.reblogs_count].compact.max
     end
 
     def favorite_count
-      actual_status.favourites_count
+      [@favorite_accts.size, actual_status.favourites_count].compact.max
     end
 
     def retweet?
@@ -300,7 +318,13 @@ module Plugin::Mastodon
     end
 
     def retweeted_by
-      actual_status.reblog_status_uris.map{|pair| pair[:acct] }.compact.uniq.map{|acct| Account.findbyacct(acct) }.compact
+      actual_status
+        .reblog_status_uris
+        .lazy
+        .filter_map { |v| v[:acct] }
+        .filter_map(&Account.method(:findbyacct))
+        .uniq
+        .to_a
     end
 
     def shared?(counterpart=nil)
@@ -316,7 +340,7 @@ module Plugin::Mastodon
     alias :retweeted? :shared?
 
     def favorited_by
-      @favorite_accts.map{|acct| Account.findbyacct(acct) }.compact.uniq
+      @favorite_accts.lazy.filter_map(&Account.method(:findbyacct)).uniq.to_a
     end
 
     def favorite?(counterpart = nil)

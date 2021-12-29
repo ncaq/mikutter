@@ -1,0 +1,140 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the activity package.
+# 
+# Translators:
+# Arian - Cazare Muncitori <arianserv@gmail.com>, 2014
+msgid ""
+msgstr ""
+"Project-Id-Version: mikutter\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2018-01-14 03:49+0900\n"
+"PO-Revision-Date: 2017-09-20 01:37+0000\n"
+"Last-Translator: Toshiaki Asai <toshi.alternative@gmail.com>\n"
+"Language-Team: Romanian (Romania) (http://www.transifex.com/lindwurm/mikutter/language/ro_RO/)\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: ro_RO\n"
+"Plural-Forms: nplurals=3; plural=(n==1?0:(((n%100>19)||((n%100==0)&&(n!=0)))?2:1));\n"
+
+#: ../activity.rb:47
+msgid "種類"
+msgstr "Tip"
+
+#: ../activity.rb:48
+msgid "説明"
+msgstr "Descriere"
+
+#: ../activity.rb:49
+msgid "時刻"
+msgstr "Ora"
+
+#: ../activity.rb:166 ../activity.rb:315 ../activity.rb:318
+msgid "アクティビティ"
+msgstr "Activităţi"
+
+#: ../activity.rb:222
+msgid "@%{user} がふぁぼふぁぼしました"
+msgstr "%@{user} marcat ca favorit"
+
+#: ../activity.rb:232
+msgid "@%{user} があんふぁぼしました"
+msgstr "%@{user} demarcat ca favorit"
+
+#: ../activity.rb:244
+msgid "@%{user} がリツイートしました"
+msgstr "%@{user} a primit retweet"
+
+#: ../activity.rb:250
+msgid "リツイートソースが取得できませんでした"
+msgstr "Nu s-a putut prelua sursa de retweet"
+
+#: ../activity.rb:254
+msgid "@%{user}が%{list}に追加されました"
+msgstr "@%{user} a fost adăugat în lista %{list}"
+
+#: ../activity.rb:262 ../activity.rb:279
+msgid "%{description} (by @%{user})"
+msgstr "%{description} (de @%{user})"
+
+#: ../activity.rb:271
+msgid "@%{user}が%{list}から削除されました"
+msgstr "@%{user} a fost eliminat din lista %{list}"
+
+#: ../activity.rb:291
+msgid "@%{followee} が @%{follower} をﾌｮﾛｰしました"
+msgstr "@%{followee} este urmat de @%{follower}"
+
+#: ../activity.rb:303
+msgid "差出人: @%{sender}"
+msgstr ""
+
+#: ../activity.rb:304
+msgid "宛先: @%{recipient}"
+msgstr ""
+
+#: ../activity.rb:335
+msgid "%{name}を表示する"
+msgstr ""
+
+#: ../activity.rb:335
+msgid "%{name}を、アクティビティタイムラインに表示します。チェックを外すと、%{name}の他の設定は無効になります。"
+msgstr ""
+
+#: ../activity.rb:336
+msgid "自分に関係ない%{name}も表示する"
+msgstr ""
+
+#: ../activity.rb:336
+msgid ""
+"自分に関係ない%{name}もアクティビティタイムラインに表示されるようになります。チェックを外すと、自分に関係ない%{name}は表示されません。"
+msgstr ""
+
+#: ../activity.rb:337
+msgid "タイムラインに表示"
+msgstr "Afişare în cronologie"
+
+#: ../activity.rb:337
+msgid "%{name}が通知された時に、システムメッセージで%{name}を通知します"
+msgstr ""
+
+#: ../activity.rb:338
+msgid "ステータスバーに表示"
+msgstr "Afişare în bara de status"
+
+#: ../activity.rb:338
+msgid "%{name}が通知された時に、ステータスバーにしばらく表示します"
+msgstr ""
+
+#: ../activity.rb:343
+msgid "リツイート"
+msgstr "Retweet"
+
+#: ../activity.rb:344
+msgid "ふぁぼ"
+msgstr "Fav"
+
+#: ../activity.rb:345
+msgid "フォロー"
+msgstr "Urmărire"
+
+#: ../activity.rb:346
+msgid "リストに追加"
+msgstr "Adăugare în listă"
+
+#: ../activity.rb:347
+msgid "リストから削除"
+msgstr "Eliminare din listă"
+
+#: ../activity.rb:348
+msgid "ダイレクトメッセージ"
+msgstr "Mesaj Direct"
+
+#: ../activity.rb:349
+msgid "システムメッセージ"
+msgstr "Mesaj de Sistem"
+
+#: ../activity.rb:350
+msgid "エラー"
+msgstr "Eroare"
