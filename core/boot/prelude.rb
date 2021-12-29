@@ -2,14 +2,22 @@
 
 # プラグインでCLIコマンドを作成するためのDSLと、実行環境のセットアップ
 module Prelude
+  class NameError < RuntimeError; end
+
   module DSL
     def namespace(name, &block)
       @namespaces ||= {}
+      if toplevel? && Prelude.plugin_context[:slug].to_s != name.to_s
+        raise NameError, '最上位のnamespaceはプラグインのslugと同じ名前にする必要があります'
+      end
       (@namespaces[name] ||= Namespace.new(self, name)).instance_eval(&block)
     end
 
     def command(name, description: nil, &block)
       @commands_dict ||= {}
+      if toplevel? && Prelude.plugin_context[:slug].to_s != name.to_s
+        raise NameError, 'namespaceに含まれないcommandはプラグインのslugと同じ名前にする必要があります'
+      end
       if @commands_dict[name]
         warn "already defined command `#{[full_name, name].compact.join(':')}`"
       end
@@ -38,6 +46,12 @@ module Prelude
 
     def full_name
       [parent.full_name, name].compact.join(':')
+    end
+
+    private
+
+    def toplevel?
+      false
     end
   end
 
@@ -123,6 +137,12 @@ module Prelude
       end
 
       exit
+    end
+
+    private
+
+    def toplevel?
+      true
     end
   end
 end
