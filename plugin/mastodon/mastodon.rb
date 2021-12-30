@@ -108,7 +108,7 @@ Plugin.create(:mastodon) do
         a | worlds.flat_map do |world|
           [
             world.sse.user,
-            world.rest.mention,
+            world.sse.mention,
             world.sse.direct,
             world.sse.public,
             world.sse.public(only_media: true),

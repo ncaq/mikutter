@@ -28,6 +28,12 @@ module Plugin::Mastodon
       set_endpoint('user')
     end
 
+    def mention
+      @datasource_slug = "mastodon-#{world.account.acct}-mentions".to_sym
+      @title = Plugin[:mastodon]._('Mastodon/%{domain}/%{acct}/Mentions') % {domain: world.server.domain, acct: world.account.acct}
+      set_endpoint('user')
+    end
+
     def direct
       @datasource_slug = "mastodon-#{world.account.acct}-direct".to_sym
       @title = Plugin[:mastodon]._("Mastodon/%{domain}/%{acct}/ダイレクトメッセージ") % {domain: world.server.domain, acct: world.account.acct}

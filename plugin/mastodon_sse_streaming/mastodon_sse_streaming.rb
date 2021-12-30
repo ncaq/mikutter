@@ -3,6 +3,7 @@
 require_relative 'connection'
 require_relative 'handler/favorite'
 require_relative 'handler/follow'
+require_relative 'handler/mention'
 require_relative 'handler/poll'
 require_relative 'handler/reblog'
 require_relative 'handler/update'
@@ -23,6 +24,7 @@ Plugin.create(:mastodon_sse_streaming) do
       end
     }.terminate(_('Mastodon: リスト取得時にエラーが発生しました'))
     generate_notification_stream(new_world.sse.user, tag: tag_of(new_world))
+    generate_mention_stream(new_world.sse.mention, tag: tag_of(new_world))
   end
 
   subscribe(:mastodon_worlds__delete).each do |lost_world|
@@ -44,6 +46,17 @@ Plugin.create(:mastodon_sse_streaming) do
     generate(:extract_receive_message, connection_type.datasource_slug, tags: [tag]) do |stream_input|
       connection_pool(connection_type).add_handler(
         Plugin::MastodonSseStreaming::Handler::Update.new(
+          connection_type,
+          &stream_input.method(:<<)
+        )
+      )
+    end
+  end
+
+  def generate_mention_stream(connection_type, tag:)
+    generate(:extract_receive_message, connection_type.datasource_slug, tags: [tag]) do |stream_input|
+      connection_pool(connection_type).add_handler(
+        Plugin::MastodonSseStreaming::Handler::Mention.new(
           connection_type,
           &stream_input.method(:<<)
         )
