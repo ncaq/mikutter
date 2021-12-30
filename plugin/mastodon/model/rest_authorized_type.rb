@@ -86,5 +86,9 @@ module Plugin::Mastodon
     def params
       @params ||= {}
     end
+
+    def inspect
+      "#<#{self.class}: #{@datasource_slug} #{@perma_link}>"
+    end
   end
 end

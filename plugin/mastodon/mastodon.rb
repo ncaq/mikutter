@@ -212,8 +212,7 @@ Plugin.create(:mastodon) do
       Plugin.call(:extract_tab_create, {
                     name: _('メンション (%{name})') % name_param,
                     slug: mention_slug,
-                    sources: [:mastodon_appear_toots],
-                    sexp: [:or, [:include?, :receiver_idnames, world.user_obj.idname]],
+                    sources: [world.rest.mention.datasource_slug],
                     icon: Skin[:reply].uri,
                   })
     end

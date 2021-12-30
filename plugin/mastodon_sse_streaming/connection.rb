@@ -1,85 +1,51 @@
 # frozen_string_literal: true
 
-require_relative 'client'
 require_relative 'cooldown_time'
+require_relative 'middleware/chunk_to_line'
+require_relative 'middleware/connection_keeping_stream'
+require_relative 'middleware/server_sent_events_json_parser'
+require_relative 'raw_server_sent_events_stream'
+require_relative 'splitter'
 
+# 接続に必要な情報を構築し、管理する。
+# 接続用Threadを作り、リトライ制御などを行う。
 module Plugin::MastodonSseStreaming
   class Connection
-
-    attr_reader :connection_type
-
-    def initialize(connection_type:, receiver:)
-      type_strict connection_type => tcor(Plugin::Mastodon::SSEPublicType, Plugin::Mastodon::SSEAuthorizedType)
-      @connection_type = connection_type
-      @thread = nil
-      @cooldown_time = Plugin::MastodonSseStreaming::CooldownTime.new
-      @receiver = receiver
-      start
+    def initialize(connection_type)
+      @cooldown_time = CooldownTime.new
+      @connection = Splitter.new(
+        Middleware::ServerSentEventsJSONParser.new(
+          Middleware::ChunkToLine.new(
+            Middleware::ConnectionKeepingStream.new(
+              RawServerSentEventsStream.new(
+                connection_type
+              ),
+              keeper: @cooldown_time
+            )
+          )
+        )
+      )
     end
 
-    def domain
-      connection_type.server.domain
+    # @params [Plugin::MastodonSseStreaming::Handler] addition 追加するハンドラ
+    def add_handler(addition)
+      @connection.add_handler(addition)
+      self
     end
 
-    def stream_slug
-      connection_type.datasource_slug
+    # @params [Plugin::MastodonSseStreaming::Handler] deletion 削除するハンドラ
+    def remove_handler(deletion)
+      @connection.remove_handler(deletion)
+      self
     end
 
-    def token
-      connection_type.token
-    end
-
-    def stop
-      @thread.kill
-    end
-
-    private
-
-    def start
+    def run
+      @thread&.kill
       @thread = Thread.new do
-        loop do
-          connect
-          @cooldown_time.sleep
-        end
-      rescue Pluggaloid::NoReceiverError
-        @thread = nil
-      ensure
-        if @thread == Thread.current
-          @cooldown_time.sleep
-          start
-        end
-      end
-    end
-
-    def connect
-      parser = Plugin::MastodonSseStreaming::Parser.new(self, @receiver)
-      client = HTTPClient.new
-      client.ssl_config.set_default_paths
-      notice "connect #{connection_type.perma_link.to_s}"
-      response = client.request(:get, connection_type.perma_link.to_s, {}, {}, headers) do |fragment|
-        @cooldown_time.reset
-        parser << fragment
-      end
-      if response
-        @cooldown_time.status_code(response.status_code)
-      else
-        @cooldown_time.client_error
-      end
-    rescue => exc
-      error exc
-      notice "disconnect #{response&.status} #{exc}"
-      @cooldown_time.client_error
-    rescue Exception => exc
-      notice "disconnect #{response&.status} #{exc}"
-      @cooldown_time.client_error
-      raise
-    end
-
-    def headers
-      if token
-        { 'Authorization' => 'Bearer %{token}' % {token: token} }
-      else
-        {}
+        Thread.current.abort_on_exception = true
+        @connection.run
+      rescue Pluggaloid::NoReceiverError # Handlerがraiseすることを想定
+        @thread = nil if Thread.current == @thread
       end
     end
   end

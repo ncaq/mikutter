@@ -8,6 +8,12 @@ module Plugin::Mastodon
     attr_reader :title
     attr_reader :perma_link
 
+    def uri
+      URI::Generic.build({ scheme: 'plugin',
+                           host: 'public.sse.mastodon',
+                           path: "/#{@datasource_slug}" })
+    end
+
     def token
       nil
     end
@@ -46,6 +52,10 @@ module Plugin::Mastodon
 
     def params
       @params ||= {}
+    end
+
+    def inspect
+      "#<#{self.class}: #{@datasource_slug} #{@perma_link}>"
     end
   end
 end
