@@ -47,22 +47,6 @@ module Plugin::Mastodon
       Plugin::Mastodon::RestAuthorizedType.new(world: self)
     end
 
-    def datasource_slug(type, n = nil)
-      case type
-      when :home
-        # ホームTL
-        "mastodon-#{account.acct}-home".to_sym
-      when :direct
-        # DM TL
-        "mastodon-#{account.acct}-direct".to_sym
-      when :list
-        # リストTL
-        "mastodon-#{account.acct}-list-#{n}".to_sym
-      else
-        "mastodon-#{account.acct}-#{type.to_s}".to_sym
-      end
-    end
-
     def get_lists
       Delayer::Deferred.new do
         if @@lists[uri.to_s]

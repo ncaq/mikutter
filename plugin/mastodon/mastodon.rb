@@ -86,6 +86,11 @@ Plugin.create(:mastodon) do
     Delayer.new { followings_updater.call }
   end
 
+  # 起動時
+  Delayer.new do
+    followings_updater.call
+  end
+
   # Mastodonサーバが初期化されたら、サーバの集合に加える
   collection(:mastodon_servers) do |servers|
     on_mastodon_server_created do |server|
@@ -103,6 +108,7 @@ Plugin.create(:mastodon) do
         a | worlds.flat_map do |world|
           [
             world.sse.user,
+            world.sse.mention,
             world.sse.direct,
             world.sse.public,
             world.sse.public(only_media: true),
@@ -198,7 +204,12 @@ Plugin.create(:mastodon) do
       Plugin.call(:extract_tab_create, {
                     name: _('ホームタイムライン (%{name})') % name_param,
                     slug: htl_slug,
-                    sources: [world.sse.user.datasource_slug],
+                    sources: Set[ # restとsseではslugが重複するが、ソースとする範囲を表現するため、明示する
+                      world.rest.user.datasource_slug,
+                      world.sse.user.datasource_slug,
+                      world.rest.mention.datasource_slug,
+                      world.sse.mention.datasource_slug,
+                    ],
                     icon: Skin[:timeline].uri,
                   })
     end
@@ -206,8 +217,10 @@ Plugin.create(:mastodon) do
       Plugin.call(:extract_tab_create, {
                     name: _('メンション (%{name})') % name_param,
                     slug: mention_slug,
-                    sources: [:mastodon_appear_toots],
-                    sexp: [:or, [:include?, :receiver_idnames, world.user_obj.idname]],
+                    sources: Set[
+                      world.rest.mention.datasource_slug,
+                      world.sse.mention.datasource_slug,
+                    ],
                     icon: Skin[:reply].uri,
                   })
     end
@@ -215,7 +228,10 @@ Plugin.create(:mastodon) do
       Plugin.call(:extract_tab_create, {
                     name: _('ローカルタイムライン (%{domain})') % name_param,
                     slug: ltl_slug,
-                    sources: [world.sse.public_local.datasource_slug],
+                    sources: Set[
+                      world.rest.public_local.datasource_slug,
+                      world.sse.public_local.datasource_slug,
+                    ],
                     icon: 'https://%{domain}/apple-touch-icon.png' % slug_param,
                   })
     end
@@ -250,7 +266,10 @@ Plugin.create(:mastodon) do
       result = await_input
       domain = result[:domain_selection] == :other ? result[:domain] : result[:domain_selection]
 
-      instance = await Plugin::Mastodon::Instance.add_ifn(domain).trap{ nil }
+      instance = await Plugin::Mastodon::Instance.add_ifn(domain).trap{ |err|
+        error err
+        nil
+      }
       unless instance
         error_msg = _("%{domain} サーバーへの接続に失敗しました。やり直してください。") % {domain: domain}
         next

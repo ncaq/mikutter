@@ -12,6 +12,10 @@ module Plugin::Mastodon
       nil
     end
 
+    def response_entities
+      :status
+    end
+
     def public(only_media: false)
       params[:only_media] = only_media
       if only_media
@@ -47,6 +51,10 @@ module Plugin::Mastodon
 
     def params
       @params ||= {}
+    end
+
+    def inspect
+      "#<#{self.class}: #{@datasource_slug} #{@perma_link}>"
     end
   end
 end

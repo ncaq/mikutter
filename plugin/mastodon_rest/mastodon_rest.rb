@@ -3,6 +3,7 @@ Plugin.create(:mastodon_rest) do
 
   subscribe(:mastodon_worlds__add).each do |new_world|
     [ new_world.rest.user,
+      new_world.rest.mention,
       new_world.rest.direct,
       new_world.rest.public,
       new_world.rest.public_local,
@@ -31,15 +32,15 @@ Plugin.create(:mastodon_rest) do
     detach(tag_of(lost_server))
   end
 
-  def generate_stream(connection, tag:)
-    generate(:extract_receive_message, connection.datasource_slug, tags: [tag]) do |stream_input|
+  def generate_stream(connection_type, tag:)
+    generate(:extract_receive_message, connection_type.datasource_slug, tags: [tag]) do |stream_input|
       Delayer::Deferred.next do
         wait_count = Float::INFINITY
         loop do
           wait_count += 1
           if wait_count >= UserConfig[:mastodon_rest_interval]
             wait_count = 0
-            (+query(connection))&.yield_self(&stream_input.method(:bulk_add))
+            (+query(connection_type))&.yield_self(&stream_input.method(:bulk_add))
           end
           +Delayer::Deferred.sleep(60)
         end
@@ -51,10 +52,15 @@ Plugin.create(:mastodon_rest) do
     end
   end
 
-  def query(connection)
-    Plugin::Mastodon::API.call(:get, connection.uri.host, connection.uri.path, connection.token, limit: 200, **connection.params).next { |api_response|
-      Plugin::Mastodon::Status.bulk_build(connection.server, api_response.value)
-    }.terminate(_('Mastodon: %{title}取得時にエラーが発生しました') % {title: connection.title})
+  def query(connection_type)
+    Plugin::Mastodon::API.call(:get, connection_type.uri.host, connection_type.uri.path, connection_type.token, limit: 200, **connection_type.params).next { |api_response|
+      case connection_type.response_entities
+      when :status
+        Plugin::Mastodon::Status.bulk_build(connection_type.server, api_response.value)
+      when :notification
+        Plugin::Mastodon::Status.bulk_build(connection_type.server, api_response.value.map{ |h| h[:status] })
+      end
+    }.terminate(_('Mastodon: %{title}取得時にエラーが発生しました') % {title: connection_type.title})
       .trap{ nil }
   end
 

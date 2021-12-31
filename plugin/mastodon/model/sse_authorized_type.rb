@@ -8,6 +8,12 @@ module Plugin::Mastodon
     attr_reader :title
     attr_reader :perma_link
 
+    def uri
+      URI::Generic.build({ scheme: 'plugin',
+                           host: 'authorized.sse.mastodon',
+                           path: "/#{@datasource_slug}" })
+    end
+
     def server
       world.server
     end
@@ -19,6 +25,12 @@ module Plugin::Mastodon
     def user
       @datasource_slug = "mastodon-#{world.account.acct}-home".to_sym
       @title = Plugin[:mastodon]._("Mastodon/%{domain}/%{acct}/ホームタイムライン") % {domain: world.server.domain, acct: world.account.acct}
+      set_endpoint('user')
+    end
+
+    def mention
+      @datasource_slug = "mastodon-#{world.account.acct}-mentions".to_sym
+      @title = Plugin[:mastodon]._('Mastodon/%{domain}/%{acct}/Mentions') % {domain: world.server.domain, acct: world.account.acct}
       set_endpoint('user')
     end
 
@@ -74,6 +86,10 @@ module Plugin::Mastodon
 
     def query
       params.map { |pair| pair.join('=') }.join('&')
+    end
+
+    def inspect
+      "#<#{self.class}: #{@datasource_slug} #{@perma_link}>"
     end
   end
 end
