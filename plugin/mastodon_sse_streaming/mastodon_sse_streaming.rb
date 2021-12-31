@@ -94,7 +94,7 @@ Plugin.create(:mastodon_sse_streaming) do
     @connection_pool ||= {}
     @connection_pool[connection_type.uri] ||= Plugin::MastodonSseStreaming::Connection.new(
       connection_type
-    ).tap(&:run)
+    )
   end
 
   @tags = {}                    # world_hash => handler_tag

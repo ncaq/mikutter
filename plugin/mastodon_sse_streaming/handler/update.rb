@@ -19,9 +19,6 @@ module Plugin::MastodonSseStreaming::Handler
         @receiver.(message)
         Plugin.call(:update, nil, [message]) # 互換性のため
       end
-    rescue StandardError
-      notice [event, payload]
-      raise
     end
   end
 end

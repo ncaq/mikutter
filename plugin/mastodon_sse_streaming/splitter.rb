@@ -9,17 +9,24 @@ module Plugin::MastodonSseStreaming
     def initialize(parsed_sse_stream)
       @stream = parsed_sse_stream
       @handlers = Set[]
+      @handler_lock = Mutex.new
     end
 
     # @params [Plugin::MastodonSseStreaming::Handler] addition 追加するハンドラ
     def add_handler(addition)
-      @handlers << addition
+      @handler_lock.synchronize do
+        @handlers << addition
+      end
       self
     end
 
     # @params [Plugin::MastodonSseStreaming::Handler] deletion 削除するハンドラ
+    # @raises [NoHandlerExsitsError] 削除したあと、Handlerの個数が0になった
     def remove_handler(deletion)
-      @handlers.delete(deletion)
+      @handler_lock.synchronize do
+        @handlers.delete(deletion)
+        raise NoHandlerExsitsError if @handlers.empty?
+      end
       self
     end
 
@@ -30,6 +37,8 @@ module Plugin::MastodonSseStreaming
       @stream.to_enum.each do |(event, data)|
         @handlers.each do |handler|
           handler.(event, data)
+        rescue Pluggaloid::NoReceiverError
+          remove_handler(handler)
         end
       end
     end
