@@ -41,6 +41,10 @@ module Plugin::MastodonSseStreaming
         else
           raise ConnectionRefusedError
         end
+      rescue SocketError,
+             HTTPClient::BadResponseError,
+             HTTPClient::TimeoutError => exception
+        raise ConnectionRefusedError, exception.to_s
       end
     end
   end
