@@ -1,0 +1,12 @@
+---
+slug: plugin_depends
+depends:
+  mikutter: 4.1.4
+  plugin: []
+version: '1.0'
+author: toshi_a
+prelude:
+  - prelude.rb
+name: Plugin dependency graph generator
+description: >-
+  プラグインの依存関係をdot言語で出力します

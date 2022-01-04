@@ -13,7 +13,9 @@ http://opensource.org/licenses/mit-license.php
 =end
 module Mikutter; end
 
-require_relative 'core/boot/option'
+require_relative 'core/miquire'
+require 'boot/delayer'
+require 'boot/option'
 Mopt.parse exec_command: true
 
 if !ENV['DISABLE_BUNDLER_SETUP'] || ['', '0'].include?(ENV['DISABLE_BUNDLER_SETUP'].to_s)
@@ -32,8 +34,6 @@ require 'benchmark'
 require 'thread'
 require 'fileutils'
 
-require_relative 'core/miquire'
-
 require 'lib/diva_hacks'
 require 'lib/lazy'
 require 'lib/reserver'
@@ -45,7 +45,6 @@ require_relative 'core/utils'
 
 require 'boot/check_config_permission'
 require 'boot/mainloop'
-require 'boot/delayer'
 require 'environment'
 
 Dir.chdir(Environment::CONFROOT)
