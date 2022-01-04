@@ -15,7 +15,7 @@ module Prelude
 
     def command(name, description: nil, &block)
       @commands_dict ||= {}
-      if name.nil? || name.empty?
+      if !name || name.empty?
         raise NameError, 'command name cannot be empty'
       end
       if toplevel? && Prelude.plugin_context[:slug].to_s != name.to_s
