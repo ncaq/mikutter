@@ -58,9 +58,6 @@ class UserConfig
     # 常にURLを展開して表示
     :shrinkurl_expand => true,
 
-    # 非公式RTにin_reply_to_statusをつける
-    :legacy_retweet_act_as_reply => false,
-
     :bitly_user => '',
     :bitly_apikey => '',
 

@@ -48,17 +48,6 @@ Plugin.create :command do
                               header: messages.map(&:user).uniq.reject(&:me?).select{|x|x.respond_to?(:idname)}.map{|x| "@#{x.idname}"}.join(' ') + ' ',
                               use_blind_footer: !UserConfig[:footer_exclude_reply]) end
 
-  command(:legacy_retweet,
-          name: _('引用'),
-          condition: ->opt{ opt.messages.size == 1 && compose?(opt.world, to: opt.messages) },
-          visible: true,
-          role: :timeline) do |opt|
-    m = opt.messages.first
-    opt.widget.create_postbox(to: [m],
-                              footer: " RT @#{m.idname}: #{m.description}",
-                              to_display_only: !UserConfig[:legacy_retweet_act_as_reply],
-                              use_blind_footer: !UserConfig[:footer_exclude_retweet]) end
-
   command(:retweet,
           name: _('リツイート'),
           condition: ->opt{ opt.messages.any?{|m| share?(opt.world, m) && !shared?(opt.world, m) } },
