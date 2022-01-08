@@ -87,12 +87,16 @@ module MIKU
                       "\nelse\n" + indent(expanded.cdr.cdr.map{|n| to_ruby(n, use_result: false)}.join("\n")) +
                       "\nend" end end
             else
-              if expanded[1].is_a? Symbol
-                args = [":" + operator.to_s, *(expanded.size > 2 ? expanded.cdr.cdr.map{|node|to_ruby(node)} : [])].join(", ")
-                "#{to_ruby(expanded[1])}.__send__(#{args})"
-              else
-                args = expanded.size > 2 ? expanded.cdr.cdr.map{|node|to_ruby(node)}.join(",") : ""
-                "#{to_ruby(expanded[1])}.#{operator.to_s}(#{args})" end end end
+              case expanded
+              in [Symbol | String => method, _ => receiver]
+                "#{to_ruby(receiver)}.#{method}"
+              in [Symbol | String => method, _ => receiver, *args]
+                buf = "#{to_ruby(receiver)}.#{method}("
+                buf += args.map(&method(:to_ruby)).join(', ')
+                "#{buf})"
+              end
+            end
+          end
         else
           expanded.to_s
         end
