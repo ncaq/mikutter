@@ -24,13 +24,10 @@
   (each ary #((pair) (store result (car pair) (cdr pair))))
   result)
 
-(defmacro and ((rest args))
-  (if (empty? args)
-      t
-    (if (<= 2 (size args))
-        `(if ,(car args)
-             (and ,@(cdr args)))
-        (car args))))
+(defmacro and (body (rest other))
+  (if (empty? other)
+      body
+  `(if ,body (and ,@other))))
 
 (defmacro or (body (rest other))
   `(if ,body
