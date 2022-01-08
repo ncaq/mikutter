@@ -104,11 +104,10 @@ module MIKU
       def string_literal(str)
         escaped = str.gsub(STRING_LITERAL_ESCAPE_MATCHER, STRING_LITERAL_ESCAPE_MAP)
         CompiledCode.new(
-          "-'#{escaped}'",
+          "'#{escaped}'",
           taint: false,
           affect: false,
-          type: Type.new(String, freeze: true),
-          priority: OPERATOR_UNARY_MINUS
+          type: Type.new(String, freeze: true)
         )
       end
 
@@ -176,7 +175,7 @@ module MIKU
         in [:if, cond, then_expr]
           cond_code = to_ruby(cond, use_result: use_result)
           then_code = to_ruby(then_expr, use_result: use_result)
-          if use_result && cond_code.each_line.size == 1 && then_code.each_line.size == 1
+          if use_result && cond_code.single_line? && then_code.single_line?
             CompiledCode.new(
               "#{cond_code} && #{then_code}",
               taint: cond_code.taint? || then_code.taint?,

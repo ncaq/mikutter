@@ -65,8 +65,12 @@ module MIKU::ToRuby
     end
 
     def indent
-      __setobj__(each_line.map { "  #{_1}" }.join("\n").freeze)
+      __setobj__(each_line.map { "  #{_1.chomp}" }.join("\n").freeze)
       self
+    end
+
+    def single_line?
+      each_line.take(2).size == 1
     end
 
     def taint?
