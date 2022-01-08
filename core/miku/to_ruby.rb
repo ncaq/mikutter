@@ -4,16 +4,16 @@ module MIKU
   module ToRuby
     STRING_LITERAL_ESCAPE_MAP = {'\\' => '\\\\', "'" => "\\'"}.freeze
     STRING_LITERAL_ESCAPE_MATCHER = Regexp.union(STRING_LITERAL_ESCAPE_MAP.keys).freeze
+    OPERATOR_DICT = { :< => "<", :> => ">", :<= => "<=", :>= => ">=", :eql => "==", :equal => "===", :and => "&&", :or => "||", :== => "==", :eq => 'equal?' }.freeze
 
     class << self
       def indent(code)
         code.each_line.map{|l| "  #{l}"}.join("\n")
       end
 
-      def progn(list, options={quoted: false, use_result: true})
+      def progn(list, quoted: false, use_result: true)
         if options[:use_result]
-          progn_code = list.dup
-          progn_last = progn_code.pop
+          *progn_code, progn_last = list
           [*progn_code.map{|n| to_ruby(n, use_result: false)}, to_ruby(progn_last, use_result: :to_return)].join("\n")
         else
           list.map{|n| to_ruby(n, use_result: false)}.join("\n") end end
@@ -30,8 +30,8 @@ module MIKU
         case expanded
         when Symbol
           (options[:quoted] ? ":" : "") + "#{expanded.to_s}"
-        when Numeric
-          expanded.to_s
+        # when Numeric
+        #   expanded.to_s # same else form
         when String
           string_literal(expanded)
         when TrueClass
@@ -44,57 +44,64 @@ module MIKU
           if options[:quoted]
             '[' + expanded.map{|node| to_ruby(node, quoted: true, use_result: true)}.join(", ") + ']'
           else
-            operator = expanded.car
-            case operator
-            when :quote
-              to_ruby(expanded[1], quoted: true, use_result: true)
-            when :<, :>, :<=, :>=, :eql, :equal, :and, :or, :==
-                converted = {
-                :< => "<", :> => ">", :<= => "<=", :>= => ">=", :eql => "==", :equal => "===", :and => "and", :or => "or", :== => "=="}[operator]
-              if 2 == expanded.size
-                to_ruby(expanded[1], use_result: options[:use_result])
+            case expanded
+            in [:quote, expr]
+              to_ruby(expr, quoted: true, use_result: true)
+            in [(:eq | :eql | :equal | :and | :or | :==), expr]
+              to_ruby(expr, use_result: options[:use_result])
+            in [:eq => operator, left, right]
+              receiver = to_ruby(left, use_result: options[:use_result])
+              arg      = to_ruby(right, use_result: options[:use_result])
+              "#{receiver}.equal?(#{arg})"
+            in [(:< | :> | :<= | :>= | :eql | :equal | :and | :or | :==) => operator, left, right]
+              [
+                to_ruby(left, use_result: options[:use_result]),
+                OPERATOR_DICT[operator],
+                to_ruby(right, use_result: options[:use_result])
+              ].join(' ')
+            in [(:< | :> | :<= | :>= | :eq | :eql | :equal | :==) => operator, *exprs] if exprs.size >= 3
+              args = exprs.map { to_ruby(_1, use_result: true) }.join(', ')
+              "[#{args}].each_cons(2, &:#{OPERATOR_DICT[operator]})"
+            in [(:and | :or | :+ | :- | :* | :/) => operator, *exprs] if exprs.size >= 2
+              operator = OPERATOR_DICT[operator] || operator.to_s
+              exprs.map { to_ruby(_1, use_result: true) }.join(" #{operator} ")
+            in [:not, expr]
+              "!(#{to_ruby(expanded[1], use_result: options[:use_result])})"
+            in [:progn, *exprs]
+              "begin\n" + indent(progn(exprs, use_result: options[:use_result])) + "\nend\n"
+            in [:if, cond, then_expr]
+              cond_code = to_ruby(cond, use_result: options[:use_result])
+              then_code = to_ruby(then_expr, use_result: options[:use_result])
+              if options[:use_result] && cond_code.each_line.size == 1 && then_code.each_line.size == 1
+                "#{cond_code} && #{then_code}"
               else
-                expanded.cdr.enum_for(:each_cons, 2).map{ |a, b|
-                  "#{to_ruby(a)} #{converted} #{to_ruby(b)}" }.join(' and ')
+                [
+                  "if #{cond_code}",
+                  indent(then_code),
+                  'end'
+                ].join("\n")
               end
-            when :eq
-              expanded.cdr.enum_for(:each_cons, 2).map{ |a, b|
-                "#{to_ruby(a)}.equal?(#{to_ruby(b)})" }.join(' and ')
-            when :+, :-, :*, :/
-              expanded.cdr.join(" #{expanded.car.to_s} ")
-            when :not
-                '!(' + to_ruby(expanded[1]) + ')'
-            when :progn
-              "begin\n" + indent(progn(expanded.cdr.cdr, use_result: options[:use_result])) + "\nend\n"
-            when :if
-                if options[:use_result]
-                  if 3 == expanded.size
-                    if expanded[2].is_a?(List) and :progn == expanded[2].car
-                      'if ' + to_ruby(expanded[1]) + "\n" + indent(progn(expanded[2].cdr)) + "\nend"
-                    else
-                      "(" + to_ruby(expanded[1]) + " and " + to_ruby(expanded[2]) + ")" end
-                  else
-                    else_code = expanded.cdr.cdr
-                    else_last = else_code.pop
-                    'if ' + to_ruby(expanded[1]) + "\n" + indent(to_ruby(expanded[2])) +
-                      "\nelse\n" + indent([*else_code.map{|n| to_ruby(n, use_result: false)}, to_ruby(else_last)].join("\n")) +
-                      "\nend" end
-                else
-                  if 3 == expanded.size
-                    to_ruby(expanded[2], use_result: false) + ' if ' + to_ruby(expanded[1])
-                  else
-                    'if ' + to_ruby(expanded[1]) + "\n" + indent(to_ruby(expanded[2])) +
-                      "\nelse\n" + indent(expanded.cdr.cdr.map{|n| to_ruby(n, use_result: false)}.join("\n")) +
-                      "\nend" end end
-            else
-              case expanded
-              in [Symbol | String => method, _ => receiver]
-                "#{to_ruby(receiver)}.#{method}"
-              in [Symbol | String => method, _ => receiver, *args]
-                buf = "#{to_ruby(receiver)}.#{method}("
-                buf += args.map(&method(:to_ruby)).join(', ')
-                "#{buf})"
-              end
+            in [:if, cond, then_expr, *else_exprs]
+              cond_code = to_ruby(cond, use_result: options[:use_result])
+              then_code = to_ruby(then_expr, use_result: options[:use_result])
+              *else_progn, else_result = else_exprs
+              else_code = [
+                *else_progn.map { to_ruby(_1, use_result: false) },
+                to_ruby(else_result, use_result: options[:use_result])
+              ]
+              [
+                "if #{cond_code}",
+                indent(then_code),
+                'else',
+                *else_code.map(&method(:indent)),
+                'end'
+              ].join("\n")
+            in [Symbol | String => method, _ => receiver]
+              "#{to_ruby(receiver)}.#{method}"
+            in [Symbol | String => method, _ => receiver, *args]
+              buf = "#{to_ruby(receiver)}.#{method}("
+              buf += args.map(&method(:to_ruby)).join(', ')
+              "#{buf})"
             end
           end
         else
