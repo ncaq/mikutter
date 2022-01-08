@@ -129,12 +129,11 @@ module MIKU
     def macro_expand_all_ne(symtable, sexp)
       if sexp.is_a?(List)
         expanded = macro_expand_ne(symtable, sexp)
-        if expanded.is_a?(List)
-          if expanded.car.is_a?(Symbol) && symtable[expanded.car].cdr.is_a?(Macro)
-            macro_expand_all_ne(symtable, expanded)
-          else
-            expanded.map(&method(:macro_expand_all_ne).curry.(symtable))
-          end
+        case expanded
+        in [Symbol => macro, *] if symtable[macro].cdr.is_a?(Macro)
+          macro_expand_all_ne(symtable, expanded)
+        in List
+          expanded.map(&method(:macro_expand_all_ne).curry.(symtable))
         else
           expanded
         end
