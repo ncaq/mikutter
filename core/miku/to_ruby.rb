@@ -111,6 +111,19 @@ module MIKU
         )
       end
 
+      def miracle_defarg(argsym)
+        case argsym
+        in []
+          ''
+        in [*args, [:rest, Symbol => rest]]
+          x = +'('
+          x << args.join(', ')
+          "#{x}, *#{rest})".freeze
+        in [*args]
+          "(#{args.join(', ')})"
+        end
+      end
+
       def call_method(expanded, quoted: false, use_result: true)
         case expanded
         in [:quote, expr]
@@ -140,7 +153,7 @@ module MIKU
           codes = exprs.map { to_ruby(_1, use_result: true) }
           args = codes.join(', ')
           CompiledCode.new(
-            "[#{args}].each_cons(2, &:#{OPERATOR_DICT[operator]})",
+            "[#{args}].each_cons(2).inject(&:#{OPERATOR_DICT[operator]})",
             taint: codes.any?(&:taint?),
             affect: codes.any?(&:affect?),
             type: BOOLEAN_TYPE
@@ -176,12 +189,18 @@ module MIKU
           cond_code = to_ruby(cond, use_result: use_result)
           then_code = to_ruby(then_expr, use_result: use_result)
           if use_result && cond_code.single_line? && then_code.single_line?
+            if cond_code.priority > OPERATOR_LOGICAL_AND.priority
+              cond_code.attach_paren
+            end
+            if then_code.priority >= OPERATOR_LOGICAL_AND.priority
+              then_code.attach_paren
+            end
             CompiledCode.new(
               "#{cond_code} && #{then_code}",
               taint: cond_code.taint? || then_code.taint?,
               affect: cond_code.affect? || then_code.affect?,
               type: then_code.type | FALSY_TYPE,
-              priority: OPERATOR_LOGICAL_AND.priority
+              priority: [cond_code.priority, then_code.priority, OPERATOR_LOGICAL_AND.priority].max
             )
           else
             CompiledCode.new(
@@ -209,15 +228,22 @@ module MIKU
                 taint: cond_code.taint?,
                 affect: cond_code.affect?,
                 type: LOGICAL_TYPE,
-                priority: OPERATOR_LOGICAL_OR
+                priority: cond_code.priority
               )
             else
+              *_, right_code = else_code
+              if cond_code.priority > OPERATOR_LOGICAL_OR.priority
+                cond_code.attach_paren
+              end
+              if right_code.priority >= OPERATOR_LOGICAL_OR.priority
+                right_code.attach_paren
+              end
               CompiledCode.new(
-                "#{cond_code} || #{else_code.last}",
-                taint: cond_code.taint? || else_code.last.taint?,
-                affect: cond_code.affect? || else_code.last.affect?,
-                type: TRUE_TYPE | else_code.last.type,
-                priority: OPERATOR_LOGICAL_OR
+                "#{cond_code} || #{right_code}",
+                taint: cond_code.taint? || right_code.taint?,
+                affect: cond_code.affect? || right_code.affect?,
+                type: TRUE_TYPE | right_code.type,
+                priority: [cond_code.priority, right_code.priority, OPERATOR_LOGICAL_OR].max
               )
             end
           else
@@ -234,15 +260,37 @@ module MIKU
               type: then_code.type | else_code.last.type
             )
           end
+        in [:lambda, [*argsym], body]
+          return_code = to_ruby(body, use_result: :to_return)
+          CompiledCode.new(
+            "->#{miracle_defarg(argsym)} { #{return_code} }",
+            taint: return_code.taint?,
+            affect: return_code.affect?,
+            type: Type.new(GenericProc.new(return_code.type))
+          )
+        in [:lambda, [*argsym], *body, return_body] if body.size >= 2
+          body_codes = body.map { to_ruby(_1 , use_result: false) }
+          return_code = to_ruby(return_body, use_result: :to_return)
+          codes = [*body_codes, return_code]
+          CompiledCode.new(
+            [
+              "->#{miracle_defarg(argsym)} do",
+              *codes.map(&:indent),
+              'end'
+            ].join("\n"),
+            taint: codes.any?(&:taint?),
+            affect: codes.any?(&:affect?),
+            type: Type.new(GenericProc.new(return_code.type))
+          )
         in [Symbol | String => method, _ => receiver]
-          receiver_code = to_ruby(receiver)
+          receiver_code = to_ruby(receiver, use_result: true)
           CompiledCode.new(
             "#{receiver_code}.#{method}",
             taint: true,
             affect: true
           )
         in [Symbol | String => method, _ => receiver, *args]
-          receiver_code = to_ruby(receiver)
+          receiver_code = to_ruby(receiver, use_result: true)
           arg_codes = args.map(&method(:to_ruby))
           buf = "#{receiver_code}.#{method}("
           buf += arg_codes.join(', ')
@@ -251,6 +299,69 @@ module MIKU
             taint: true,
             affect: true
           )
+        in [func, *args]
+          func = to_ruby(func, use_result: true).attach_paren
+          arg_codes = args.map { to_ruby(_1, use_result: true) }
+          arg_single_line = arg_codes.all?(&:single_line?)
+          case func.type.types.to_a
+          in [GenericProc => proc_type]
+            if arg_single_line
+              CompiledCode.new(
+                "#{func}.(#{arg_codes.join(', ')})",
+                taint: func.taint? || arg_codes.any?(&:taint?),
+                affect: func.affect? || arg_codes.any?(&:affect?),
+                type: proc_type.return_type
+              )
+            else
+              [
+                "#{func}.(",
+                *arg_codes.map { "  #{_1}," },
+                ')'
+              ].join("\n")
+            end
+          else
+            CompiledCode.new(
+              [
+                "#{func}.then do |__func|",
+                '  if __func.respond_to?(:call)',
+                *if arg_single_line
+                "    __func.(#{arg_codes.join(', ')})"
+              else
+                [
+                  '    __func.(',
+                  *arg_codes.map { "      #{_1}," },
+                  '    )'
+                ]
+                end,
+                '  elsif __func.is_a?(Symbol)',
+                *if arg_codes.first.single_line?
+                "    __receiver = #{arg_codes.first}"
+              else
+                ac1, *acrest = arg_codes.first.each_line.map(&:chomp)
+                [
+                  "    __receiver = #{ac1}",
+                  *acrest.map { "      #{_1}" }
+                ]
+                end,
+                '    if __receiver.respond_to?(__func)',
+                *if arg_single_line
+                "      __receiver.public_send(__func, #{arg_codes.join(', ')})"
+              else
+                [
+                  '      __receiver.(',
+                  '        __func,',
+                  *arg_codes.map { "        #{_1}," },
+                  '      )'
+                ]
+                end,
+                '    end',
+                '  end',
+                'end'
+              ].join("\n"),
+              taint: func.taint? || arg_codes.any?(&:taint?),
+              affect: func.affect? || arg_codes.any?(&:affect?)
+            )
+          end
         end
       end
     end

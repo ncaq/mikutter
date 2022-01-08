@@ -29,7 +29,12 @@ module MIKU::ToRuby
     end
 
     def |(other)
-      Type.new(*(@types | other.types), freeze: immutable? & other.immutable?)
+      fusion = (@types | other.types).group_by(&:class)
+      new_types = Set.new(fusion.delete(Class))
+      fusion.each_value do |types|
+        new_types << types.inject(&:|)
+      end
+      Type.new(new_types, freeze: immutable? & other.immutable?)
     end
 
     def to_s
@@ -50,6 +55,26 @@ module MIKU::ToRuby
   FALSY_TYPE = FALSE_TYPE | NIL_TYPE
   LOGICAL_TYPE = BOOLEAN_TYPE | NIL_TYPE
 
+  class GenericProc
+    attr_reader :return_type
+
+    def initialize(return_type)
+      @return_type = return_type
+    end
+
+    def |(other)
+      self.class.new(@return_type.types | other.return_type.types)
+    end
+
+    def to_s
+      "#<Type:Proc -> #{@return_type}>"
+    end
+
+    def inspect
+      to_s
+    end
+  end
+
   class CompiledCode < SimpleDelegator
     attr_reader :type, :priority
 
@@ -66,6 +91,14 @@ module MIKU::ToRuby
 
     def indent
       __setobj__(each_line.map { "  #{_1.chomp}" }.join("\n").freeze)
+      self
+    end
+
+    def attach_paren
+      if @priority > -1
+        @priority = -1
+        __setobj__("(#{self})")
+      end
       self
     end
 
