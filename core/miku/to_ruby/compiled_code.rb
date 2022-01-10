@@ -48,6 +48,16 @@ module MIKU::ToRuby
       !(taint? || affect?)
     end
 
+    def deconstruct_keys(_keys)
+      {
+        taint: @taint,
+        affect: @affect,
+        pure: pure?,
+        priority: @priority,
+        type: @type
+      }
+    end
+
     def inspect
       x = ["p=#{@priority}", "t=#{@type}"]
       x << 'taint' if taint?

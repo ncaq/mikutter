@@ -59,11 +59,11 @@ module MIKU
       def to_ruby(sexp, options={ quoted: false, use_result: true })
         expanded = sexp
         case expanded
-        when true, TrueClass
+        when :true, true # rubocop:disable Lint/BooleanSymbol
           CompiledCode.new('true', taint: false, affect: false, type: TRUE_TYPE)
-        when false, FalseClass
+        when :false, false # rubocop:disable Lint/BooleanSymbol
           CompiledCode.new('false', taint: false, affect: false, type: FALSE_TYPE)
-        when :nil, NilClass
+        when :nil, nil
           CompiledCode.new('nil', taint: false, affect: false, type: NIL_TYPE)
         when Symbol
           if options[:quoted]
@@ -122,6 +122,52 @@ module MIKU
           "#{x}, *#{rest})".freeze
         in [*args]
           "(#{args.join(', ')})"
+        end
+      end
+
+      def ife(cond_expr, then_expr, *else_progn_expr, else_result_expr, quoted: false, use_result: true)
+        pattern = [
+          to_ruby(cond_expr, use_result: true),
+          to_ruby(then_expr, use_result: use_result),
+          *else_progn_expr.map { to_ruby(_1, use_result: false) },
+          to_ruby(else_result_expr, use_result: use_result)
+        ]
+        case pattern
+        in [code, {pure: true, type: TRUE_TYPE}, {pure: true, type: FALSY_TYPE}]
+          code
+        in [cond_code, then_code, {pure: true, type: FALSY_TYPE}] => codes
+          cond_code.attach_paren if cond_code.priority > OPERATOR_LOGICAL_AND.priority
+          then_code.attach_paren if then_code.priority > OPERATOR_LOGICAL_AND.priority
+          CompiledCode.new(
+            "#{cond_code} && #{then_code}",
+            taint: codes.any?(&:taint?),
+            affect: codes.any?(&:affect?),
+            type: then_code.type | NIL_TYPE,
+            priority: [cond_code.priority, then_code.priority, OPERATOR_LOGICAL_AND].max
+          )
+        in [cond_code, {pure: true, type: TRUE_TYPE}, else_code]
+          cond_code.attach_paren if cond_code.priority > OPERATOR_LOGICAL_OR.priority
+          else_code.attach_paren if else_code.priority > OPERATOR_LOGICAL_OR.priority
+          CompiledCode.new(
+            "#{cond_code} || #{else_code}",
+            taint: cond_code.taint? || else_code.taint?,
+            affect: cond_code.affect? || else_code.affect?,
+            type: cond_code.type | else_code.type,
+            priority: [cond_code.priority, else_code.priority, OPERATOR_LOGICAL_OR].max
+          )
+        in [cond_code, then_code, *else_code] => codes
+          CompiledCode.new(
+            [
+              "if #{cond_code}",
+              then_code.indent,
+              'else',
+              *else_code.map(&:indent),
+              'end'
+            ].join("\n"),
+            taint: codes.any?(&:taint?),
+            affect: codes.any?(&:affect?),
+            type: then_code.type | else_code.last.type
+          )
         end
       end
 
@@ -191,80 +237,9 @@ module MIKU
             type: code.type
           )
         in [:if, cond, then_expr]
-          cond_code = to_ruby(cond, use_result: use_result)
-          then_code = to_ruby(then_expr, use_result: use_result)
-          if use_result && cond_code.single_line? && then_code.single_line?
-            if cond_code.priority > OPERATOR_LOGICAL_AND.priority
-              cond_code.attach_paren
-            end
-            if then_code.priority >= OPERATOR_LOGICAL_AND.priority
-              then_code.attach_paren
-            end
-            CompiledCode.new(
-              "#{cond_code} && #{then_code}",
-              taint: cond_code.taint? || then_code.taint?,
-              affect: cond_code.affect? || then_code.affect?,
-              type: then_code.type | FALSY_TYPE,
-              priority: [cond_code.priority, then_code.priority, OPERATOR_LOGICAL_AND.priority].max
-            )
-          else
-            CompiledCode.new(
-              [
-                "if #{cond_code}",
-                then_code.indent,
-                'end'
-              ].join("\n"),
-              taint: cond_code.taint? || then_code.taint?,
-              affect: cond_code.affect? || then_code.affect?,
-              type: then_code.type | NIL_TYPE
-            )
-          end
+          ife(cond, then_expr, false, use_result: use_result)
         in [:if, cond, then_expr, *else_progn, else_result]
-          cond_code = to_ruby(cond, use_result: use_result)
-          then_code = to_ruby(then_expr, use_result: use_result)
-          else_code = [
-            *else_progn.map { to_ruby(_1, use_result: false) },
-            to_ruby(else_result, use_result: use_result)
-          ]
-          if else_progn.empty? && then_code.pure? && then_code.type.subset?(TRUE_TYPE)
-            if else_code.last.pure? && FALSY_TYPE.intersect?(else_code.last.type)
-              CompiledCode.new(
-                cond_code,
-                taint: cond_code.taint?,
-                affect: cond_code.affect?,
-                type: LOGICAL_TYPE,
-                priority: cond_code.priority
-              )
-            else
-              *_, right_code = else_code
-              if cond_code.priority > OPERATOR_LOGICAL_OR.priority
-                cond_code.attach_paren
-              end
-              if right_code.priority >= OPERATOR_LOGICAL_OR.priority
-                right_code.attach_paren
-              end
-              CompiledCode.new(
-                "#{cond_code} || #{right_code}",
-                taint: cond_code.taint? || right_code.taint?,
-                affect: cond_code.affect? || right_code.affect?,
-                type: TRUE_TYPE | right_code.type,
-                priority: [cond_code.priority, right_code.priority, OPERATOR_LOGICAL_OR].max
-              )
-            end
-          else
-            CompiledCode.new(
-              [
-                "if #{cond_code}",
-                then_code.indent,
-                'else',
-                *else_code.map(&:indent),
-                'end'
-              ].join("\n"),
-              taint: [cond_code, then_code, *else_code].any?(&:taint?),
-              affect: [cond_code, then_code, *else_code].any?(&:affect?),
-              type: then_code.type | else_code.last.type
-            )
-          end
+          ife(cond, then_expr, *else_progn, else_result, use_result: use_result)
         in [:lambda, [*argsym], body]
           return_code = to_ruby(body, use_result: :to_return)
           CompiledCode.new(

@@ -19,8 +19,14 @@ module MIKU::ToRuby
       !@mutable
     end
 
+    # selfがotherのsubsetであれば真。
     def subset?(other)
       @types.subset?(other.types)
+    end
+
+    # selfがotherのsupersetであれば真。
+    def superset?(other)
+      @types.superset?(other.types)
     end
 
     def intersect?(other)
@@ -33,7 +39,15 @@ module MIKU::ToRuby
       fusion.each_value do |types|
         new_types << types.inject(&:|)
       end
-      Type.new(new_types, freeze: immutable? & other.immutable?)
+      Type.new(*new_types, freeze: immutable? & other.immutable?)
+    end
+
+    def ==(other)
+      @types == other.types && mutable? == other.mutable?
+    end
+
+    def ===(other)
+      superset?(other)
     end
 
     def to_s
