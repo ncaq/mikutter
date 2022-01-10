@@ -141,14 +141,16 @@ module MIKU
             type: BOOLEAN_TYPE
           )
         in [(:< | :> | :<= | :>= | :eql | :equal | :and | :or | :==) => operator, left, right]
-          left_code = to_ruby(left, use_result: use_result)
-          right_code = to_ruby(right, use_result: use_result)
+          operator = OPERATOR_DICT[operator]
+          left_code = to_ruby(left, use_result: true)
+          right_code = to_ruby(right, use_result: true)
+          [left_code, right_code].select { _1.priority > operator.priority }.map(&:attach_paren)
           CompiledCode.new(
-            [left_code, OPERATOR_DICT[operator], right_code].join(' '),
+            [left_code, operator, right_code].join(' '),
             taint: left_code.taint? || right_code.taint?,
             affect: left_code.affect? || right_code.affect?,
             type: BOOLEAN_TYPE,
-            priority: OPERATOR_DICT[operator].priority
+            priority: [left_code, right_code, operator].map(&:priority).max
           )
         in [(:< | :> | :<= | :>= | :eq | :eql | :equal | :==) => operator, *exprs] if exprs.size >= 3
           codes = exprs.map { to_ruby(_1, use_result: true) }
@@ -162,11 +164,13 @@ module MIKU
         in [(:and | :or | :+ | :- | :* | :/) => operator, *exprs] if exprs.size >= 2
           codes = exprs.map { to_ruby(_1, use_result: true) }
           operator = OPERATOR_DICT[operator]
+          codes.select { _1.priority > operator.priority }.map(&:attach_paren)
           CompiledCode.new(
             codes.join(" #{operator} "),
             taint: codes.any?(&:taint?),
             affect: codes.any?(&:affect?),
-            type: ANY
+            type: ANY,
+            priority: [*codes.map(&:priority), operator.priority].max
           )
         in [:not, expr]
           code = to_ruby(expanded[1], use_result: use_result)
