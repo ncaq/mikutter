@@ -13,11 +13,6 @@ http://opensource.org/licenses/mit-license.php
 =end
 module Mikutter; end
 
-require_relative 'core/miquire'
-require 'boot/delayer'
-require 'boot/option'
-Mopt.parse exec_command: true
-
 if !ENV['DISABLE_BUNDLER_SETUP'] || ['', '0'].include?(ENV['DISABLE_BUNDLER_SETUP'].to_s)
   begin
     ENV['BUNDLE_GEMFILE'] = File.expand_path(File.join(File.dirname($0), "Gemfile"))
@@ -27,6 +22,11 @@ if !ENV['DISABLE_BUNDLER_SETUP'] || ['', '0'].include?(ENV['DISABLE_BUNDLER_SETU
     # System の gem を使ってみる
   end
 end
+
+require_relative 'core/miquire'
+require 'boot/delayer'
+require 'boot/option'
+Mopt.parse exec_command: true
 
 ENV['LIBOVERLAY_SCROLLBAR'] = '0'
 
