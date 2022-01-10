@@ -123,27 +123,24 @@ module MIKU
     end
 
     def macro_expand_all(symtable, sexp)
-      sexp = eval(symtable, sexp)
-      if sexp.is_a? List
-        expanded = macro_expand_ne(symtable, sexp)
-        if expanded.is_a? List
-          expanded.map{|node|
-            macro_expand_all_ne(symtable, node) }
-        else
-          expanded end
-      else
-        sexp end end
+      macro_expand_all_ne(symtable, eval(symtable, sexp))
+    end
 
     def macro_expand_all_ne(symtable, sexp)
-      if sexp.is_a? List
+      if sexp.is_a?(List)
         expanded = macro_expand_ne(symtable, sexp)
-        if expanded.is_a? List
-          expanded.map{|node|
-            macro_expand_all_ne(symtable, node) }
+        case expanded
+        in [Symbol => macro, *] if symtable[macro].cdr.is_a?(Macro)
+          macro_expand_all_ne(symtable, expanded)
+        in List
+          expanded.map(&method(:macro_expand_all_ne).curry.(symtable))
         else
-          expanded end
+          expanded
+        end
       else
-        sexp end end
+        sexp
+      end
+    end
 
     def macro_expand_ne(symtable, sexp)
       if sexp.is_a? List

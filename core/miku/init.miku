@@ -47,6 +47,13 @@
 				   (cons (car node) (nth node 1))
 				   (cons node nil))))))
 
+(defmacro let* (bind (rest body))
+  (if (cdr bind)
+      `(let (,(car bind))
+         (let* ,(cdr bind) ,@body))
+    `(let (,(car bind))
+       ,@body)))
+
 (defmacro progn ((rest body))
   `(#(() ,@body)))
 

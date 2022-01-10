@@ -49,5 +49,8 @@ module MIKU
                           else " . #{@cdr.inspect})" end)
     end
 
+    def deconstruct
+      to_a
+    end
   end
 end
