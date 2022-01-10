@@ -2,12 +2,13 @@
 
 require_relative 'to_ruby/compiled_code'
 require_relative 'to_ruby/operator'
+require_relative 'to_ruby/generic_proc'
 
 module MIKU
   module ToRuby
-    STRING_LITERAL_ESCAPE_MAP = {'\\' => '\\\\', "'" => "\\'"}.freeze
+    STRING_LITERAL_ESCAPE_MAP = { '\\' => '\\\\', "'" => "\\'" }.freeze
     STRING_LITERAL_ESCAPE_MATCHER = Regexp.union(STRING_LITERAL_ESCAPE_MAP.keys).freeze
-    OPERATOR_DICT = {           # MIKU_FUNCNAME => Operator
+    OPERATOR_DICT = { # MIKU_FUNCNAME => Operator
       :< => OPERATOR_GREATER_THAN,
       :> => OPERATOR_LESS_THAN,
       :<= => OPERATOR_GREATER_THAN_OR_EQUAL,
@@ -21,7 +22,7 @@ module MIKU
       :+ => OPERATOR_ADDITION,
       :- => OPERATOR_SUBTRACTION,
       :* => OPERATOR_PRODUCT,
-      :/ => OPERATOR_DIVISION,
+      :/ => OPERATOR_DIVISION
     }.freeze
 
     class << self
@@ -49,18 +50,18 @@ module MIKU
       end
 
       # rubyに変換して返す
-      # 
+      #
       # ==== Args
       # [sexp] MIKUの式(MIKU::Nodeのインスタンス)
       # [options] 以下の値を持つHash
       #   quoted :: 真ならクォートコンテキスト内。シンボルが変数にならず、シンボル定数になる
       #   use_result :: 結果を使うなら真。そのコンテキストの戻り値として使うだけなら、 :to_return を指定
-      def to_ruby(sexp, options={quoted: false, use_result: true})
+      def to_ruby(sexp, options={ quoted: false, use_result: true })
         expanded = sexp
         case expanded
-        when :true, TrueClass
+        when true, TrueClass
           CompiledCode.new('true', taint: false, affect: false, type: TRUE_TYPE)
-        when :false, FalseClass
+        when false, FalseClass
           CompiledCode.new('false', taint: false, affect: false, type: FALSE_TYPE)
         when :nil, NilClass
           CompiledCode.new('nil', taint: false, affect: false, type: NIL_TYPE)
@@ -86,9 +87,9 @@ module MIKU
           string_literal(expanded)
         when List
           if options[:quoted]
-            codes = expanded.map{|node| to_ruby(node, quoted: true, use_result: true)}
+            codes = expanded.map { |node| to_ruby(node, quoted: true, use_result: true) }
             CompiledCode.new(
-              '[' + codes.join(', ') + ']',
+              "[#{codes.join(', ')}]",
               taint: codes.any?(&:taint?),
               affect: codes.any?(&:affect?),
               type: Type.new(Array, freeze: false)
@@ -269,7 +270,7 @@ module MIKU
             type: Type.new(GenericProc.new(return_code.type))
           )
         in [:lambda, [*argsym], *body, return_body] if body.size >= 2
-          body_codes = body.map { to_ruby(_1 , use_result: false) }
+          body_codes = body.map { to_ruby(_1, use_result: false) }
           return_code = to_ruby(return_body, use_result: :to_return)
           codes = [*body_codes, return_code]
           CompiledCode.new(
@@ -325,35 +326,35 @@ module MIKU
                 "#{func}.then do |__func|",
                 '  if __func.respond_to?(:call)',
                 *if arg_single_line
-                "    __func.(#{arg_codes.join(', ')})"
-              else
-                [
-                  '    __func.(',
-                  *arg_codes.map { "      #{_1}," },
-                  '    )'
-                ]
-                end,
+                   "    __func.(#{arg_codes.join(', ')})"
+                 else
+                   [
+                     '    __func.(',
+                     *arg_codes.map { "      #{_1}," },
+                     '    )'
+                   ]
+                 end,
                 '  elsif __func.is_a?(Symbol)',
                 *if arg_codes.first.single_line?
-                "    __receiver = #{arg_codes.first}"
-              else
-                ac1, *acrest = arg_codes.first.each_line.map(&:chomp)
-                [
-                  "    __receiver = #{ac1}",
-                  *acrest.map { "      #{_1}" }
-                ]
-                end,
+                   "    __receiver = #{arg_codes.first}"
+                 else
+                   ac1, *acrest = arg_codes.first.each_line.map(&:chomp)
+                   [
+                     "    __receiver = #{ac1}",
+                     *acrest.map { "      #{_1}" }
+                   ]
+                 end,
                 '    if __receiver.respond_to?(__func)',
                 *if arg_single_line
-                "      __receiver.public_send(__func, #{arg_codes.join(', ')})"
-              else
-                [
-                  '      __receiver.(',
-                  '        __func,',
-                  *arg_codes.map { "        #{_1}," },
-                  '      )'
-                ]
-                end,
+                   "      __receiver.public_send(__func, #{arg_codes.join(', ')})"
+                 else
+                   [
+                     '      __receiver.(',
+                     '        __func,',
+                     *arg_codes.map { "        #{_1}," },
+                     '      )'
+                   ]
+                 end,
                 '    end',
                 '  end',
                 'end'

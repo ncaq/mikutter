@@ -80,7 +80,7 @@ module MIKU::ToRuby
   # 15 ?:(条件演算子)
   OPERATOR_CONDITION = Operator.new('?:', priority: 15)
   # 16 =(+=, -= ... )
-  #OPERATOR_ASSIGN_PLUS = Operator.new('+=', priority: 16)
+  # OPERATOR_ASSIGN_PLUS = Operator.new('+=', priority: 16)
   # 17 not
   OPERATOR_NOT_STRING = Operator.new('not', priority: 17)
   # 18 and or
