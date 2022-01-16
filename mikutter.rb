@@ -112,7 +112,7 @@ begin
       super(string)
       self.fsync rescue nil
     end
-    $logger = Logger.new($stderr)
+    $logger = nil # 次の呼び出しから Kernel.logger の出力先が新しい stderr になるようにする
   end
   boot!(Mopt.profile)
   if(Delayer.exception)

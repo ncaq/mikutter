@@ -7,9 +7,9 @@ require 'thread'
 require 'monitor'
 require "open-uri"
 require 'logger'
+require_relative 'lib/log_formatter'
 
 $atomic = Monitor.new
-$logger = Logger.new($stderr)
 
 # 基本的な単位であり、数学的にも重要なマジックナンバーで、至るところで使われる。
 # これが言語仕様に含まれていないRubyは正直気が狂っていると思う。
@@ -235,13 +235,18 @@ def caller_util
 # 内部処理用。外部からは呼び出さないこと。
 def log(prefix, object)
   debugging_wait
+  return if $daemon
   begin
     msg = object.to_s
     msg += "\nfrom " + object.backtrace.join("\nfrom ") if object.is_a? Exception
-    $logger.log(prefix, msg, caller_util) unless $daemon
+    logger.log(prefix, msg, caller_util)
   rescue Exception => e
     __write_stderr("critical!: #{caller(0)}: #{e.to_s}")
   end
+end
+
+def logger
+  $logger ||= Logger.new($stderr, formatter: LogFormatter::Standard.new)
 end
 
 FOLLOW_DIR = File.expand_path(File.join(__dir__, '..'))
