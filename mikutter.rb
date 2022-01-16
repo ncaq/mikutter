@@ -110,7 +110,10 @@ begin
     $stderr = File.open(errfile, 'w')
     def $stderr.write(string)
       super(string)
-      self.fsync rescue nil end end
+      self.fsync rescue nil
+    end
+    $logger = Logger.new($stderr)
+  end
   boot!(Mopt.profile)
   if(Delayer.exception)
     raise Delayer.exception end
