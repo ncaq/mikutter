@@ -34,6 +34,7 @@ module Mopt
         @opts[:confroot] = File.expand_path(v) }
       opt.on('--daemon', '-d'){
         Process.daemon(true) }
+      opt.on('--color', 'Colorize terminal output') { @opts[:color] = !Gem.win_platform? }
       opt.on('--clean', 'delete all caches and duplicated files') { |v|
         require 'fileutils'
         require_relative '../utils'

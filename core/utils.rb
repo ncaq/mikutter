@@ -246,7 +246,8 @@ def log(prefix, object)
 end
 
 def logger
-  $logger ||= Logger.new($stderr, formatter: LogFormatter::Standard.new)
+  formatter = Mopt.color ? LogFormatter::Colorful : LogFormatter::Standard
+  $logger ||= Logger.new($stderr, formatter: formatter.new)
 end
 
 FOLLOW_DIR = File.expand_path(File.join(__dir__, '..'))
