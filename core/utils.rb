@@ -238,15 +238,7 @@ def log(prefix, object)
   begin
     msg = object.to_s
     msg += "\nfrom " + object.backtrace.join("\nfrom ") if object.is_a? Exception
-    unless $daemon
-      $logger.log(prefix, msg, caller_util)
-      if logfile
-        FileUtils.mkdir_p(File.expand_path(File.dirname(logfile + '_')))
-        File.open(File.expand_path("#{logfile}#{Time.now.strftime('%Y-%m-%d')}.log"), 'a') do |wp|
-          wp.write("#{Time.now.to_s}: #{caller_utils}: #{msg}\n")
-        end
-      end
-    end
+    $logger.log(prefix, msg, caller_util) unless $daemon
   rescue Exception => e
     __write_stderr("critical!: #{caller(0)}: #{e.to_s}")
   end
@@ -272,14 +264,6 @@ def chi_fatal_alert(msg)
     dialog.destroy end
   puts msg.to_s
   abort end
-
-#ログファイルを取得設定
-def logfile(fn = nil)
-  if(fn) then
-    $logfile = fn
-  end
-  $logfile or nil
-end
 
 # 共通のMutexで処理を保護して実行する。
 # atomicブロックで囲まれたコードは、別々のスレッドで同時に実行されない。
