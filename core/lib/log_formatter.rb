@@ -45,7 +45,7 @@ module LogFormatter
       when 'ERROR'
         "\e[1;31m"
       else
-        "\e[30m"
+        ''
       end
     end
   end
