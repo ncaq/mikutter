@@ -13,7 +13,7 @@ module LogFormatter
 
   class Colorful < Logger::Formatter
     # based on Logger::Formatter::Format
-    FORMAT = "\e[0m%{severity_decorate}%{short_severity}\e[0m, [%{datetime}\e[2m#%{pid}\e[0m] %{severity_decorate}%{severity}\e[0m -- \e[2m%{progname}:\e[0m %{message}\n"
+    FORMAT = "\e[0m%{severity_decorate}%{short_severity}\e[0m, [%{datetime}\e[2m#%{pid}\e[0m] %{severity_decorate}%{severity}\e[0m -- %{progname}: %{message}\n"
 
     def call(severity, time, progname, message)
       # NOTE: stderrを出力先にしていることが前提
