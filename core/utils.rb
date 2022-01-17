@@ -235,19 +235,19 @@ def caller_util
 # 内部処理用。外部からは呼び出さないこと。
 def log(prefix, object)
   debugging_wait
-  return if $daemon
+  return if $daemon # rubocop:disable Style/GlobalVars
   begin
     msg = object.to_s
-    msg += "\nfrom " + object.backtrace.join("\nfrom ") if object.is_a? Exception
+    msg += "\nfrom #{object.backtrace.join("\nfrom ")}" if object.is_a? Exception
     logger.log(prefix, msg, caller_util)
-  rescue Exception => e
-    __write_stderr("critical!: #{caller(0)}: #{e.to_s}")
+  rescue Exception => exception # rubocop:disable Lint/RescueException
+    __write_stderr("critical!: #{caller(0)}: #{exception}")
   end
 end
 
 def logger
   formatter = Mopt.color ? LogFormatter::Colorful : LogFormatter::Standard
-  $logger ||= Logger.new($stderr, formatter: formatter.new)
+  $logger ||= Logger.new($stderr, formatter: formatter.new) # rubocop:disable Style/GlobalVars
 end
 
 FOLLOW_DIR = File.expand_path(File.join(__dir__, '..'))
