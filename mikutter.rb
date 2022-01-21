@@ -110,7 +110,10 @@ begin
     $stderr = File.open(errfile, 'w')
     def $stderr.write(string)
       super(string)
-      self.fsync rescue nil end end
+      self.fsync rescue nil
+    end
+    $logger = nil # 次の呼び出しから Kernel.logger の出力先が新しい stderr になるようにする
+  end
   boot!(Mopt.profile)
   if(Delayer.exception)
     raise Delayer.exception end

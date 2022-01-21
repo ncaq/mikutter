@@ -6,9 +6,10 @@ CHI内部で共通で使われるユーティリティ。
 require 'thread'
 require 'monitor'
 require "open-uri"
+require 'logger'
+require_relative 'lib/log_formatter'
 
 $atomic = Monitor.new
-$log_lock = Mutex.new
 
 # 基本的な単位であり、数学的にも重要なマジックナンバーで、至るところで使われる。
 # これが言語仕様に含まれていないRubyは正直気が狂っていると思う。
@@ -107,7 +108,7 @@ def where_should_insert_it(insertion, src, order)
 
 # 一般メッセージを表示する。
 def notice(msg)
-  log "notice", msg if Mopt.error_level >= 3
+  log Logger::INFO, msg if Mopt.error_level >= 3
 end
 
 alias __mikutter_original_warn warn
@@ -118,14 +119,14 @@ def warn(*msg, uplevel: nil)
     __mikutter_original_warn(*msg, uplevel: uplevel)
   when Mopt.error_level >= 2
     msg.each do |m|
-      log "warning", m
+      log Logger::WARN, m
     end
   end
 end
 
 # エラーメッセージを表示する。
 def error(msg)
-  log "error", msg if Mopt.error_level >= 1
+  log Logger::ERROR, msg if Mopt.error_level >= 1
   abort if Mopt.error_level >= 4
 end
 
@@ -234,23 +235,19 @@ def caller_util
 # 内部処理用。外部からは呼び出さないこと。
 def log(prefix, object)
   debugging_wait
+  return if $daemon # rubocop:disable Style/GlobalVars
   begin
-    msg = "#{prefix}: #{caller_util}: #{object}"
-    msg += "\nfrom " + object.backtrace.join("\nfrom ") if object.is_a? Exception
-    unless $daemon
-      $log_lock.synchronize do
-        if msg.is_a? Exception
-          __write_stderr(msg.to_s)
-          __write_stderr(msg.backtrace.join("\n"))
-        else
-          __write_stderr(msg) end end
-      if logfile
-        FileUtils.mkdir_p(File.expand_path(File.dirname(logfile + '_')))
-        File.open(File.expand_path("#{logfile}#{Time.now.strftime('%Y-%m-%d')}.log"), 'a'){ |wp|
-          wp.write("#{Time.now.to_s}: #{msg}\n") } end end
-  rescue Exception => e
-    __write_stderr("critical!: #{caller(0)}: #{e.to_s}")
+    msg = object.to_s
+    msg += "\nfrom #{object.backtrace.join("\nfrom ")}" if object.is_a? Exception
+    logger.log(prefix, msg, caller_util)
+  rescue Exception => exception # rubocop:disable Lint/RescueException
+    __write_stderr("critical!: #{caller(0)}: #{exception}")
   end
+end
+
+def logger
+  formatter = Mopt.color ? LogFormatter::Colorful : LogFormatter::Standard
+  $logger ||= Logger.new($stderr, formatter: formatter.new) # rubocop:disable Style/GlobalVars
 end
 
 FOLLOW_DIR = File.expand_path(File.join(__dir__, '..'))
@@ -273,14 +270,6 @@ def chi_fatal_alert(msg)
     dialog.destroy end
   puts msg.to_s
   abort end
-
-#ログファイルを取得設定
-def logfile(fn = nil)
-  if(fn) then
-    $logfile = fn
-  end
-  $logfile or nil
-end
 
 # 共通のMutexで処理を保護して実行する。
 # atomicブロックで囲まれたコードは、別々のスレッドで同時に実行されない。
