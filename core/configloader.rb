@@ -41,7 +41,7 @@ module ConfigLoader
     def boot
       @@configloader_cache = if FileTest.exist?(STORAGE_FILE)
                                notice "load setting data from #{STORAGE_FILE}"
-                               YAML.load_file(STORAGE_FILE)
+                               YAML.safe_load_file(STORAGE_FILE, permitted_classes: AVAILABLE_TYPES)
                              elsif FileTest.exist?(PSTORE_FILE)
                                notice "load setting data from #{PSTORE_FILE}"
                                ConfigLoader.migration_from_pstore
