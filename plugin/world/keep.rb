@@ -15,14 +15,21 @@ module Plugin::World
   module Keep
     ACCOUNT_FILE = File.join(Environment::SETTINGDIR, 'core', 'token').freeze
     ACCOUNT_TMP = (ACCOUNT_FILE + ".write").freeze
-    ACCOUNT_CRYPT_KEY_LEN = 16
+    # 暗号化ライブラリが32 bytesを要求してくる。
+    ACCOUNT_CRYPT_KEY_LEN = 32
 
     extend Keep
     @@service_lock = Monitor.new
 
+    # 暗号化手法を統一して扱いたいので共有変数にする。
+    @@cipher = OpenSSL::Cipher.new('aes-256-cbc')
+
     def key
-      key = UserConfig[:account_crypt_key] ||= SecureRandom.random_bytes(ACCOUNT_CRYPT_KEY_LEN)
-      key[0, ACCOUNT_CRYPT_KEY_LEN] end
+      # また暗号化方法が将来的な非推奨になった時に、削除される前に変換出来るように暗号化方法を保存しておく。
+      account_crypt =
+        UserConfig[:account_crypt] || { key: SecureRandom.random_bytes(ACCOUNT_CRYPT_KEY_LEN).to_s, cipher_name: @@cipher.name }
+      UserConfig[:account_crypt] = account_crypt
+      account_crypt[:key][0, ACCOUNT_CRYPT_KEY_LEN] end
 
     # 全てのアカウント情報をオブジェクトとして返す
     # ==== Return
@@ -122,17 +129,32 @@ module Plugin::World
       account_data end
 
     def encrypt(str)
-      cipher = OpenSSL::Cipher.new('bf-ecb').encrypt
-      cipher.key_len = ACCOUNT_CRYPT_KEY_LEN
-      cipher.key = key
-      cipher.update(str) << cipher.final end
+      @@cipher.encrypt
+      @@cipher.key_len = ACCOUNT_CRYPT_KEY_LEN
+      @@cipher.key = key
+      @@cipher.update(str) << @@cipher.final
+    rescue StandardError => exception
+      chi_fatal_alert exception.inspect
+    end
 
     def decrypt(binary_data)
-      cipher = OpenSSL::Cipher.new('bf-ecb').decrypt
-      cipher.key = key
-      str = cipher.update(binary_data) << cipher.final
+      @@cipher.decrypt
+      @@cipher.key = key
+      str = @@cipher.update(binary_data) << @@cipher.final
       str.force_encoding(Encoding::UTF_8)
-      str end
+      str
+    rescue StandardError => exception
+      chi_fatal_alert <<~"EOS"
+暗号の復号時にエラーが起きました。
+mikutterがアップデートしたり、
+システムのOpenSSLがアップデートされたりした場合にこのエラーが起きた場合は、
+~/.mikutter/settings/setting.ymlからaccount_cryptで始まるものを消して、
+~/.mikutter/settings/core/tokenファイルを消して、
+アカウントを再認証すると上手くいく可能性があります。
+
+#{exception.inspect}
+EOS
+    end
 
     private
 
